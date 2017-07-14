@@ -13,7 +13,6 @@
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
 sudo apt-get update
-sudo rpi-source
 
 sudo apt-get install -y --force-yes \
 bc g++ lua5.2 bc sshpass libudev-dev nmap motion speedtest-cli gstreamer1.0 \
