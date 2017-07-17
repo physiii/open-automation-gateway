@@ -24,7 +24,8 @@ get_mac();
 
 // ----------------------  disk management -------------- //
 
-var diskspace = require('diskspace');
+const disk = require('diskusage');
+var disk_path = os.platform() === 'win32' ? 'c:' : '/';
 var findRemoveSync = require('find-remove');
 var _ = require('underscore');
 var path = require('path');
@@ -36,37 +37,40 @@ function timeout() {
   setTimeout(function () {
     check_diskspace();
     timeout();
-  }, 60*60*1000);
+  }, 1*20*1000);
 }
 
 function check_diskspace() {
-  diskspace.check('/', function (err, total, free, status)
-  {
-    //console.log("free space: " + free);
-    if (free < 2000000000) {
+  disk.check(disk_path, function(err, info) {
+    if (err) return console.log(err);
+    module.exports.disk = {free:info.free, total:info.total};
+    if (info.free < 2000000000) {
       remove_old_files();
     }
-    module.exports.disk = {free:free, total:total};
+    console.log(TAG,'free space:',info.free);
   });
 }
 
 function remove_old_files() {
-      // Return only base file name without dir
-      var oldest_dir = getMostRecentFileName('/var/lib/motion');
-      try {
-       var result = findRemoveSync('/var/lib/motion/' + oldest_dir, {age: {seconds: 0}}, {files: '*'});
-rimraf('/var/lib/motion/' + oldest_dir, function(error) {
-        if(error) {
-          console.log(error);
-        } else {
-          console.log('Files deleted');
-        }
+  // Return only base file name without dir
+  exec("find /var/lib/motion -type f -printf '%T+ %p\n' | sort | head -n 1", (error, stdout, stderr) => {
+    if (error) {return console.error(`exec error: ${error}`)}
+    var temp_arr = stdout.split(" ")[1].split("/");
+    temp_arr[temp_arr.length - 1] = "";
+    var oldest_dir = "";
+    for (var i = 0; i < temp_arr.length; i++) {
+      if (temp_arr[i] == "") continue;
+      oldest_dir+="/"+temp_arr[i];
+    }
+    try {
+      //var result = findRemoveSync(oldest_dir, {age: {seconds: 0}}, {files: '*'});
+      rimraf(oldest_dir, function(error) {
+        if(error) return console.log(error);
+        console.log(TAG,'directory deleted',oldest_dir);
       });
-      console.log("removed old files | " + oldest_dir);
-      }
-      catch (e) {
-	console.log(e);
-      }
+    }
+    catch (e) {console.log(TAG,e)};
+  });
 }
 
 function get_mac () {
@@ -103,12 +107,4 @@ function find_index(array, key, value) {
     }
   }
   return -1;
-}
-
-function getMostRecentFileName(dir) {
-  var files = fs.readdirSync(dir);
-  return _.min(files, function (f) {
-    var fullpath = path.join(dir, f);
-    return fs.statSync(fullpath).ctime;
-  });
 }

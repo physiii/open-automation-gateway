@@ -7,6 +7,13 @@ var spawn = require('child_process').spawn;
 var fs = require('fs');
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 8082;
+var motion;
+
+// ---------- //
+// initialize //
+// ---------- //
+pass_camera_stream();
+start_motion();
 
 // ------------- //
 // sockets calls //
@@ -74,6 +81,76 @@ socket.relay.on('set resolution', function (data) {
 // ---------------- //
 // camera functions //
 // ---------------- //
+
+process.stdin.resume();//so the program will not close instantly
+
+/*function exitHandler(process, err) {
+  if (process.init) return console.log(TAG,"exitHandler init",process.spawnargs[0]);
+  var pid = parseInt(process.pid) + 1;
+  var command = "kill -9 " + pid;
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return;
+    }
+  });
+    console.log(TAG,"exitHandler",pid);
+}*/
+
+function pass_camera_stream() {
+    var command =  [
+                   '-loglevel', 'panic',
+                   '-f', 'video4linux2',
+                   '-i', '/dev/video0',
+                   '-f', 'v4l2',
+		   '-vcodec', 'copy',
+                   '-f', 'v4l2',
+                   '/dev/video10',
+                   '-vcodec', 'copy',
+                   '-f', 'v4l2',
+		   '/dev/video11'
+                 ];
+
+  ffmpeg_pass = spawn('ffmpeg', command);
+  ffmpeg_pass.stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
+  ffmpeg_pass.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+  ffmpeg_pass.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+  //ffmpeg_pass.on('exit', exitHandler.bind(null,pass_camera_stream));
+  //ffmpeg_pass.on('SIGINT', exitHandler.bind(null, pass_camera_stream));
+  //ffmpeg_pass.on('uncaughtException', exitHandler.bind(null, pass_camera_stream));
+  console.log(TAG,"ffmpeg_pass");
+}
+
+function start_motion() {
+  var command = "ps aux | grep motion";
+  exec(command, (error, stdout, stderr) => {
+    if (stdout.length > 190) return console.log("motion already started", stdout.length);
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return;
+    }
+    motion = spawn('motion');
+    motion.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
+    motion.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+  });
+  //motion.on('close', (code) => {console.log(`child process exited with code ${code}`);});
+  //motion.on('close', exitHandler.bind(null,motion));
+  //motion.on('exit', exitHandler.bind(null,motion));
+  //motion.on('SIGINT', exitHandler.bind(null, motion));
+  //motion.on('uncaughtException', exitHandler.bind(null, motion));
+  var command =  ['-f', '/var/log/motion/motion.log'];
+  tail = spawn('tail',command);
+  tail.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
+  tail.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+  tail.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+
+  console.log(TAG,"start_motion");
+}
+
 function get_camera_preview(camera_number) {
   var root_dir = "/var/lib/motion/camera"+camera_number[0];
   var command = "ls -lahRt --full-time "+root_dir+" | head -100";
