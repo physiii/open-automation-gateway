@@ -8,6 +8,7 @@ var fs = require('fs');
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 8082;
 var motion;
+var ffmpeg_pass = [];
 
 // ---------- //
 // initialize //
@@ -96,9 +97,9 @@ process.stdin.resume();//so the program will not close instantly
   });
     console.log(TAG,"exitHandler",pid);
 }*/
-
+var command = [];
 function pass_camera_stream() {
-    var command =  [
+    command =  [
                    '-loglevel', 'panic',
                    '-f', 'video4linux2',
                    '-i', '/dev/video0',
@@ -111,19 +112,37 @@ function pass_camera_stream() {
 		   '/dev/video11'
                  ];
 
-  ffmpeg_pass = spawn('ffmpeg', command);
-  ffmpeg_pass.stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
-  ffmpeg_pass.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
-  ffmpeg_pass.on('close', (code) => {
-    console.log(`child process exited with code ${code}`);
-  });
-  //ffmpeg_pass.on('exit', exitHandler.bind(null,pass_camera_stream));
-  //ffmpeg_pass.on('SIGINT', exitHandler.bind(null, pass_camera_stream));
-  //ffmpeg_pass.on('uncaughtException', exitHandler.bind(null, pass_camera_stream));
+
+    command2 =  [
+                   '-loglevel', 'panic',
+                   '-f', 'video4linux2',
+                   '-i', '/dev/video1',
+                   '-f', 'v4l2',
+		   '-vcodec', 'copy',
+                   '-f', 'v4l2',
+                   '/dev/video20',
+                   '-vcodec', 'copy',
+                   '-f', 'v4l2',
+		   '/dev/video21'
+                 ];
+
+
+  ffmpeg_pass[0] = spawn('ffmpeg', command);
+  ffmpeg_pass[0].stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
+  ffmpeg_pass[0].stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+  ffmpeg_pass[0].on('close', (code) => {console.log(TAG,`ffmpeg_pass child process exited with code ${code}`)});
+  //ffmpeg -loglevel panic -f video4linux2 -i /dev/video1 -vcodec copy -f v4l2 /dev/video20 -vcodec copy -f v4l2 /dev/video21 2>&1 &
+
+  ffmpeg_pass2 = spawn('ffmpeg', command2);
+  ffmpeg_pass2.stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
+  ffmpeg_pass2.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+  ffmpeg_pass2.on('close', (code) => {console.log(TAG,`ffmpeg_pass2 child process exited with code ${code}`)});
+
   console.log(TAG,"ffmpeg_pass");
 }
 
 function start_motion() {
+
   var command = "ps aux | grep motion";
   exec(command, (error, stdout, stderr) => {
     if (stdout.length > 190) return console.log("motion already started", stdout.length);
@@ -135,11 +154,7 @@ function start_motion() {
     motion.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
     motion.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
   });
-  //motion.on('close', (code) => {console.log(`child process exited with code ${code}`);});
-  //motion.on('close', exitHandler.bind(null,motion));
-  //motion.on('exit', exitHandler.bind(null,motion));
-  //motion.on('SIGINT', exitHandler.bind(null, motion));
-  //motion.on('uncaughtException', exitHandler.bind(null, motion));
+
   var command =  ['-f', '/var/log/motion/motion.log'];
   tail = spawn('tail',command);
   tail.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
