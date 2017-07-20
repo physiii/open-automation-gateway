@@ -67,7 +67,8 @@ socket.relay.on('get camera preview', function (data) {
   //if (data.command == 'preview')
   console.log(TAG,"get camera preview",data.camera_number)
   var camera_number = data.camera_number;
-  get_camera_preview(camera_number);
+  var socket_id = data.socket_id;
+  get_camera_preview(camera_number, socket_id);
 });
 
 socket.relay.on('set resolution', function (data) {
@@ -167,7 +168,7 @@ function start_motion() {
   console.log(TAG,"start_motion");
 }
 
-function get_camera_preview(camera_number) {
+function get_camera_preview(camera_number, socket_id) {
   var root_dir = "/var/lib/motion/camera"+camera_number[0];
   var command = "ls -lahRt --full-time "+root_dir+" | head -100";
   exec(command, (error, stdout, stderr) => {
@@ -187,19 +188,19 @@ function get_camera_preview(camera_number) {
       stdout[i][9] = cur_dir + stdout[i][9];
       if (!stdout[i][9]) continue;
       if (stdout[i][9].indexOf(".jpg") > -1) {
-        send_camera_preview(stdout[i][9], camera_number);
+        send_camera_preview(stdout[i][9], camera_number, socket_id);
         return console.log("get_camera_preview",stdout[i][9]);
       }
     }
   });
 }
 
-function send_camera_preview (path, camera_number) {
+function send_camera_preview (path, camera_number, socket_id) {
   fs.readFile(path, function(err, data) {
     if (err) return console.log(err); // Fail if the file can't be read.
     var settings = database.settings;
     var image = data.toString('base64');
-    data_obj = {mac:settings.mac, token:settings.token, camera_number:camera_number, image:image}
+    data_obj = {mac:settings.mac, token:settings.token, camera_number:camera_number, socket_id:socket_id, image:image}
     socket.relay.emit('camera preview',data_obj);
     console.log(TAG,'send_camera_preview',data_obj.mac,data_obj.camera_number);
   });
