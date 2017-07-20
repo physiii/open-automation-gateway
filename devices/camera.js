@@ -145,11 +145,12 @@ function start_motion() {
 
   var command = "ps aux | grep -v 'log' | grep motion";
   exec(command, (error, stdout, stderr) => {
-    if (stdout.length > 190) return console.log("motion already started", stdout.length);
+    if (stdout.length > 80) return console.log("motion already started", stdout.length);
     if (error) {
       console.error(`exec error: ${error}`);
       return;
     }
+    console.log(TAG,"length:",stdout.length);
     motion = spawn('motion');
     motion.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
     motion.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
