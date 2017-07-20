@@ -83,7 +83,7 @@ socket.relay.on('set resolution', function (data) {
 // camera functions //
 // ---------------- //
 
-process.stdin.resume();//so the program will not close instantly
+//process.stdin.resume();//so the program will not close instantly
 
 /*function exitHandler(process, err) {
   if (process.init) return console.log(TAG,"exitHandler init",process.spawnargs[0]);
@@ -143,7 +143,7 @@ function pass_camera_stream() {
 
 function start_motion() {
 
-  var command = "ps aux | grep motion";
+  var command = "ps aux | grep -v 'log' | grep motion";
   exec(command, (error, stdout, stderr) => {
     if (stdout.length > 190) return console.log("motion already started", stdout.length);
     if (error) {
@@ -187,7 +187,7 @@ function get_camera_preview(camera_number) {
       if (!stdout[i][9]) continue;
       if (stdout[i][9].indexOf(".jpg") > -1) {
         send_camera_preview(stdout[i][9], camera_number);
-        return; //console.log("get_camera_preview",stdout[i][9]);
+        return console.log("get_camera_preview",stdout[i][9]);
       }
     }
   });
@@ -200,7 +200,7 @@ function send_camera_preview (path, camera_number) {
     var image = data.toString('base64');
     data_obj = {mac:settings.mac, token:settings.token, camera_number:camera_number, image:image}
     socket.relay.emit('camera preview',data_obj);
-    console.log(TAG,'send_camera_preview',data_obj.camera_number);
+    console.log(TAG,'send_camera_preview',data_obj.mac,data_obj.camera_number);
   });
 }
 
@@ -401,7 +401,7 @@ function start_ffmpeg(data) {
   
   ffmpeg_started = true;
   socket.relay.emit('ffmpeg started',settings);
-  console.log(TAG,'ffmpeg started | ',command);
+  //console.log(TAG,'ffmpeg started | ',command);
 }
 
 function stop_ffmpeg(ffmpeg) {
