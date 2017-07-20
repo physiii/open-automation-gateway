@@ -55,6 +55,7 @@ function remove_old_files() {
   // Return only base file name without dir
   exec("find /var/lib/motion -type f -printf '%T+ %p\n' | sort | head -n 1", (error, stdout, stderr) => {
     if (error) {return console.error(`exec error: ${error}`)}
+    if (!stdout) return console.log(TAG,"no motion files found to remove");
     var temp_arr = stdout.split(" ")[1].split("/");
     temp_arr[temp_arr.length - 1] = "";
     var oldest_dir = "";

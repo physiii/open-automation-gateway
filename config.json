@@ -1,5 +1,5 @@
 {
-  "relay_server":"pyfi.org",
-  "relay_port":80,
+  "relay_server":"192.168.0.10",
+  "relay_port":5000,
   "zwave":false
 }
