@@ -65,7 +65,7 @@ sudo make install
 
 ## install open-automation
 cd ~
-git clone https://github.com/physiii/open-automation
+git clone https://github.com/physiii/open-automation-gateway
 cd open-automation
 sudo npm install -g pm2 openzwave-shared
 npm install
