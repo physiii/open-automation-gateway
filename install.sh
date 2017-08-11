@@ -37,10 +37,10 @@ sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
 sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 
 ## create loop back devices for video
-sudo wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source
-sudo chmod +x /usr/bin/rpi-source
-/usr/bin/rpi-source -q --tag-update
-rpi-source
+# sudo wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source
+# sudo chmod +x /usr/bin/rpi-source
+# /usr/bin/rpi-source -q --tag-update
+# rpi-source
 
 ## v4l2loopback
 sudo chmod -R 777 /usr/src
