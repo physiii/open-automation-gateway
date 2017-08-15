@@ -19,7 +19,7 @@ sudo apt-get install -y --force-yes \
 bc g++ lua5.2 bc sshpass libudev-dev nmap motion speedtest-cli gstreamer1.0 \
 git nodejs mongodb dnsmasq hostapd \
 pkg-config libudev-dev libjpeg-dev libavformat-dev libavcodec-dev libavutil-dev \
-libc6-dev zlib1g-dev libpq5 libpq-dev tmux xdotool libncurses5-dev 
+libc6-dev zlib1g-dev libpq5 libpq-dev tmux xdotool libncurses5-dev \
 v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers
 
 sudo ln -s /usr/bin/nodejs /usr/bin/node
