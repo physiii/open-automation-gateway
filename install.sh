@@ -20,7 +20,7 @@ bc g++ lua5.2 bc sshpass libudev-dev nmap motion speedtest-cli gstreamer1.0 \
 git nodejs mongodb dnsmasq hostapd \
 pkg-config libudev-dev libjpeg-dev libavformat-dev libavcodec-dev libavutil-dev \
 libc6-dev zlib1g-dev libpq5 libpq-dev tmux xdotool libncurses5-dev 
-# v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers
+v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers
 
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 sudo chmod a+rwxt /var/run/motion
@@ -48,6 +48,7 @@ cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
 make && sudo make install
+sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,11
 
 ## ffmpeg
