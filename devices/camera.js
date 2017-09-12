@@ -41,7 +41,7 @@ socket.relay.on('folder list', function (data) {
 socket.relay.on('camera', function (data) {
   //if (data.command == 'snapshot')
   //if (data.command == 'preview')
-  //get_camera_preview();
+  get_camera_preview();
 });
 
 socket.relay.on('get camera list', function (data) {
@@ -100,6 +100,7 @@ socket.relay.on('set resolution', function (data) {
 }*/
 var command = [];
 function pass_camera_stream() {
+
     command =  [
                    '-loglevel', 'panic',
                    '-f', 'video4linux2',
@@ -410,4 +411,23 @@ function stop_ffmpeg(ffmpeg) {
     ffmpeg.kill();
     ffmpeg_started = false;
     console.log(TAG,'ffmpeg stop',ffmpeg.tag.camera_number);
+}
+
+camera_loop();
+function camera_loop () {
+  setTimeout(function () {
+    camera_loop();
+  }, 2*60*1000);
+  check_ffmpeg();
+}
+
+function check_ffmpeg() {
+  var command = "ps aux | grep -v 'grep' | grep ffmpeg";
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      pass_camera_stream();
+      return console.error(TAG,"check_ffmpeg failed...restarting ffmpeg!");
+    }
+    console.log(TAG,"ffmpeg...good");
+  });
 }
