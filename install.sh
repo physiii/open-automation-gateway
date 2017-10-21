@@ -43,7 +43,7 @@ sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 # rpi-source
 
 ## v4l2loopback
-sudo chmod -R 777 /usr/src
+sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
@@ -79,4 +79,5 @@ sudo cp files/thread1.conf /etc/motion/thread1.conf
 sudo cp files/thread2.conf /etc/motion/thread2.conf
 sudo cp files/default.motion /etc/default/motion
 sudo service motion restart
-sudo chmod -R 777 /var/log /var/lib
+sudo chown -R $USER /var/log /var/lib/motion /etc/motion
+#sudo chmod -R 777 /var/log /var/lib
