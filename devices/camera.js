@@ -170,7 +170,7 @@ function start_motion() {
 }
 
 function get_camera_preview(camera_number, socket_id) {
-  var root_dir = "/var/lib/motion/camera"+camera_number[0];
+  var root_dir = "motion/events";
   var command = "ls -lahRt --full-time "+root_dir+" | head -100";
   exec(command, (error, stdout, stderr) => {
     if (error) {
