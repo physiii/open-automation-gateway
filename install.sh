@@ -1,31 +1,22 @@
 #!/bin/sh -e
-# make it so it will install in back ground and output to log so you can tail -f if you want
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
 
-## speed up sd card on pi
-# https://www.jeffgeerling.com/blog/2016/how-overclock-microsd-card-reader-on-raspberry-pi-3
-# sudo bash -c 'printf "dtoverlay=sdhost,overclock_50=100\n" >> /boot/config.txt'
-# Installs and run hdparm, dd, and iozone benchmarks.
-# curl https://raw.githubusercontent.com/geerlingguy/raspberry-pi-dramble/master/setup/benchmarks/microsd-benchmarks.sh | sudo bash
-# Run hdparm and some large file read/write benchmarks.
-# curl http://www.nmacleod.com/public/sdbench.sh | sudo bash
 sudo apt update
+sudo apt upgrade -y
+sudo rpi-update
+
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
-sudo apt update
-# sudo apt-get -y dist-upgrade
 
 sudo apt-get install -y --force-yes \
-# speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
-# libjpeg-dev libavformat-dev libavcodec-dev \
-# libavutil-dev libudev-dev libncurses5-dev \
-# libc6-dev zlib1g-dev libpq5 libpq-dev \
-# v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers
-  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool
-
+  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool \
+#  v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers
+#  speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
+#  libjpeg-dev libavformat-dev libavcodec-dev \
+#  libavutil-dev libudev-dev libncurses5-dev \
+#  libc6-dev zlib1g-dev libpq5 libpq-dev \
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
-#sudo chmod a+rwxt /var/run/motion
 ## make and install openzwave
 # cd /usr/src
 # wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
@@ -44,28 +35,27 @@ sudo ln -s /usr/bin/nodejs /usr/bin/node
 # rpi-source
 
 ## v4l2loopback
-#sudo chown -R $USER /usr/src
-#cd /usr/src
-#git clone https://github.com/umlaeute/v4l2loopback
-#cd v4l2loopback
-#make && sudo make install
-#sudo depmod -a
-#sudo modprobe v4l2loopback video_nr=10,11
+sudo chown -R $USER /usr/src
+cd /usr/src
+git clone https://github.com/umlaeute/v4l2loopback
+cd v4l2loopback
+make && sudo make install
+sudo depmod -a
+sudo modprobe v4l2loopback video_nr=10,11
 
 ## ffmpeg
-#cd /usr/src
-#git clone git://git.videolan.org/x264
-#cd x264
-#./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
-#make
-#sudo make install
-
-#cd /usr/src
-#git clone https://github.com/FFmpeg/FFmpeg.git
-#cd FFmpeg
-#sudo ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree
-#make
-#sudo make install
+cd /usr/src
+git clone git://git.videolan.org/x264
+cd x264
+./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
+make
+sudo make install
+cd /usr/src
+git clone https://github.com/FFmpeg/FFmpeg.git
+cd FFmpeg
+sudo ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree
+make
+sudo make install
 
 ## install open-automation
 cd ~
