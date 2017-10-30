@@ -1,32 +1,32 @@
 #!/bin/sh -e
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
 
-sudo apt update
-sudo apt upgrade -y
-sudo rpi-update
+# sudo apt update
+# sudo apt upgrade -y
+# sudo rpi-update
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
 
 sudo apt-get install -y --force-yes \
-  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool \
-#  v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers
+  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
+  v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers \
 #  speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
 #  libjpeg-dev libavformat-dev libavcodec-dev \
-#  libavutil-dev libudev-dev libncurses5-dev \
+#  libavutil-dev libncurses5-dev \
 #  libc6-dev zlib1g-dev libpq5 libpq-dev \
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 ## make and install openzwave
-# cd /usr/src
-# wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
-# tar zxvf openzwave-1.4.1.tar.gz
-# cd openzwave-1.4.1
-# make && sudo make install
-# export LD_LIBRARY_PATH=/usr/local/lib
-# sudo ldconfig
-# sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
-# sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
+cd /usr/src
+wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
+tar zxvf openzwave-1.4.1.tar.gz
+cd openzwave-1.4.1
+make && sudo make install
+export LD_LIBRARY_PATH=/usr/local/lib
+sudo ldconfig
+sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
+sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 
 ## (old) create loop back devices for video
 # sudo wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source
