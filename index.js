@@ -28,11 +28,11 @@ try {
 // ---------------- //
 // global variables //
 // ---------------- //
+utils = require('./utils');
 admin = require('./admin.js');
 connection = require('./connection.js');
 socket = require('./socket.js');
 database = require('./database');
-utils = require('./utils');
 
 thermostat = require('./devices/thermostat.js');
 lights = require('./devices/lights.js');
@@ -53,7 +53,7 @@ function main_loop () {
     database.store_settings(settings_obj);
     if (!database.got_token) {
       console.log("fetching token...");
-      socket.relay.emit('get token',{mac:utils.mac, device_type:['gateway']});
+      socket.relay.emit('get token',{mac:utils.mac, type:'gateway'});
     }
     var settings = database.settings;
     //check_connection();
@@ -70,7 +70,7 @@ function main_loop () {
     connection.scan_wifi();
     thermostat.get_therm_state();
     for (var i = 0; i < device_array.length; i++) {
-      if (device_array[i].device_type == 'thermostat') {
+      if (device_array[i].type == 'thermostat') {
         thermostat.get_therm_state(device_array[i].local_ip);
       }
     }

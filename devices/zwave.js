@@ -119,8 +119,8 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
 	nodes[nodeid]['loc'] = nodeinfo.loc;
 	nodes[nodeid]['ready'] = true;
 	nodes[nodeid]['id'] = nodeid;
-	nodes[nodeid]['device_type'] = nodeinfo.type;
-	nodes[nodeid]['local_ip'] = connection.local_ip;
+	nodes[nodeid]['type'] = nodeinfo.type;
+	//nodes[nodeid]['local_ip'] = connection.local_ip;
 
 	console.log('node%d: %s, %s', nodeid,
 		    nodeinfo.manufacturer ? nodeinfo.manufacturer

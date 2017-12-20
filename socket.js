@@ -26,15 +26,15 @@ relay.on('get token', function (data) {
   relay.emit('load settings',settings);
 });
 
-relay.on('loaded settings', function (data) {
-  //console.log('loaded settings |',data.mac);
-  //clearTimeout(load_settings_timer);
+relay.on('set settings', function (data) {
+  database.store_settings(data);
+  console.log("set settings |", data);
 });
 
-relay.on('set settings', function (data) {
-  //data = {'device_name':data.device_name,'media_enabled':data.media_enabled,'camera_enabled':data.camera_enabled};
-  database.store_settings(data);
-  console.log("set settings |", data.mac);
+
+relay.on('set device settings', function (device) {
+  database.store_device_settings(device);
+  console.log("set device settings |", device);
 });
 
 relay.on('store_schedule', function (data) {
@@ -97,26 +97,11 @@ relay.on('update', function (data) {
   utils.update();
 });
 
-/*function start_settings_timer() {
-  load_settings_timer = setTimeout(function () {
-    console.log("load_settings_timer | no reply from server");
-    exec("pm2 restart all", (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      console.log(`stderr: ${stderr}`);
-    });    
-    start_settings_timer();
-  }, 3000);
-}*/
-
 relay.on('get settings', function (data) {
   var settings = database.settings;
+  settings.devices = device_array;
   relay.emit('load settings', settings);
-  console.log(TAG,"sending load settings |", settings.mac);
-  //start_settings_timer();
+  //console.log(TAG,"load settings |", settings);
 });
 
 relay.on('get devices', function (data) {

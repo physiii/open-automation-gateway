@@ -10,8 +10,6 @@ import cv2
 import os
 import shutil
 from subprocess import call
-from ffmpy import FFmpeg
-
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -42,12 +40,15 @@ postloaded = 1
 postload = 10
 postload_count = 0
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+print dir_path
+
 max_height = 500
 print("[INFO] warming up...")
-vs = VideoStream(usePiCamera=conf["picamera"] > 0,resolution=(800,600),framerate=10).start()
+vs = VideoStream(src=conf["device"],usePiCamera=conf["picamera"] > 0,resolution=conf["resolution"],framerate=conf["fps"]).start()
 time.sleep(conf["camera_warmup_time"])
-if os.path.exists('temp'):
-	shutil.rmtree("temp")
+if os.path.exists(dir_path+'/temp'):
+	shutil.rmtree(dir_path+'/temp')
 # capture frames from the camera
 #for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 while True:
@@ -60,14 +61,33 @@ while True:
 	day = timestamp.strftime("%d")
 	hour = timestamp.strftime("%I:%M%p")
 	text = ""
-	#out.write(image)
-	# show the frame
-	# cv2.imshow("Frame", image)
-	# key = cv2.waitKey(1) & 0xFF
+
+	if preloaded is None:
+		if not os.path.exists(dir_path+'/temp'):
+			os.mkdir(dir_path+'/temp')
+		if preload_count > preload:
+			preload_count = 0
+			preloaded = 1
+			continue
+		file = dir_path+'/temp/'+str(image_count)+".png"
+		print("Preloading...",file)
+		cv2.imwrite(file,frame)
+		preload_count += 1
+		image_count = preload_count
+		continue
+
+	for i in range(1,preload+1):
+		old_img = dir_path+'/temp/'+str(i)+".png"
+		new_img = dir_path+'/temp/'+str(i - 1)+".png"
+		#print "renaming "+old_img+" to "+new_img
+		os.rename(old_img, new_img)
+
+	file = dir_path+'/temp/'+str(preload)+".png"
+	cv2.imwrite(file,frame)
+
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
-	# if the average frame is None, initialize it
 	if avg is None:
 		print("[INFO] starting background model...")
 		avg = gray.copy().astype("float")
@@ -111,59 +131,41 @@ while True:
 	# clear the stream in preparation for the next frame
 	#rawCapture.truncate(0)
 
-	if preloaded is None:
-		if not os.path.exists('temp'):
-			os.mkdir('temp')
-		image_count = preload_count
-		file = "temp/"+str(image_count)+".png"
-		if preload_count > preload:
-			preload_count = 0
-			preloaded = 1
-			continue
-		print("Preloading...",file);
-		cv2.imwrite(file,frame)
-		preload_count += 1
-		continue
-
 	if motion_detected:
-		file = "temp/"+str(image_count)+".png"
-		print("{ message:\"Motion detected!\" file:\""+file+"\"");
+		file = dir_path+'/temp/'+str(image_count)+".png"
+		print("{ message:\"Motion detected!\" file:\""+file+"\"")
 		cv2.imwrite(file,frame)
+		preview_image = dir_path+'/preview.jpg'
+		cv2.imwrite(preview_image,frame)
 		image_count += 1
 		postloaded = None
 	else:
 		if postloaded is None:
-			file = "temp/"+str(image_count)+".png"
+			file = dir_path+'/temp/'+str(image_count)+".png"
 			cv2.imwrite(file,frame)
 			image_count += 1
 			postload_count += 1
 			if postload_count > postload:
-				if not os.path.exists('events'):
-					os.mkdir('events')
+				if not os.path.exists(dir_path+'/events'):
+					os.mkdir(dir_path+'/events')
 
-				if not os.path.exists('events/'+month):
-					os.mkdir('events/'+month)
+				if not os.path.exists(dir_path+'/events/'+month):
+					os.mkdir(dir_path+'/events/'+month)
 
-				if not os.path.exists('events/'+month+"/"+day):
-					os.mkdir('events/'+month+"/"+day)
+				if not os.path.exists(dir_path+'/events/'+month+"/"+day):
+					os.mkdir(dir_path+'/events/'+month+"/"+day)
 
-				video_file = "events/"+month+"/"+day+"/"+hour+".mp4"
-				call(["ffmpeg","-r","3","-f","image2","-s","800x600","-i","temp/%d.png","-vcodec","libx264","-crf","3","-pix_fmt","yuv420p",video_file,"-y"])
-				#ffmpeg -r 2 -f image2 -s 640x480 -i temp/%d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p test.mp4
+				video_file = dir_path+'/events/'+month+"/"+day+"/"+hour+".avi";
+				video_res = str(conf["resolution"][0])+"x"+str(conf["resolution"][1]);
+				print "video_res "+video_res;
+				call(["ffmpeg","-y","-r","3","-f","image2","-s",video_res,"-i",dir_path+"/temp/%d.png",video_file])
+				#ffmpeg -y -r 3 -f image2 -s 800x600 -i temp/%d.png test.avi
 				print("{ motion_video:\""+video_file+"\" }");
 				time.sleep(1)
-				shutil.rmtree("temp")
+				shutil.rmtree(dir_path+'/temp')
 				postloaded = 1
 				preloaded = None
 				postload_count = 0
 				continue
 				
-
-		for i in range(1,preload):
-			old_img = "temp/"+str(i)+".png"
-			new_img = "temp/"+str(i - 1)+".png"
-			#print("renaming",old_img,"to",new_img)
-			os.rename(old_img, new_img)
-		file = "temp/"+str(preload-1)+".png"
-		cv2.imwrite(file,frame)
 	frame_count += 1

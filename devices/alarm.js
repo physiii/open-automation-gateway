@@ -16,7 +16,7 @@ function set_alarm(data) {
     //console.log("set alarm",device_array);
     for (var i = 0; i < device_array.length; i++) {
       try {
-        if (device_array[i].device_type == "Secure Keypad Door Lock") {
+        if (device_array[i].type == "Secure Keypad Door Lock") {
           zwave.set_value(device_array[i].id, 98, 1, 0, true);
           //zwave.setValue(device_array[i].id, 112, 1, 7, 'Tamper');
         }
@@ -27,7 +27,7 @@ function set_alarm(data) {
     alert = false;
     for (var i = 0; i < device_array.length; i++) {
       try {
-        if (device_array[i].device_type == "Secure Keypad Door Lock") {
+        if (device_array[i].type == "Secure Keypad Door Lock") {
           //zwave.setValue(device_array[i].id, 112, 1, 7, 'Activity');
           zwave.set_value(device_array[i].id, 98, 1, 0, false);
         }
@@ -37,7 +37,7 @@ function set_alarm(data) {
   if (data.mode == "night") {
     for (var i = 0; i < device_array.length; i++) {
       try {
-        if (device_array[i].device_type == "Secure Keypad Door Lock") {
+        if (device_array[i].type == "Secure Keypad Door Lock") {
           zwave.set_value(device_array[i].id, 98, 1, 0, true);
           //zwave.setValue(device_array[i].id, 112, 1, 7, 'Tamper');
         }

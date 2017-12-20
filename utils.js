@@ -9,7 +9,7 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 var TAG = "[utils.js]";
-
+var free_space_limit = 500 * 1000000;
 
 module.exports = {
   find_index: find_index,
@@ -19,7 +19,7 @@ module.exports = {
 
 // ---------------------- device info  ------------------- //
 var mac = "init";
-var device_type = ["gateway"];
+var type = "gateway";
 get_mac();
 
 // ----------------------  disk management -------------- //
@@ -44,18 +44,19 @@ function check_diskspace() {
   disk.check(disk_path, function(err, info) {
     if (err) return console.log(err);
     module.exports.disk = {free:info.free, total:info.total};
-    if (info.free < 2000000000) {
+    if (info.free < free_space_limit) {
       remove_old_files();
     }
-    //console.log(TAG,'free space:',info.free);
+    console.log(TAG,'free space:',info.free);
   });
 }
 
 function remove_old_files() {
   // Return only base file name without dir
-  exec("find /var/lib/motion -type f -printf '%T+ %p\n' | sort | head -n 1", (error, stdout, stderr) => {
+  var command = "find "+__dirname+"/motion/events -type f -printf '%T+ %p\n' | sort | head -n 1";
+  exec(command, (error, stdout, stderr) => {
     if (error) {return console.error(`exec error: ${error}`)}
-    if (!stdout) return console.log(TAG,"no motion files found to remove");
+    if (!stdout) return console.log(TAG,"no motion files found to remove",command);
     var temp_arr = stdout.split(" ")[1].split("/");
     temp_arr[temp_arr.length - 1] = "";
     var oldest_dir = "";

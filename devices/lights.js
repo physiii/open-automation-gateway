@@ -31,7 +31,7 @@ function set_theme(theme) {
     else state = red;
   }
   for (var i = 0; i < device_array.length; i++) {
-    if (device_array[i].device_type == "lights") {
+    if (device_array[i].type == "lights") {
       hue = new HueApi(device_array[i].ipaddress,device_array[i].user);
       for (var j = 0; j < device_array[i].lights.length; j++) {
         if (theme == 'presence') {
@@ -76,7 +76,7 @@ function create_user(device) {
     for (var i = 0; i < device_array.length; i++) {
       if (device_array[i].id == device.id) {
         device_array[i].user = user;
-	device_array[i].device_type = "lights";
+	device_array[i].type = "lights";
 	device_array[i].local_ip = utils.local_ip;
  	//device_array[i].token = token;
   	//device_array[i].mac = mac;
@@ -108,7 +108,7 @@ function find_lights(device) {
 function set_light(device_id,state) {
   console.log("set_light",state);
   for (var i = 0; i < device_array.length; i++) {
-    if (device_array[i].device_type == "lights") {
+    if (device_array[i].type == "lights") {
       hue = new HueApi(device_array[i].ipaddress,device_array[i].user);
       hue.setLightState(device_id, state, function(err, results) {
         if (err) console.log(err);

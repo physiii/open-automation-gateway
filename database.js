@@ -16,15 +16,20 @@ module.exports = {
   get_devices: get_devices,
   get_settings: get_settings,  
   store_settings: store_settings,
+  store_device_settings: store_device_settings,
   store_device: store_device,
-  settings, settings
+  settings, settings,
+  device_settings, device_settings
 }
 
-get_devices();
 get_settings();
+get_devices();
+get_device_settings();
 
+var TAG = "[database.js]";
 //-- initialize variables --//
 var settings = {};
+var device_settings = {};
 
 function set_wifi_from_db() {
   console.log("set_wifi_from_db");
@@ -60,7 +65,7 @@ function get_settings() {
       module.exports.settings = settings;
       if (!module.exports.got_token) {
         console.log("fetching token");
-        socket.relay.emit('get token',{mac:utils.mac, device_type:['gateway']});          
+        socket.relay.emit('get token',{mac:utils.mac, type:'gateway'});          
         store_settings(settings);
       }
       settings.devices = device_array;
@@ -71,7 +76,22 @@ function get_settings() {
 });
 }
 
-//-- store new settings --//
+//-- get and send settings object --//
+function get_device_settings() {
+  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
+    if (err) return console.log('Unable to connect to the mongoDB server. Error:', err);
+    var collection = db.collection('devices');
+    collection.find().toArray(function (err, result) {
+      if (err) return console.log(err);
+      if (result[0]) device_settings = result[0]
+      module.exports.device_settings = device_settings;
+      //console.log("get_device_settings",device_settings);
+    });
+  db.close();
+});
+}
+
+//-- store setting --//
 function store_settings(data) {
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
     if (err) return console.log(err);
@@ -85,10 +105,26 @@ function store_settings(data) {
   });
 }
 
+//-- store device setting --//
+function store_device_settings(device) {
+  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
+    if (err) return console.log(err);
+    var collection = db.collection('devices');
+    //device_settings[Object.keys(device)[0]] = device[Object.keys(device)[0]];
+    console.log(device)
+    collection.update({id:device.id}, {$set:device.settings}, {upsert:true}, function(err, item){
+        console.log("item",item)
+    });
+    db.close();
+    console.log('store_device_settings',device);
+  });
+}
+
 //-- store new device --//
 function store_device(device) {
   delete device["_id"];
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
+    console.log(TAG,"storing device",device);
     if (err) {
       console.log('Unable to connect to the mongoDB server. Error:', err);
     } else {
@@ -120,11 +156,11 @@ function get_devices() {
       if (err) return console.log(err);
       if (!result.length) return console.log('get_devices | no results');
       device_array = result;
-      var devices_obj = settings;
-      devices_obj.devices = device_array;
+      //var devices_obj = settings;
+      //devices_obj.devices = device_array;
       //console.log("get_devices", device_array);
     });
     db.close();
+   //console.log("!! get_devices !!",device_array);
   });
-  //console.log("!! get_devices !!");
 }

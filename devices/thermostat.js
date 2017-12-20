@@ -30,7 +30,7 @@ function (error, response, data2) {
       data_obj['current_state'] = JSON.parse(data2);
       data_obj['token'] = database.token;
       data_obj['mac'] = utils.mac;
-      data_obj['device_type'] = 'thermostat';
+      data_obj['type'] = 'thermostat';
       data_obj['local_ip'] = data.local_ip;
       data_obj['device_name'] = data.device_name;
       data_obj['schedule'] = {"7 AM":70,"9 AM":70,"11 AM":70,"1 PM":70,"3 PM":70,"5 PM":70,"7 PM":70,"9 PM":70,"11 PM":70,"1 AM":70};
