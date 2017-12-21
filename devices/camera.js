@@ -6,7 +6,7 @@ var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 var fs = require('fs');
 var TAG = "[camera.js]";
-var STREAM_PORT = config.video_stream_port || 8082;
+var STREAM_PORT = config.video_stream_port || 8083;
 var motion;
 var ffmpeg_pass = [];
 var command = [];
