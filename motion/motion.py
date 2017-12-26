@@ -9,18 +9,63 @@ import time
 import cv2
 import os
 import shutil
+import sys
+
+from bson import BSON
+from bson import json_util
 from subprocess import call
+from pymongo import MongoClient
+from pprint import pprint
+
+#client = MongoClient("127.0.0.1")
+#db = client.gateway
+#devices = db.devices.find()
+#for device in devices:
+#	print(device)
 
 # construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--conf", required=True,
-	help="path to the JSON configuration file")
-args = vars(ap.parse_args())
+# ap = argparse.ArgumentParser()
+# ap.add_argument("-c", "--conf", required=False,
+#	help="path to the JSON configuration file")
 
-# filter warnings, load the configuration and initialize the Dropbox
-# client
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
+print("starting motion.py...")
+device_list = []
+
+try:
+  connection = MongoClient('mongodb://localhost:27017')
+  db = connection.gateway
+except:
+  print('Error: Unable to Connect')
+  connection = None
+
+if connection is not None:
+  devices = db.devices.find()
+  for device in devices:
+    #database["test"].insert({'name': 'foo'})
+    device_obj = db.devices.find_one(device)
+    print(device_obj)
+    JSONEncoder().encode(device_obj)
+    #device_list.append(json.dumps(device_obj))
+    
+for device in device_list:
+  print device
+
+
+
+print("CONFIGURATION: " + sys.argv[1])
+conf = json.loads(sys.argv[1])
+#if ap.parse_args() is None:
+#	args = vars(ap.parse_args())
+#	conf = json.load(open(args["conf"]))
+
 warnings.filterwarnings("ignore")
-conf = json.load(open(args["conf"]))
+
 client = None
 avg = None
 lastUploaded = datetime.datetime.now()
@@ -39,11 +84,11 @@ preload_count = 0
 postloaded = 1
 postload = 10
 postload_count = 0
+max_height = 500
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 print dir_path
 
-max_height = 500
 print("[INFO] warming up...")
 vs = VideoStream(src=conf["device"],usePiCamera=conf["picamera"] > 0,resolution=conf["resolution"],framerate=conf["fps"]).start()
 time.sleep(conf["camera_warmup_time"])
