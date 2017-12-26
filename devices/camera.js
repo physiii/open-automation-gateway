@@ -178,10 +178,19 @@ function start_motion() {
     if (stdout.length > 100) return console.log("motion already started", stdout.length);
     if (error) return console.error(`exec error: ${error}`);
     console.log(TAG,"length:",stdout.length);
+    console.log(TAG,"launching motion.py");
+   // var conf = { "picamera":0, "device":"/dev/video10", "show_video": false, "min_upload_seconds": 3.0, "min_motion_frames": 8, "camera_warmup_time": 2.5, "delta_thresh": 5, "resolution": [800, 600], "fps": 16, "min_area": 5000 };
 
-    motion = spawn('python',[__dirname+'/../motion/motion.py','-c',__dirname+'/../motion/conf.json']);
-    //motion.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
-    //motion.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+    //var conf = "{\"test\":'testing'}";
+    //var conf = {test:"testing"};
+    //conf = conf.toString();
+
+    motion = spawn('python',[__dirname+'/../motion/motion.py']);
+    //motion = spawn('python',[__dirname+'/../motion/motion.py',conf]);
+    //motion = spawn('python',[__dirname+'/../motion/motion.py','-c',__dirname+'/../motion/conf.json']);
+
+    motion.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
+    motion.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
   });
   console.log(TAG,"start_motion");
 }
