@@ -16,6 +16,7 @@ from bson import json_util
 from subprocess import call
 from pymongo import MongoClient
 from pprint import pprint
+from bson.objectid import ObjectId
 
 #client = MongoClient("127.0.0.1")
 #db = client.gateway
@@ -44,37 +45,22 @@ except:
   print('Error: Unable to Connect')
   connection = None
 
+vs = []
 if connection is not None:
   devices = db.devices.find()
+  i=0
   for device in devices:
-    #database["test"].insert({'name': 'foo'})
     device_obj = db.devices.find_one(device)
-    print(device_obj)
-    JSONEncoder().encode(device_obj)
-    #device_list.append(json.dumps(device_obj))
+    if device_obj['dev'].find("/dev/video2") < 0: continue
+    print("loading " + device_obj['dev'])
+    vs.append(VideoStream(src=device_obj["dev"],usePiCamera=0,resolution=[800,600],framerate=10).start());
+    i=i+1
     
-for device in device_list:
-  print device
-
-
-
-print("CONFIGURATION: " + sys.argv[1])
-conf = json.loads(sys.argv[1])
-#if ap.parse_args() is None:
-#	args = vars(ap.parse_args())
-#	conf = json.load(open(args["conf"]))
 
 warnings.filterwarnings("ignore")
-
 client = None
 avg = None
-lastUploaded = datetime.datetime.now()
 motionCounter = 0
-#camera = PiCamera()
-#camera.resolution = (640, 480)
-#camera.framerate = 10
-#rawCapture = PiRGBArray(camera, size=(640, 480))
-#out = cv2.VideoWriter('output.avi', -1, 20.0, (640,480))
 frame_count = 0
 motion_detected = None
 preloaded = None
@@ -85,13 +71,18 @@ postloaded = 1
 postload = 10
 postload_count = 0
 max_height = 500
+last_motion_event = datetime.datetime.now()
+motion_off_delay = 5
+frame_delta = 200
+last_frame = 0
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 print dir_path
 
 print("[INFO] warming up...")
-vs = VideoStream(src=conf["device"],usePiCamera=conf["picamera"] > 0,resolution=conf["resolution"],framerate=conf["fps"]).start()
-time.sleep(conf["camera_warmup_time"])
+
+#vs = VideoStream(src=conf["device"],usePiCamera=conf["picamera"] > 0,resolution=conf["resolution"],framerate=conf["fps"]).start()
+time.sleep(2.5)
 if os.path.exists(dir_path+'/temp'):
 	shutil.rmtree(dir_path+'/temp')
 # capture frames from the camera
@@ -99,8 +90,7 @@ if os.path.exists(dir_path+'/temp'):
 while True:
 	# grab the raw NumPy array representing the image, then initialize the timestamp
 	# and occupied/unoccupied text
-	frame = vs.read()
-	#frame = f.array
+	frame = vs[0].read()
 	timestamp = datetime.datetime.now()
 	month = timestamp.strftime("%B")
 	day = timestamp.strftime("%d")
@@ -144,7 +134,7 @@ while True:
 
 	# threshold the delta image, dilate the thresholded image to fill
 	# in holes, then find contours on thresholded image
-	thresh = cv2.threshold(frameDelta, conf["delta_thresh"], 255,
+	thresh = cv2.threshold(frameDelta, 5, 255,
 		cv2.THRESH_BINARY)[1]
 	thresh = cv2.dilate(thresh, None, iterations=2)
 	cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
@@ -153,17 +143,20 @@ while True:
  
 	# loop over the contours
 	for c in cnts:
-		motion_detected = None
-		if cv2.contourArea(c) < conf["min_area"]:
+		last_motion_event_delta = datetime.datetime.now() - last_motion_event
+		if last_motion_event_delta.total_seconds() > motion_off_delay:
+			#print "no motion detected!"
+			motion_detected = None
+		if cv2.contourArea(c) < 5000:
 			continue
 		# compute the bounding box for the contour, draw it on the frame,
 		# and update the text
 		x, y, w, h = cv2.boundingRect(c)
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		#print("x:",x)
-		if x > max_height:
-			continue
+		if x > max_height: continue
 		text = "Motion"
+		last_motion_event = datetime.datetime.now()
 		motion_detected = 1
  
 	# draw the text and timestamp on the frame
@@ -178,7 +171,13 @@ while True:
 
 	if motion_detected:
 		file = dir_path+'/temp/'+str(image_count)+".png"
-		print("{ message:\"Motion detected!\" file:\""+file+"\"")
+		current_frame = int(round(time.time() * 1000))
+		if frame_delta < current_frame - last_frame:
+			last_frame = int(round(time.time() * 1000))
+			cv2.imwrite(file,frame)
+			print("{ message:\"Motion detected!\" file:\""+file+"\"")
+		else: continue
+
 		cv2.imwrite(file,frame)
 		preview_image = dir_path+'/preview.jpg'
 		cv2.imwrite(preview_image,frame)
@@ -201,9 +200,9 @@ while True:
 					os.mkdir(dir_path+'/events/'+month+"/"+day)
 
 				video_file = dir_path+'/events/'+month+"/"+day+"/"+hour+".avi";
-				video_res = str(conf["resolution"][0])+"x"+str(conf["resolution"][1]);
+				video_res = str(800)+"x"+str(600);
 				print "video_res "+video_res;
-				call(["ffmpeg","-y","-r","3","-f","image2","-s",video_res,"-i",dir_path+"/temp/%d.png",video_file])
+				call(["ffmpeg","-y","-r","5","-f","image2","-s",video_res,"-i",dir_path+"/temp/%d.png",video_file])
 				#ffmpeg -y -r 3 -f image2 -s 800x600 -i temp/%d.png test.avi
 				print("{ motion_video:\""+video_file+"\" }");
 				time.sleep(1)
