@@ -19,7 +19,7 @@ sudo apt-get install -y --force-yes \
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
-sudo python -m pip install pymongo numpy opencv-python
+sudo python -m pip install pymongo numpy imutils opencv-python
 
 ## make and install openzwave
 cd /usr/src
