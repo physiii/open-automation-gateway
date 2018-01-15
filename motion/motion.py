@@ -51,9 +51,10 @@ if connection is not None:
   i=0
   for device in devices:
     device_obj = db.devices.find_one(device)
+    if 'dev' not in device_obj: continue
     if device_obj['dev'].find("/dev/video2") < 0: continue
     print("loading " + device_obj['dev'])
-    vs.append(VideoStream(src=device_obj["dev"],usePiCamera=0,resolution=[800,600],framerate=10).start());
+    vs.append(VideoStream(src=device_obj["dev"],usePiCamera=0,resolution=[800,600],framerate=5).start());
     i=i+1
     
 
@@ -73,7 +74,7 @@ postload_count = 0
 max_height = 500
 last_motion_event = datetime.datetime.now()
 motion_off_delay = 5
-frame_delta = 200
+frame_delta = 100 #200ms = 5 fps
 last_frame = 0
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -179,6 +180,8 @@ while True:
 		else: continue
 
 		cv2.imwrite(file,frame)
+		if not os.path.exists(dir_path+'/events'):
+			os.mkdir(dir_path+'/events')
 		preview_image = dir_path+'/preview.jpg'
 		cv2.imwrite(preview_image,frame)
 		image_count += 1
@@ -190,9 +193,6 @@ while True:
 			image_count += 1
 			postload_count += 1
 			if postload_count > postload:
-				if not os.path.exists(dir_path+'/events'):
-					os.mkdir(dir_path+'/events')
-
 				if not os.path.exists(dir_path+'/events/'+month):
 					os.mkdir(dir_path+'/events/'+month)
 
@@ -202,7 +202,7 @@ while True:
 				video_file = dir_path+'/events/'+month+"/"+day+"/"+hour+".avi";
 				video_res = str(800)+"x"+str(600);
 				print "video_res "+video_res;
-				call(["ffmpeg","-y","-r","5","-f","image2","-s",video_res,"-i",dir_path+"/temp/%d.png",video_file])
+				call(["ffmpeg","-y","-r","1","-f","image2","-s",video_res,"-i",dir_path+"/temp/%d.png",video_file])
 				#ffmpeg -y -r 3 -f image2 -s 800x600 -i temp/%d.png test.avi
 				print("{ motion_video:\""+video_file+"\" }");
 				time.sleep(1)
