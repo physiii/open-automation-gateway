@@ -6,7 +6,7 @@
 # sudo rpi-update
 
 sudo apt-get install -y curl
-curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
