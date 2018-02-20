@@ -10,12 +10,12 @@ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  v4l2loopback-dkms v4l2loopback-utils raspberrypi-kernel-headers \
+  v4l2loopback-dkms v4l2loopback-utils \
   python-setuptools python-dev build-essential libopencv-dev python-opencv \
 #  speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
 #  libjpeg-dev libavformat-dev libavcodec-dev \
 #  libavutil-dev libncurses5-dev \
-#  libc6-dev zlib1g-dev libpq5 libpq-dev \
+#  libc6-dev zlib1g-dev libpq5 libpq-dev raspberrypi-kernel-headers \ \
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
