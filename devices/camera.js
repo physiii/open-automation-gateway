@@ -189,8 +189,19 @@ function start_motion() {
     //motion = spawn('python',[__dirname+'/../motion/motion.py',conf]);
     //motion = spawn('python',[__dirname+'/../motion/motion.py','-c',__dirname+'/../motion/conf.json']);
 
-    motion.stdout.on('data', (data) => {console.log(TAG,`[motion] ${data}`)});
-    motion.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+    motion.stdout.on('data', (data) => {
+      console.log(TAG,`[motion] ${data}`)
+      if(data && data.includes("[MOTION]")  ){
+         console.log('motion detected');
+         socket.relay.emit('motion detected', data);
+      } else if(data && data.includes("[NO MOTION]")) {
+         console.log('motion stopped');
+         socket.relay.emit('motion stopped', data);
+      }
+    });
+    motion.stderr.on('data', (data) => {
+      console.log(`stderr: ${data}`)
+    });
   });
   console.log(TAG,"start_motion");
 }

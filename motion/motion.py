@@ -36,6 +36,7 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 print("starting motion.py...")
+sys.stdout.flush()
 device_list = []
 
 try:
@@ -43,6 +44,7 @@ try:
   db = connection.gateway
 except:
   print('Error: Unable to Connect')
+  sys.stdout.flush()
   connection = None
 
 vs = []
@@ -51,10 +53,14 @@ if connection is not None:
   i=0
   for device in devices:
     device_obj = db.devices.find_one(device)
+    print("dev = "+device_obj['dev'])
+    sys.stdout.flush()
     if 'dev' not in device_obj: continue
-    if device_obj['dev'].find("/dev/video2") < 0: continue
+    if device_obj['dev'].find("/dev/video0") < 0: continue
     print("loading " + device_obj['dev'])
     vs.append(VideoStream(src=device_obj["dev"],usePiCamera=0,resolution=[800,600],framerate=5).start());
+    print("loaded " + device_obj['dev'])
+    sys.stdout.flush()
     i=i+1
     
 
@@ -79,8 +85,10 @@ last_frame = 0
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 print dir_path
+sys.stdout.flush()
 
 print("[INFO] warming up...")
+sys.stdout.flush()
 
 #vs = VideoStream(src=conf["device"],usePiCamera=conf["picamera"] > 0,resolution=conf["resolution"],framerate=conf["fps"]).start()
 time.sleep(2.5)
@@ -107,6 +115,7 @@ while True:
 			continue
 		file = dir_path+'/temp/'+str(image_count)+".png"
 		print("Preloading...",file)
+  		sys.stdout.flush()
 		cv2.imwrite(file,frame)
 		preload_count += 1
 		image_count = preload_count
@@ -126,6 +135,7 @@ while True:
 
 	if avg is None:
 		print("[INFO] starting background model...")
+  		sys.stdout.flush()
 		avg = gray.copy().astype("float")
 		#rawCapture.truncate(0)
 		continue
@@ -146,7 +156,7 @@ while True:
 	for c in cnts:
 		last_motion_event_delta = datetime.datetime.now() - last_motion_event
 		if last_motion_event_delta.total_seconds() > motion_off_delay:
-			#print "no motion detected!"
+			print("[NO MOTION] no motion detected!")
 			motion_detected = None
 		if cv2.contourArea(c) < 5000:
 			continue
@@ -176,7 +186,8 @@ while True:
 		if frame_delta < current_frame - last_frame:
 			last_frame = int(round(time.time() * 1000))
 			cv2.imwrite(file,frame)
-			print("{ message:\"Motion detected!\" file:\""+file+"\"")
+			print("[MOTION]{ topic: \"motion detected\", message:\"Motion detected!\", file:\""+file+"\" }")
+			sys.stdout.flush()
 		else: continue
 
 		cv2.imwrite(file,frame)
@@ -202,9 +213,11 @@ while True:
 				video_file = dir_path+'/events/'+month+"/"+day+"/"+hour+".avi";
 				video_res = str(800)+"x"+str(600);
 				print "video_res "+video_res;
+				sys.stdout.flush()
 				call(["ffmpeg","-y","-r","1","-f","image2","-s",video_res,"-i",dir_path+"/temp/%d.png",video_file])
 				#ffmpeg -y -r 3 -f image2 -s 800x600 -i temp/%d.png test.avi
 				print("{ motion_video:\""+video_file+"\" }");
+				sys.stdout.flush()
 				time.sleep(1)
 				shutil.rmtree(dir_path+'/temp')
 				postloaded = 1
