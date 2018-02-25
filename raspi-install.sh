@@ -1,6 +1,8 @@
 #!/bin/sh -e
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
 
+## set up environment
+
 sudo apt update
 sudo apt upgrade -y
 #sudo rpi-update
@@ -30,12 +32,6 @@ sudo ldconfig
 sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
 sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 
-## (old) create loop back devices for video
-# sudo wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source
-# sudo chmod +x /usr/bin/rpi-source
-# /usr/bin/rpi-source -q --tag-update
-# rpi-source
-
 ## v4l2loopback
 sudo chown -R $USER /usr/src
 cd /usr/src
@@ -64,12 +60,3 @@ cd ~
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 npm install
-
-## copy files and set permissions
-#sudo cp files/motion.conf /etc/motion/motion.conf
-#sudo cp files/thread1.conf /etc/motion/thread1.conf
-#sudo cp files/thread2.conf /etc/motion/thread2.conf
-#sudo cp files/default.motion /etc/default/motion
-#sudo service motion restart
-#sudo chown -R $USER /var/log /var/lib/motion /etc/motion
-#sudo chmod -R 777 /var/log /var/lib
