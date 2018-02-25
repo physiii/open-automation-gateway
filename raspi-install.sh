@@ -1,9 +1,9 @@
 #!/bin/sh -e
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
 
-# sudo apt update
-# sudo apt upgrade -y
-# sudo rpi-update
+sudo apt update
+sudo apt upgrade -y
+#sudo rpi-update
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
@@ -12,14 +12,12 @@ sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   v4l2loopback-dkms v4l2loopback-utils \
   python-setuptools python-dev build-essential libopencv-dev python-opencv raspberrypi-kernel-headers \
-#  speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
-#  libjpeg-dev libavformat-dev libavcodec-dev \
-#  libavutil-dev libncurses5-dev \
-#  libc6-dev zlib1g-dev libpq5 libpq-dev \
+  
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
 sudo python -m pip install pymongo numpy imutils opencv-python
+sudo npm install -g pm2 openzwave-shared
 
 ## make and install openzwave
 cd /usr/src
@@ -65,7 +63,6 @@ sudo make install
 cd ~
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
-sudo npm install -g pm2 openzwave-shared
 npm install
 
 ## copy files and set permissions
