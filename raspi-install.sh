@@ -12,7 +12,7 @@ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  v4l2loopback-dkms v4l2loopback-utils \
+  v4l2loopback-dkms v4l2loopback-utils cmake \
   python-setuptools python-dev build-essential libopencv-dev python-opencv raspberrypi-kernel-headers \
   
 sudo ln -s /usr/bin/nodejs /usr/bin/node
@@ -23,6 +23,7 @@ sudo npm install -g pm2
 
 ## opencv
 
+#https://www.pyimagesearch.com/2017/09/04/raspbian-stretch-install-opencv-3-python-on-your-raspberry-pi/
 #nano /etc/dphys-swapfile
 #CONF_SWAPSIZE=1024
 #sudo /etc/init.d/dphys-swapfile stop
@@ -32,7 +33,7 @@ wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
 unzip opencv.zip
 wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.3.0.zip
 unzip opencv_contrib.zip
-cd ~/opencv-3.3.0/
+cd opencv-3.3.0
 mkdir build
 cd build
 cmake -D CMAKE_BUILD_TYPE=RELEASE \
