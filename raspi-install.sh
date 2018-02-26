@@ -19,7 +19,7 @@ sudo apt-get install -y --force-yes \
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
-sudo python -m pip install pymongo==3.0.3 numpy imutils opencv-python
+sudo python -m pip install pymongo==3.0.3 numpy imutils # opencv-python
 sudo npm install -g pm2
 
 ## opencv
