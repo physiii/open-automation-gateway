@@ -3,12 +3,13 @@
 
 ## set up environment
 
-sudo apt update
-sudo apt upgrade -y
 #sudo rpi-update
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+
+sudo apt update
+sudo apt upgrade -y
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
