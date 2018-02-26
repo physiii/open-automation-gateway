@@ -24,7 +24,7 @@ sudo npm install -g pm2
 ## opencv
 
 #https://www.pyimagesearch.com/2017/09/04/raspbian-stretch-install-opencv-3-python-on-your-raspberry-pi/
-#nano /etc/dphys-swapfile
+#sudo nano /etc/dphys-swapfile
 #CONF_SWAPSIZE=1024
 #sudo /etc/init.d/dphys-swapfile stop
 #sudo /etc/init.d/dphys-swapfile start
