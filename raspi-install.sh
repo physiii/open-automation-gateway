@@ -1,25 +1,50 @@
 #!/bin/sh -e
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
 
-# sudo apt update
-# sudo apt upgrade -y
-# sudo rpi-update
+## set up environment
+
+#sudo rpi-update
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 
+sudo apt update
+sudo apt upgrade -y
+
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  v4l2loopback-dkms v4l2loopback-utils \
-  python-setuptools python-dev build-essential libopencv-dev python-opencv \
-#  speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
-#  libjpeg-dev libavformat-dev libavcodec-dev \
-#  libavutil-dev libncurses5-dev \
-#  libc6-dev zlib1g-dev libpq5 libpq-dev raspberrypi-kernel-headers \ \
+  v4l2loopback-dkms v4l2loopback-utils cmake \
+  python-setuptools python-dev build-essential libopencv-dev python-opencv raspberrypi-kernel-headers \
+  
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
-sudo python -m pip install pymongo==3.0.3 numpy imutils opencv-python
+sudo python -m pip install pymongo==3.0.3 numpy imutils # opencv-python
+sudo npm install -g pm2
+
+## opencv
+
+#https://www.pyimagesearch.com/2017/09/04/raspbian-stretch-install-opencv-3-python-on-your-raspberry-pi/
+#sudo nano /etc/dphys-swapfile
+#CONF_SWAPSIZE=1024
+#sudo /etc/init.d/dphys-swapfile stop
+#sudo /etc/init.d/dphys-swapfile start
+cd ~
+wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
+unzip opencv.zip
+wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.3.0.zip
+unzip opencv_contrib.zip
+cd opencv-3.3.0
+mkdir build
+cd build
+cmake -D CMAKE_BUILD_TYPE=RELEASE \
+      -D CMAKE_INSTALL_PREFIX=/usr/local \
+      -D INSTALL_PYTHON_EXAMPLES=ON \
+      -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib-3.3.0/modules \
+      -D BUILD_EXAMPLES=ON ..
+make -j4
+sudo make install
+sudo ldconfig
 
 ## make and install openzwave
 cd /usr/src
@@ -31,12 +56,6 @@ export LD_LIBRARY_PATH=/usr/local/lib
 sudo ldconfig
 sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
 sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
-
-## (old) create loop back devices for video
-# sudo wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source -O /usr/bin/rpi-source
-# sudo chmod +x /usr/bin/rpi-source
-# /usr/bin/rpi-source -q --tag-update
-# rpi-source
 
 ## v4l2loopback
 sudo chown -R $USER /usr/src
@@ -65,14 +84,4 @@ sudo make install
 cd ~
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
-sudo npm install -g pm2 openzwave-shared
 npm install
-
-## copy files and set permissions
-#sudo cp files/motion.conf /etc/motion/motion.conf
-#sudo cp files/thread1.conf /etc/motion/thread1.conf
-#sudo cp files/thread2.conf /etc/motion/thread2.conf
-#sudo cp files/default.motion /etc/default/motion
-#sudo service motion restart
-#sudo chown -R $USER /var/log /var/lib/motion /etc/motion
-#sudo chmod -R 777 /var/log /var/lib
