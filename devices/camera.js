@@ -130,6 +130,7 @@ function load_cameras() {
 }
 
 function pass_camera_stream() {
+	return;
 
     command =  [
                    '-loglevel', 'panic',
