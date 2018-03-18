@@ -56,7 +56,7 @@ if connection is not None:
     print("dev = "+device_obj['dev'])
     sys.stdout.flush()
     if 'dev' not in device_obj: continue
-    if device_obj['dev'].find("/dev/video0") < 0: continue
+    if device_obj['dev'].find("/dev/video20") < 0: continue
     print("loading " + device_obj['dev'])
     vs.append(VideoStream(src=device_obj["dev"],usePiCamera=0,resolution=[800,600],framerate=5).start());
     print("loaded " + device_obj['dev'])

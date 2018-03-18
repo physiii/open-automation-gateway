@@ -130,7 +130,7 @@ function load_cameras() {
 }
 
 function pass_camera_stream() {
-	return;
+	//return;
 
     command =  [
                    '-loglevel', 'panic',
@@ -164,10 +164,10 @@ function pass_camera_stream() {
   ffmpeg_pass[0].on('close', (code) => {console.log(TAG,`ffmpeg_pass child process exited with code ${code}`)});
   //ffmpeg -f v4l2 -pix_fmt rgb24 -i /dev/video0 -f v4l2 /dev/video10 -f v4l2 /dev/video11
 
-  ffmpeg_pass2 = spawn('ffmpeg', command2);
+  /*ffmpeg_pass2 = spawn('ffmpeg', command2);
   ffmpeg_pass2.stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
   ffmpeg_pass2.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
-  ffmpeg_pass2.on('close', (code) => {console.log(TAG,`ffmpeg_pass2 child process exited with code ${code}`)});
+  ffmpeg_pass2.on('close', (code) => {console.log(TAG,`ffmpeg_pass2 child process exited with code ${code}`)});*/
 
   console.log(TAG,"ffmpeg_pass");
 }

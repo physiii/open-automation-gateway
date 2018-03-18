@@ -1,5 +1,5 @@
 {
-  "relay_server":"localhost",
-  "relay_port":5000,
+  "relay_server":"pyfi.org",
+  "relay_port":80,
   "video_stream_port":8082
 }
