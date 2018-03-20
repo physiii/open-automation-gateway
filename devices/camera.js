@@ -140,9 +140,9 @@ function pass_camera_stream() {
                    '-f', 'v4l2',
                    '/dev/video10',
                    '-f', 'v4l2',
-		   '/dev/video20',
-                   '-f', 'v4l2',
-		   '/dev/video30'
+		   '/dev/video20'
+                   //'-f', 'v4l2',
+		   //'/dev/video30'
                  ];
 
 
@@ -265,15 +265,15 @@ function start_ffmpeg(data) {
   if (!video_width) video_width = "640";
   if (!video_height) video_height = "480";
 
+
+  //ffmpeg -f alsa -i hw:1 -s 1280x720 -f v4l2 -i /dev/video20 -f mpegts -codec:a mp2 -ar 44100 -ac 1 -b:a 128k -codec:v mpeg1video -b:v 600k -r 2 -strict -1 http://pyfi.org:8082/09380fc2e0dcf35a04bcc15e254bf4d05cade3047d93ba5b2d87244057add8da260b0a387681bba52e2d9d3cdd4c61474ac5b3918fe75673b7fd70d94bc4418d/20/
   if (data.command == "start_webcam") {
-    // ffmpeg -s 1280x720 -f v4l2 -i /dev/video20 -f mpegts -codec:a mp2 -ar 44100 -ac 1 -b:a 128k -codec:v mpeg1video -b:v 600k -r 2 -strict -1
-    // http://pyfi.org:8082/645bda113ac8af6cc9f6b93f526ec822f5faa4043ca3a4627655651ebb6fc8b60e8cc6099f55d96366a3e5c59b90ef34713187f6366510fbdf6f5170c9bc92a3/20/
     var command =  [
                    '-loglevel', 'panic',
                    //'-r', '2',
                    //'-strict', '-1',
                    '-f', 'alsa',
-                   '-i', 'hw:0',
+                   '-i', 'hw:1',
                    '-s', video_width+"x"+video_height,
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
