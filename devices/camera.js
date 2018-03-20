@@ -138,24 +138,24 @@ function pass_camera_stream() {
                    '-pix_fmt', 'rgb24',
                    '-i', '/dev/video0',
                    '-f', 'v4l2',
-                   '-f', 'v4l2',
                    '/dev/video10',
                    '-f', 'v4l2',
-		   '/dev/video20'
+		   '/dev/video20',
+                   '-f', 'v4l2',
+		   '/dev/video30'
                  ];
 
 
-    command2 =  [
+    /*command2 =  [
                    '-loglevel', 'panic',
                    '-f', 'v4l2',
                    '-pix_fmt', 'rgb24',
                    '-i', '/dev/video1',
                    '-f', 'v4l2',
-                   '-f', 'v4l2',
                    '/dev/video11',
                    '-f', 'v4l2',
 		   '/dev/video21'
-                 ];
+                 ];*/
 
 
   ffmpeg_pass[0] = spawn('ffmpeg', command);
@@ -191,12 +191,12 @@ function start_motion() {
     //motion = spawn('python',[__dirname+'/../motion/motion.py','-c',__dirname+'/../motion/conf.json']);
 
     motion.stdout.on('data', (data) => {
-      console.log(TAG,`[motion] ${data}`)
+      //console.log(TAG,`[motion] ${data}`)
       if(data && data.includes("[MOTION]")  ){
-         console.log('motion detected');
+         //console.log('motion detected');
          socket.relay.emit('motion detected', data);
       } else if(data && data.includes("[NO MOTION]")) {
-         console.log('motion stopped');
+         //console.log('motion stopped');
          socket.relay.emit('motion stopped', data);
       }
     });
@@ -272,6 +272,8 @@ function start_ffmpeg(data) {
                    '-loglevel', 'panic',
                    //'-r', '2',
                    //'-strict', '-1',
+                   '-f', 'alsa',
+                   '-i', 'hw:0',
                    '-s', video_width+"x"+video_height,
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
