@@ -273,7 +273,7 @@ function start_ffmpeg(data) {
                    //'-r', '2',
                    //'-strict', '-1',
                    '-f', 'alsa',
-                   '-i', 'hw:1',
+                   '-i', 'hw:3',
                    '-s', video_width+"x"+video_height,
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
@@ -286,7 +286,7 @@ function start_ffmpeg(data) {
                    '-b:v', '600k',
                    '-r', '2',
                    '-strict', '-1',
-                   "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
   }
   if (data.command == "play_file") {
@@ -300,7 +300,7 @@ function start_ffmpeg(data) {
                    '-b:v', '600k',
                    '-r', '2',
                    '-strict', '-1',
-                   "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
     console.log("playing file:",command);
     //console.log("ng file:",data.file);
@@ -317,7 +317,7 @@ function start_ffmpeg(data) {
                    '-r', '24',
                    '-strict', '-1',
 		   //'-ss', '00:00:30',
-                   "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
     send_file_duration(data);
     //console.log("ffmpeg play_folder:");
