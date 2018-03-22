@@ -1,8 +1,8 @@
 {
-  "relay_server":"pyfi.org",
+  "relay_server":"127.0.0.1",
   "relay_port":5000,
   "use_ssl":false,
   "use_domain_ssl":false,
-  "use_dev":false,
+  "use_dev":true,
   "video_stream_port":5054
 }
