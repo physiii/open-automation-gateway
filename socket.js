@@ -13,11 +13,11 @@ var relay_server = config.relay_server;
 var relay_port = config.relay_port;
 }
 if (use_domain_ssl || use_ssl) {
-var relay_server = "127.0.0.1";
+var relay_server = config.relay_server;
 var relay_port = 4443;
 }
 if (use_dev){
-var relay_server = "127.0.0.1";
+var relay_server = config.relay_server;
 var relay_port = 5000;
 }
 
