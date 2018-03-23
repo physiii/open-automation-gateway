@@ -4,5 +4,6 @@
   "use_ssl":false,
   "use_domain_ssl":false,
   "use_dev":true,
-  "video_stream_port":5054
+  "video_stream_port":5054,
+  "device_hw":"hw:3"
 }

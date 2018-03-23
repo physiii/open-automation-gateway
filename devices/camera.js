@@ -10,6 +10,7 @@ var STREAM_PORT = config.video_stream_port || 5054;
 var use_ssl = config.use_ssl || false;
 var use_domain_ssl = config.use_domain_ssl || false;
 var use_dev = config.use_dev || false;
+var device_hw = config.device_hw || 'hw:0'
 var motion;
 var ffmpeg_pass = [];
 var command = [];
@@ -253,7 +254,7 @@ function start_ffmpeg(data) {
       /*if (data.command == "play_file") {
         stop_ffmpeg(ffmpeg_proc_list[i]);
         console.log(TAG,"killing current ffmpeg process",ffmpeg_proc_list[i].tag.camera_number);
-      } 
+      }
       if (data.command == "play_folder") {
         stop_ffmpeg(ffmpeg_proc_list[i]);
         console.log(TAG,"killing current ffmpeg process",ffmpeg_proc_list[i].tag.camera_number);
@@ -277,7 +278,7 @@ function start_ffmpeg(data) {
                    //'-r', '2',
                    //'-strict', '-1',
                    '-f', 'alsa',
-                   '-i', 'hw:3',
+                   '-i', device_hw,
                    '-s', video_width+"x"+video_height,
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
@@ -299,7 +300,7 @@ function start_ffmpeg(data) {
                    //'-r', '2',
                    //'-strict', '-1',
                    '-f', 'alsa',
-                   '-i', 'hw:3',
+                   '-i', device_hw,
                    '-s', video_width+"x"+video_height,
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
@@ -321,7 +322,7 @@ function start_ffmpeg(data) {
                    //'-r', '2',
                    //'-strict', '-1',
                    '-f', 'alsa',
-                   '-i', 'hw:3',
+                   '-i', device_hw,
                    '-s', video_width+"x"+video_height,
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
@@ -376,7 +377,7 @@ function start_ffmpeg(data) {
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
-    }  
+    }
     console.log("playing file:",command);
     //console.log("ng file:",data.file);
   }
@@ -456,7 +457,7 @@ function start_ffmpeg(data) {
     })(ffmpeg), camera.stream_timeout*60*1000);
     console.log(TAG,"timeout",camera.stream_timeout);
   }
-  
+
   ffmpeg_started = true;
   socket.relay.emit('ffmpeg started',settings);
 }
