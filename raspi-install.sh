@@ -76,8 +76,8 @@ sudo make install
 cd /usr/src
 git clone https://github.com/FFmpeg/FFmpeg.git
 cd FFmpeg
-sudo ./configure --enable-openssl --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree
-make
+sudo ./configure --arch=armel --target-os=linux --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
+make -j4
 sudo make install
 
 ## install open-automation
