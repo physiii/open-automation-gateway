@@ -104,7 +104,7 @@ time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
-bufSize = 64
+bufSize = 60
 kcw = KeyClipWriter(bufSize)
 consecFrames = 0
 lastUploaded = datetime.datetime.now()
@@ -192,7 +192,7 @@ while True:
 		if motionCounter >= 8:
 
 
-			FPS = 16
+			FPS = 20
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 

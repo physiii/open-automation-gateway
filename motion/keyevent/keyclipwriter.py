@@ -9,7 +9,7 @@ import time
 import cv2
 
 class KeyClipWriter:
-	def __init__(self, bufSize=256, timeout=1.0):
+	def __init__(self, bufSize=64, timeout=1.0):
 		# store the maximum buffer size of frames to be kept
 		# in memory along with the sleep timeout during threading
 		self.bufSize = bufSize
@@ -27,7 +27,7 @@ class KeyClipWriter:
 	def update(self, frame):
 		# update the frames buffer
 		#print("Updating Queue Buffer")
-		self.frames.appendleft(frame)		
+		self.frames.appendleft(frame)
 		# if we are recording, update the queue as well
 		if self.recording:
 			self.Q.put(frame)
@@ -43,7 +43,7 @@ class KeyClipWriter:
 
 		# loop over the frames in the deque structure and add them
 		# to the queue
-		
+
 		for i in range(len(self.frames), 0, -1):
 			self.Q.put(self.frames[i - 1])
 
