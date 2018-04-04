@@ -142,7 +142,7 @@ while True:
 	# accumulate the weighted average between the current frame and
 	# previous frames, then compute the difference between the current
 	# frame and running average
-	cv2.accumulateWeighted(gray, avg, 0.5)
+	cv2.accumulateWeighted(gray, avg, 0.4)
 	frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
 	thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
 
