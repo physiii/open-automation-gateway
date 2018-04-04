@@ -58,8 +58,7 @@ except:
   print('Error: Unable to Connect')
   sys.stdout.flush()
   connection = None
-  total_width = 1280
-  total_height = 720
+
 
 if connection is not None:
   devices = db.devices.find()
@@ -89,7 +88,7 @@ height = 350
 width = 240
 xmin = 400
 ymin = 200
-region_detect = True
+region_detect = False
 xmax = xmin + width
 ymax = ymin + height
 avg = None
