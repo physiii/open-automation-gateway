@@ -1,6 +1,8 @@
 {
   "relay_server":"pyfi.org",
   "relay_port":5000,
+  "zwave":false,
+  "zwave_dev":"ttyACM0",
   "use_ssl":false,
   "use_domain_ssl":false,
   "use_dev":false,
