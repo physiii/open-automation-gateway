@@ -85,7 +85,6 @@ if connection is not None:
 # construct the argument parse and parse the arguments
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-fps = 60
 height = 350
 width = 500
 xmin = 200
@@ -105,7 +104,7 @@ time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
-bufSize = 256
+bufSize = 64
 kcw = KeyClipWriter(bufSize)
 consecFrames = 0
 lastUploaded = datetime.datetime.now()
@@ -127,7 +126,7 @@ while True:
 	hour = timestamp.strftime("%I:%M%p")
 
 	# resize the frame, convert it to grayscale, and blur it
-	frame = imutils.resize(frame, width=total_width)
+	frame = imutils.resize(frame, width=640)
 	#print("frames:", frame.shape[1], frame.shape[0])
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -193,7 +192,7 @@ while True:
 		if motionCounter >= 8:
 
 
-			FPS = 60
+			FPS = 16
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
@@ -213,7 +212,8 @@ while True:
 				print("Starting video")
 
 				p = "{}/{}.avi".format((dir_path+'/events/'+month+"/"+day),
-					month+"_"+day+"--"+hour)
+					month+"_"+day+"_"+hour)
+
 				kcw.start(p, fourcc, FPS)
 
 	if updateConsecFrames:
