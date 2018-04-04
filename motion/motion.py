@@ -85,10 +85,10 @@ if connection is not None:
 # construct the argument parse and parse the arguments
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-height = 250
-width = 300
+height = 350
+width = 240
 xmin = 400
-ymin = 300
+ymin = 200
 region_detect = True
 xmax = xmin + width
 ymax = ymin + height
