@@ -186,10 +186,10 @@ while True:
 		(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
 	if text == "[MOTION]":
-		if (timestamp - lastUploaded).seconds >= 3.0:
+		if (timestamp - lastUploaded).seconds >= 1.0:
 			motionCounter += 1
 
-		if motionCounter >= 8:
+		if motionCounter >= 5:
 
 
 			FPS = 20
