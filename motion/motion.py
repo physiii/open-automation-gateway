@@ -87,8 +87,8 @@ if connection is not None:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 height = 250
 width = 300
-xmin = 200
-ymin = 150
+xmin = 400
+ymin = 300
 region_detect = True
 xmax = xmin + width
 ymax = ymin + height
