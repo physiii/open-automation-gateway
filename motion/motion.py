@@ -98,7 +98,7 @@ avg = None
 # initialize the video stream and allow the camera sensor to
 # warmup
 print("[INFO] warming up camera...")
-camera = VideoStream(src=main_cam, resolution=(total_width, total_height), framerate=60).start()
+camera = VideoStream(src=main_cam, resolution=(total_width, total_height), framerate=30).start()
 time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
@@ -195,9 +195,6 @@ while True:
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
-			preview_image = dir_path+'/preview.jpg'
-			cv2.imwrite(preview_image,frame)
-
 			if not os.path.exists(dir_path+'/events/'+month):
 				os.mkdir(dir_path+'/events/'+month)
 
@@ -208,6 +205,8 @@ while True:
 
 			if not kcw.recording:
 				print("[MOTION] Detected!")
+                preview_image = dir_path+'/preview.jpg'
+    			cv2.imwrite(preview_image,frame)
 				print("Starting video")
 
 				p = "{}/{}.avi".format((dir_path+'/events/'+month+"/"+day),
