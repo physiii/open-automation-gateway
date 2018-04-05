@@ -98,12 +98,12 @@ avg = None
 # initialize the video stream and allow the camera sensor to
 # warmup
 print("[INFO] warming up camera...")
-camera = VideoStream(src=main_cam).start()
+camera = VideoStream(src=main_cam, resolution=(total_width, total_height), framerate=60).start()
 time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
-bufSize = 60
+bufSize = 180
 kcw = KeyClipWriter(bufSize)
 consecFrames = 0
 lastUploaded = datetime.datetime.now()
@@ -191,7 +191,7 @@ while True:
 		if motionCounter >= 5:
 
 
-			FPS = 20
+			FPS = 60
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
