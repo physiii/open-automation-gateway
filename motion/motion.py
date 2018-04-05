@@ -191,7 +191,7 @@ while True:
 		if motionCounter >= 5:
 
 
-			FPS = 60
+			FPS = 20
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
