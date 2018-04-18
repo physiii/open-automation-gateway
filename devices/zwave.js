@@ -4,6 +4,7 @@
 
 var socket = require('../socket.js');
 var os = require('os');
+var config = require('../config.json');
 
 module.exports = {
   add_node: add_node,
@@ -157,7 +158,7 @@ zwave.on('scan complete', function() {
 
 var zwavedriverpaths = {
 	"darwin" : '/dev/cu.usbmodem1411',
-	"linux"  : '/dev/ttyUSB0',
+	"linux"  : '/dev/tty'+config.zwave_dev,
 	"windows": '\\\\.\\COM3'
 }
 console.log("connecting to " + zwavedriverpaths[os.platform()]);
