@@ -16,7 +16,7 @@ sudo apt-get install -y --force-yes \
   v4l2loopback-dkms v4l2loopback-utils cmake libasound2-dev python-pexpect python-dbus \
   python-setuptools python-dev build-essential libopencv-dev python-opencv raspberrypi-kernel-headers \
   
-sudo ln -s /usr/bin/nodejs /usr/bin/node
+# sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
 sudo python -m pip install pymongo==3.0.3 numpy imutils # opencv-python
