@@ -98,7 +98,7 @@ avg = None
 # initialize the video stream and allow the camera sensor to
 # warmup
 print("[INFO] warming up camera...")
-camera = VideoStream(src=main_cam, resolution=(total_width, total_height), framerate=30).start()
+camera = VideoStream(src=main_cam, resolution=(total_width, total_height), framerate=10).start()
 time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
@@ -125,7 +125,7 @@ while True:
 	hour = timestamp.strftime("%I:%M%p")
 
 	# resize the frame, convert it to grayscale, and blur it
-	frame = imutils.resize(frame, width=total_width)
+	frame = imutils.resize(frame, width=600)
 	#print("frames:", frame.shape[1], frame.shape[0])
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -191,7 +191,7 @@ while True:
 		if motionCounter >= 5:
 
 
-			FPS = 20
+			FPS = 10
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
