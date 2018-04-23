@@ -7,5 +7,5 @@
   "use_domain_ssl":false,
   "use_dev":false,
   "video_stream_port":8082,
-  "device_hw":"plughw:1"
+  "device_hw":"hw:3"
 }

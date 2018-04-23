@@ -25,7 +25,7 @@ request.get(
 function (error, response, data2) {
   if (!error && response.statusCode == 200) {
     console.log('thermostat says: ' + data2);
-    if (isJSON(data2)) { 
+    if (isJSON(data2)) {
       data_obj = {};
       data_obj['current_state'] = JSON.parse(data2);
       data_obj['token'] = database.token;
@@ -48,8 +48,7 @@ function (error, response, data2) {
 }
 
 function set_thermostat(device) {
-  //console.log("set_thermostat",device.set_state);
-  var request = require('request');
+  // Console.log("set_thermostat",device.set_state);
   request.post({
     headers: {'content-type' : 'application/x-www-form-urlencoded'},
     url:     'http://'+device.local_ip+'/tstat',
@@ -61,13 +60,13 @@ function set_thermostat(device) {
 }
 
 function get_therm_state(ipaddress) {
-  //console.log("get_therm_state",ipaddress);
+  // Console.log("get_therm_state",ipaddress);
   request.get(
   'http://'+ipaddress+'/tstat',
   function (error, response, data) {
     if (!error && response.statusCode == 200) {
-      if (isJSON(data)) { 
-        var data_obj = {};    
+      if (isJSON(data)) {
+        var data_obj = {};
         data_obj = JSON.parse(data);
         for (var i = 0; i < device_array.length; i++) {
 	  if (device_array[i].local_ip == ipaddress) {
@@ -102,5 +101,5 @@ function isJSON (json_obj) {
     return true;
   }else{
     return false;
-  }  
+  }
 }
