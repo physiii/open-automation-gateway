@@ -167,6 +167,7 @@ while True:
 		(x, y, w, h) = cv2.boundingRect(c)
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
+        #if starting time < time > ending time:
 		if region_detect:
 			if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
 				text = "[MOTION]"
