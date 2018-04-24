@@ -68,15 +68,13 @@ if connection is not None:
     if device_obj is None: continue
     if 'dev' not in device_obj: continue
     print("dev = "+device_obj['dev'])
-    if device_obj['dev'].find("/dev/video20") < 0: continue
+    if device_obj['dev'].find("/dev/video20") < 0: continue 
     for key, value in device_obj['resolution'].iteritems():
       if key == 'width':
         total_width = value
       if key == 'height':
         total_height = value
-    print("loading " + device_obj['dev'])
-    print("loaded " + device_obj['dev'])
-    main_cam = device_obj['dev']
+    main_cam=device_obj['dev']
     sys.stdout.flush()
 
 ##################################################################################################################
@@ -84,10 +82,10 @@ if connection is not None:
 # construct the argument parse and parse the arguments
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-r_height = 500
-r_width = 850
+r_height = 200
+r_width = 300
 xmin = 0
-ymin = 200
+ymin = 100
 region_detect = True
 xmax = xmin + r_width
 ymax = ymin + r_height
@@ -97,13 +95,13 @@ avg = None
 
 # initialize the video stream and allow the camera sensor to
 # warmup
-print("[INFO] warming up camera...")
-camera = VideoStream(src=main_cam, resolution=(total_width, total_height), framerate=30).start()
+print("[INFO] Warming up camera...")
+camera = VideoStream(src=main_cam, framerate=10).start()
 time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
-bufSize = 180
+bufSize = 60
 kcw = KeyClipWriter(bufSize)
 consecFrames = 0
 lastUploaded = datetime.datetime.now()
@@ -125,7 +123,7 @@ while True:
 	hour = timestamp.strftime("%I:%M%p")
 
 	# resize the frame, convert it to grayscale, and blur it
-	frame = imutils.resize(frame, width=total_width)
+	frame = imutils.resize(frame, width=600)
 	#print("frames:", frame.shape[1], frame.shape[0])
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -134,7 +132,7 @@ while True:
 	# if the first frame is None, initialize it
 
 	if avg is None:
-		print("[INFO] starting background model...")
+		print( "[INFO] Starting background model...")
   		sys.stdout.flush()
 		avg = gray.copy().astype("float")
 		continue
@@ -169,9 +167,10 @@ while True:
 
 		if region_detect:
 			if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
+				text = "[MOTION]"				
+			
+			else:
 				text = "[MOTION]"
-		else:
-			text = "[MOTION]"
 
 
 
@@ -188,10 +187,10 @@ while True:
 		if (timestamp - lastUploaded).seconds >= 1.0:
 			motionCounter += 1
 
-		if motionCounter >= 5:
+		if motionCounter >= 2:
 
 
-			FPS = 20
+			FPS = 10
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
@@ -205,8 +204,8 @@ while True:
 
 			if not kcw.recording:
 				print("[MOTION] Detected!")
-                preview_image = dir_path+'/preview.jpg'
-    			cv2.imwrite(preview_image,frame)
+                		preview_image = dir_path+'/preview.jpg'
+    				cv2.imwrite(preview_image,frame)
 				print("Starting video")
 
 				p = "{}/{}.avi".format((dir_path+'/events/'+month+"/"+day),
