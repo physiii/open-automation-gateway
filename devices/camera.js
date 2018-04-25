@@ -7,7 +7,7 @@ var spawn = require('child_process').spawn;
 const video_duration = require('get-video-duration');
 const recursive = require('recursive-readdir');
 var ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfprobePath(pathToFfprobeExecutable);
+var path = require('path');
 var fs = require('fs');
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 5054;
