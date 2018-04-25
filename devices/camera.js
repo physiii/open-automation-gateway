@@ -175,7 +175,6 @@ function recordings_list(data, callback){
   })
 }
 
-
 function load_cameras() {
   var command = "ls -lah --full-time /dev/video*";
   exec(command, (error, stdout, stderr) => {
