@@ -36,6 +36,7 @@
     "express": "^4.15.3",
     "file-browser": "0.0.5",
     "find-remove": "^1.0.1",
+    "fluent-ffmpeg": "^2.1.2",
     "get-video-duration": "^0.3.0",
     "getmac": "^1.2.1",
     "greenlock": "^2.1.12",

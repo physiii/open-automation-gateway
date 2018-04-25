@@ -1,5 +1,6 @@
 const video_duration = require('get-video-duration');
 const recursive = require('recursive-readdir');
+var ffmpeg = require('fluent-ffmpeg');
 var fs = require('fs');
 var path = require('path');
 
@@ -19,25 +20,37 @@ function recordings_list(data, callback){
     var list_promises = [];
 
     for(i = 0; files.length > i; i++){
-      console.log(files[i]);
+
       var file_promise = new Promise(function(resolve){
         resolve(files[i])
       });
+
       var date_promise = new Promise(function (resolve, reject){
         fs.stat(files[i], function (error, stats) {
           resolve(stats.birthtimeMs);
         });
       });
+
       var duration_promise = video_duration(files[i]);
-      //var res_promise = '';
+
+      var res_promise = new Promise(function (resolve) {
+        ffmpeg(files[i]).ffprobe(function(err, file_info) {
+          var resolution = {
+            width: file_info.streams[0].width,
+            height: file_info.streams[0].height
+          };
+          resolve(resolution);
+        });
+      });
+
 
       list_promises.push(
-        Promise.all([file_promise, date_promise, duration_promise]).then(function(file_data) {
+        Promise.all([file_promise, date_promise, duration_promise, res_promise]).then(function(file_data) {
           recordings_list.push({
             file: file_data[0],
             date: new Date(file_data[1]).toISOString(),
-            duration: file_data[2]
-            //resolution:{width:width, height:height}
+            duration: file_data[2],
+            resolution: file_data[3]
           });
         })
       );
