@@ -4,6 +4,8 @@
 
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
+const video_duration = require('get-video-duration');
+const recursive = require('recursive-readdir');
 var fs = require('fs');
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 5054;
@@ -52,6 +54,10 @@ socket.relay.on('folder list', function (data) {
    socket.relay.emit('folder list result',data);
   });
 });
+
+socket.relay.on('camera/recordings/get', function (data, callback) {
+  recordings_list(data, callback)
+})
 
 socket.relay.on('get camera preview', function (data) {
   var camera_number = data.camera_number;
@@ -114,6 +120,47 @@ socket.relay.on('ffmpeg', function (data) {
 // ---------------- //
 // camera functions //
 // ---------------- //
+
+function recordings_list(data, callback){
+  var directory = path.join(__dirname, '../', '/motion/events/', data.camera_number);
+
+  recursive(directory, function(err, files){
+    //console.log(files);
+    var recordings_list = [];
+    var list_promises = [];
+
+    for(i = 0; files.length > i; i++){
+      console.log(files[i]);
+      var file_promise = new Promise(function(resolve){
+        resolve(files[i])
+      });
+      var date_promise = new Promise(function (resolve, reject){
+        fs.stat(files[i], function (error, stats) {
+          resolve(stats.birthtimeMs);
+        });
+      });
+      var duration_promise = video_duration(files[i]);
+      //var res_promise = '';
+
+      list_promises.push(
+        Promise.all([file_promise, date_promise, duration_promise]).then(function(file_data) {
+          recordings_list.push({
+            file: file_data[0],
+            date: new Date(file_data[1]).toISOString(),
+            duration: file_data[2]
+            //resolution:{width:width, height:height}
+          });
+        })
+      );
+    }
+    Promise.all(list_promises).then(function(){
+      if (typeof callback === 'function') {
+        callback(null,recordings_list)
+      }
+    });
+  })
+}
+
 
 function load_cameras() {
   var command = "ls -lah --full-time /dev/video*";
@@ -212,7 +259,7 @@ function start_motion() {
 }
 
 function send_camera_preview(camera_number, socket_id) {
-  var path = __dirname + "/../motion/preview.jpg";
+  var path = __dirname + "../motion/preview.jpg";
   fs.readFile(path, function(err, data) {
     if (err) return console.log(err); // Fail if the file can't be read.
     var settings = database.settings;
