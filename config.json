@@ -1,5 +1,5 @@
 {
-  "relay_server":"10.10.10.113",
+  "relay_server":"10.10.10.118",
   "relay_port":5000,
   "zwave":false,
   "zwave_dev":"ACM0",
