@@ -483,11 +483,12 @@ function start_ffmpeg(data) {
     var command =  [
                    //'-loglevel', 'panic',
                    '-y',
+                   '-r', '10',
                    '-i', data.file,
+                   '-r', '30',
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '60',
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
