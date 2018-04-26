@@ -463,7 +463,6 @@ function start_ffmpeg(data) {
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
                    '-r', '24',
-                   '-vf', rotation,
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -476,7 +475,6 @@ function start_ffmpeg(data) {
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
                    '-r', '24',
-                   '-vf', rotation,
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -486,7 +484,6 @@ function start_ffmpeg(data) {
                    //'-loglevel', 'panic',
                    '-framerate', '10',
                    '-i', data.file,
-                   '-vf', rotation,
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
@@ -509,7 +506,6 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-r', '24',
-                   '-vf', rotation,
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
@@ -524,7 +520,6 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-r', '24',
-                   '-vf', rotation,
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
@@ -533,13 +528,12 @@ function start_ffmpeg(data) {
     if (use_domain_ssl == false && use_dev && use_ssl == false){
     var command =  [
                    //'-loglevel', 'panic',
-                   '-r', '24',
+                   '-framerate', '10',
                    '-strict', '-1',
                    '-i', data.folder_list,
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-r', '24',
-                   '-vf', rotation,
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
