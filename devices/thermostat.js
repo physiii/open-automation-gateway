@@ -19,31 +19,31 @@ function send_ping(){
 
 var data_obj = {};
 function add_thermostat(data) {
-console.log("add thermostat | " + data.local_ip);
-request.get(
-'http://'+data.local_ip+'/tstat',
-function (error, response, data2) {
-  if (!error && response.statusCode == 200) {
-    console.log('thermostat says: ' + data2);
-    if (isJSON(data2)) {
-      data_obj = {};
-      data_obj['current_state'] = JSON.parse(data2);
-      data_obj['token'] = database.token;
-      data_obj['mac'] = utils.mac;
-      data_obj['type'] = 'thermostat';
-      data_obj['local_ip'] = data.local_ip;
-      data_obj['device_name'] = data.device_name;
-      data_obj['schedule'] = {"7 AM":70,"9 AM":70,"11 AM":70,"1 PM":70,"3 PM":70,"5 PM":70,"7 PM":70,"9 PM":70,"11 PM":70,"1 AM":70};
-      //var device_obj = {device_type:"thermostat", device_name:data_obj.device_name, local_ip:data_obj.local_ip, schedule:data_obj.schedule};
-      database.store_device(data_obj);
-      device_array.push(data_obj);
-      socket.relay.emit('thermostat_state',data_obj);
+  console.log("add thermostat | " + data.local_ip);
+  request.get(
+  'http://'+data.local_ip+'/tstat',
+  function (error, response, data2) {
+    if (!error && response.statusCode == 200) {
+      console.log('thermostat says: ' + data2);
+      if (isJSON(data2)) {
+        data_obj = {};
+        data_obj['current_state'] = JSON.parse(data2);
+        data_obj['token'] = database.token;
+        data_obj['mac'] = utils.mac;
+        data_obj['type'] = 'thermostat';
+        data_obj['local_ip'] = data.local_ip;
+        data_obj['device_name'] = data.device_name;
+        data_obj['schedule'] = {"7 AM":70,"9 AM":70,"11 AM":70,"1 PM":70,"3 PM":70,"5 PM":70,"7 PM":70,"9 PM":70,"11 PM":70,"1 AM":70};
+        //var device_obj = {device_type:"thermostat", device_name:data_obj.device_name, local_ip:data_obj.local_ip, schedule:data_obj.schedule};
+        database.store_device(data_obj);
+        device_array.push(data_obj);
+        socket.relay.emit('thermostat_state',data_obj);
+      }
+      if (error !== null) {
+       console.log('add thermostat | ' + error);
+      }
     }
-    if (error !== null) {
-     console.log('add thermostat | ' + error);
-    }
-  }
-});
+  });
 
 }
 
@@ -69,17 +69,17 @@ function get_therm_state(ipaddress) {
         var data_obj = {};
         data_obj = JSON.parse(data);
         for (var i = 0; i < device_array.length; i++) {
-	  if (device_array[i].local_ip == ipaddress) {
-	    device_array[i].current_state = data_obj;
+          if (device_array[i].local_ip == ipaddress) {
+            device_array[i].current_state = data_obj;
             database.store_device(device_array[i]);
             //console.log("get_therm_state",data_obj);
-	  }
-	}
-      }
+          };
+        }
+      };
       if (error !== null) console.log('get_therm_state |' + error);
     }
   });
-}
+};
 
 /*function send_command(command) {
   console.log(command);
