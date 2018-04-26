@@ -196,13 +196,13 @@ while True:
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
 			if not os.path.exists(dir_path+'/events'+main_cam):
-				os.mkdir(dir_path+'/events/'+main_cam)
+				os.mkdir(dir_path+'/events'+main_cam)
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year):
-				os.mkdir(dir_path+'/events/'+main_cam+'/'+year)
+				os.mkdir(dir_path+'/events'+main_cam+'/'+year)
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month):
-				os.mkdir(dir_path+'/events/'+main_cam+'/'+year+'/'+month)
+				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month)
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day)
