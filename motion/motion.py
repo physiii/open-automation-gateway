@@ -68,7 +68,7 @@ if connection is not None:
     if device_obj is None: continue
     if 'dev' not in device_obj: continue
     print("dev = "+device_obj['dev'])
-    if device_obj['dev'].find("/dev/video20") < 0: continue 
+    if device_obj['dev'].find("/dev/video20") < 0: continue
     for key, value in device_obj['resolution'].iteritems():
       if key == 'width':
         total_width = value
@@ -168,8 +168,8 @@ while True:
 
 		if region_detect:
 			if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
-				text = "[MOTION]"				
-			
+				text = "[MOTION]"
+
 			else:
 				text = "[MOTION]"
 
@@ -195,17 +195,17 @@ while True:
 			consecFrames = 0
 			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
-			if not os.path.exists(dir_path+'/events/'+main_cam):
+			if not os.path.exists(dir_path+'/events'+main_cam):
 				os.mkdir(dir_path+'/events/'+main_cam)
 
-			if not os.path.exists(dir_path+'/events/'+main_cam+'/'+year):
+			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year):
 				os.mkdir(dir_path+'/events/'+main_cam+'/'+year)
 
-			if not os.path.exists(dir_path+'/events/'+main_cam+'/'+year+'/'+month):
+			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month):
 				os.mkdir(dir_path+'/events/'+main_cam+'/'+year+'/'+month)
 
-			if not os.path.exists(dir_path+'/events/'+main_cam+'/'+year+'/'+month+'/'+day):
-				os.mkdir(dir_path+'/events/'+main_cam+'/'+year+'/'+month+'/'+day)
+			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day):
+				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day)
 
 			#output = dir_path+'/events/'+month+"/"+day
 
