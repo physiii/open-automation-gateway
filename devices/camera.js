@@ -400,7 +400,7 @@ function start_ffmpeg(data) {
          '-b:a', '128k',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -423,7 +423,7 @@ function start_ffmpeg(data) {
          '-b:a', '128k',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -446,7 +446,7 @@ function start_ffmpeg(data) {
          '-b:a', '128k',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
