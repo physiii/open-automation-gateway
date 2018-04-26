@@ -7,6 +7,6 @@
   "use_domain_ssl":false,
   "use_dev":true,
   "video_stream_port":5054,
-  "rotate_90": "transpose=2",
+  "rotation": "90",
   "device_hw":"plughw:1"
 }

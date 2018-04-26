@@ -15,7 +15,8 @@ var STREAM_PORT = config.video_stream_port || 5054;
 var use_ssl = config.use_ssl || false;
 var use_domain_ssl = config.use_domain_ssl || false;
 var use_dev = config.use_dev || false;
-var device_hw = config.device_hw || 'hw:0'
+var device_hw = config.device_hw || 'hw:0';
+var rotation = ffmpeg_rotation(config.rotation);
 var motion;
 var ffmpeg_pass = [];
 var command = [];
@@ -392,6 +393,7 @@ function start_ffmpeg(data) {
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
                    '-f', 'mpegts',
+                   '-vf', rotation,
        '-codec:a', 'mp2',
        '-ar', '44100',
        '-ac', '1',
@@ -414,6 +416,7 @@ function start_ffmpeg(data) {
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
                    '-f', 'mpegts',
+                   '-vf', rotation,
        '-codec:a', 'mp2',
        '-ar', '44100',
        '-ac', '1',
@@ -436,6 +439,7 @@ function start_ffmpeg(data) {
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
                    '-f', 'mpegts',
+                   '-vf', rotation,
        '-codec:a', 'mp2',
        '-ar', '44100',
        '-ac', '1',
@@ -459,6 +463,7 @@ function start_ffmpeg(data) {
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
                    '-r', '24',
+                   '-vf', rotation,
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -470,7 +475,8 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-framerate', '10',
+                   '-r', '24',
+                   '-vf', rotation,
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -483,6 +489,7 @@ function start_ffmpeg(data) {
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
                    '-r', '24',
+                   '-vf', rotation,
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -501,6 +508,7 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-r', '24',
+                   '-vf', rotation,
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
@@ -515,6 +523,7 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-r', '24',
+                   '-vf', rotation,
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
@@ -529,6 +538,7 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-r', '24',
+                   '-vf', rotation,
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
@@ -594,4 +604,12 @@ function check_ffmpeg() {
     }
     console.log(TAG,"ffmpeg...good");
   });
+}
+
+function ffmpeg_rotation(degree) {
+  var ffmpeg_rotation = "transpose=2,transpose=1";
+  if (degree == "90") ffmpeg_rotation = "transpose=2";
+  if (degree == "180") ffmpeg_rotation = "transpose=2,transpose=2";
+  if (degree == "270") ffmpeg_rotation = "transpose=1";
+  return ffmpeg_rotation;
 }
