@@ -487,7 +487,7 @@ function start_ffmpeg(data) {
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '30',
+                   '-r', '60',
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
