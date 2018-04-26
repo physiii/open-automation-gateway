@@ -1,11 +1,11 @@
 {
-  "relay_server":"pyfi.org",
+  "relay_server":"10.10.10.128",
   "relay_port":5000,
-  "zwave":true,
+  "zwave":false,
   "zwave_dev":"ACM0",
   "use_ssl":false,
   "use_domain_ssl":false,
-  "use_dev":false,
-  "video_stream_port":8082,
-  "device_hw":"hw:3"
+  "use_dev":true,
+  "video_stream_port":5054,
+  "device_hw":"plughw:1"
 }

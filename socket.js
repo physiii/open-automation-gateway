@@ -117,11 +117,15 @@ relay.on('update', function (data) {
   utils.update();
 });
 
-relay.on('get settings', function (data) {
+relay.on('get settings', function (data, callback) {
   var settings = database.settings;
   settings.devices = device_array;
   relay.emit('load settings', settings);
   //console.log(TAG,"load settings |", settings);
+
+  if (typeof callback === 'function') {
+    callback(null, settings);
+  }
 });
 
 relay.on('get devices', function (data) {
