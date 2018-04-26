@@ -197,16 +197,19 @@ while True:
 
 			if not os.path.exists(dir_path+'/events'+main_cam):
 				os.mkdir(dir_path+'/events'+main_cam)
+                continue
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year)
+                continue
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month)
+                continue
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day)
-
+                continue
 			#output = dir_path+'/events/'+month+"/"+day
 
 			if not kcw.recording:
