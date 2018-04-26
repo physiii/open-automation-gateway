@@ -482,11 +482,12 @@ function start_ffmpeg(data) {
     if (use_domain_ssl == false && use_dev && use_ssl == false){
     var command =  [
                    //'-loglevel', 'panic',
+                   '-y',
                    '-i', data.file,
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '60',
+                   '-r', '30',
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
