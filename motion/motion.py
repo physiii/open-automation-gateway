@@ -193,11 +193,7 @@ while True:
 
 			FPS = 10
 			consecFrames = 0
-			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-
-			if not os.path.exists(dir_path+'/events'+main_cam):
-				os.mkdir(dir_path+'/events'+main_cam)
-                continue
+			fourcc = cv2.VideoWriter_fourcc(*'MJPG')			
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year)
