@@ -4,13 +4,19 @@
 
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
+const video_duration = require('get-video-duration');
+const recursive = require('recursive-readdir');
+var ffmpeg = require('fluent-ffmpeg');
+var path = require('path');
 var fs = require('fs');
+var promiseAllSoftFail = require('promise-all-soft-fail').promiseAllSoftFail;
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 5054;
 var use_ssl = config.use_ssl || false;
 var use_domain_ssl = config.use_domain_ssl || false;
 var use_dev = config.use_dev || false;
-var device_hw = config.device_hw || 'hw:0'
+var device_hw = config.device_hw || 'hw:0';
+var rotation = ffmpeg_rotation(config.rotation);
 var motion;
 var ffmpeg_pass = [];
 var command = [];
@@ -52,6 +58,10 @@ socket.relay.on('folder list', function (data) {
    socket.relay.emit('folder list result',data);
   });
 });
+
+socket.relay.on('camera/recordings/get', function (data, callback) {
+  recordings_list(data, callback)
+})
 
 socket.relay.on('get camera preview', function (data) {
   var camera_number = data.camera_number;
@@ -115,6 +125,106 @@ socket.relay.on('ffmpeg', function (data) {
 // camera functions //
 // ---------------- //
 
+function recordings_list (data, callback) {
+  var directory = path.join(__dirname, '../', '/motion/events/', data.camera_number.toString());
+
+  recursive(directory, function (error, files) {
+    var recordings_list = [];
+    var list_promises = [];
+
+    if (error) {
+      if (typeof callback === 'function') {
+        callback('Error getting recordings');
+      }
+
+      return;
+    }
+
+    for (i = 0; files.length > i; i++) {
+      var file_promise = new Promise(function (resolve) {
+        // No error handling because we always just resolve with the file path.
+        resolve(files[i])
+      });
+
+      var date_promise = new Promise(function (resolve, reject) {
+        try {
+          fs.stat(files[i], function (error, stats) {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            resolve(stats.birthtimeMs);
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      var duration_promise = video_duration(files[i]);
+
+      var res_promise = new Promise(function (resolve, reject) {
+        try {
+          ffmpeg(files[i]).ffprobe(function (error, file_info) {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            resolve({
+              width: file_info.streams[0].width,
+              height: file_info.streams[0].height
+            });
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      list_promises.push(
+        promiseAllSoftFail([file_promise, date_promise, duration_promise, res_promise]).then(function (file_data) {
+          var recording = {
+              file: file_data[0],
+              date: file_data[1],
+              duration: file_data[2],
+              resolution: file_data[3]
+            };
+
+          if (!recording.date || Object.prototype.toString.call(recording.date) === '[object Error]') {
+            recording.date = null;
+            recording.error = 'Error getting recording date';
+          }
+          if (!recording.duration || Object.prototype.toString.call(recording.duration) === '[object Error]') {
+            recording.duration = null;
+            recording.error = 'Error getting recording duration';
+          }
+          if (!recording.resolution || Object.prototype.toString.call(recording.resolution) === '[object Error]') {
+            recording.resolution = null;
+            recording.error = 'Error getting recording resolution';
+          }
+
+          // Convert date to ISO 8601 string
+          if (recording.date) {
+            recording.date = new Date(recording.date).toISOString();
+          }
+
+          recordings_list.push(recording);
+        })
+      );
+    };
+
+    Promise.all(list_promises).then(function () {
+      if (typeof callback === 'function') {
+        callback(null, recordings_list);
+      }
+    }).catch(function () {
+      if (typeof callback === 'function') {
+        callback('Error getting recordings');
+      }
+    });
+  })
+}
+
 function load_cameras() {
   var command = "ls -lah --full-time /dev/video*";
   exec(command, (error, stdout, stderr) => {
@@ -134,7 +244,7 @@ function load_cameras() {
 }
 
 function pass_camera_stream() {
-	//return;
+  //return;
 
     command =  [
                    '-loglevel', 'panic',
@@ -144,9 +254,9 @@ function pass_camera_stream() {
                    '-f', 'v4l2',
                    '/dev/video10',
                    '-f', 'v4l2',
-		   '/dev/video20'
+       '/dev/video20'
                    //'-f', 'v4l2',
-		   //'/dev/video30'
+       //'/dev/video30'
                  ];
 
 
@@ -158,7 +268,7 @@ function pass_camera_stream() {
                    '-f', 'v4l2',
                    '/dev/video11',
                    '-f', 'v4l2',
-		   '/dev/video21'
+       '/dev/video21'
                  ];*/
 
 
@@ -212,7 +322,7 @@ function start_motion() {
 }
 
 function send_camera_preview(camera_number, socket_id) {
-  var path = __dirname + "/../motion/preview.jpg";
+  var path = __dirname + "../motion/preview.jpg";
   fs.readFile(path, function(err, data) {
     if (err) return console.log(err); // Fail if the file can't be read.
     var settings = database.settings;
@@ -283,13 +393,14 @@ function start_ffmpeg(data) {
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
                    '-f', 'mpegts',
-		   '-codec:a', 'mp2',
-		   '-ar', '44100',
-		   '-ac', '1',
-	  	   '-b:a', '128k',
-		   '-codec:v', 'mpeg1video',
+                   '-vf', rotation,
+       '-codec:a', 'mp2',
+       '-ar', '44100',
+       '-ac', '1',
+         '-b:a', '128k',
+       '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -305,13 +416,14 @@ function start_ffmpeg(data) {
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
                    '-f', 'mpegts',
-		   '-codec:a', 'mp2',
-		   '-ar', '44100',
-		   '-ac', '1',
-	  	   '-b:a', '128k',
-		   '-codec:v', 'mpeg1video',
+                   '-vf', rotation,
+       '-codec:a', 'mp2',
+       '-ar', '44100',
+       '-ac', '1',
+         '-b:a', '128k',
+       '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -327,13 +439,14 @@ function start_ffmpeg(data) {
                    '-f', 'v4l2',
                    '-i', '/dev/video'+camera_number,
                    '-f', 'mpegts',
-		   '-codec:a', 'mp2',
-		   '-ar', '44100',
-		   '-ac', '1',
-	  	   '-b:a', '128k',
-		   '-codec:v', 'mpeg1video',
+                   '-vf', rotation,
+       '-codec:a', 'mp2',
+       '-ar', '44100',
+       '-ac', '1',
+         '-b:a', '128k',
+       '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -347,9 +460,9 @@ function start_ffmpeg(data) {
                    //'-loglevel', 'panic',
                    '-i', data.file,
                    '-f', 'mpegts',
-		   '-codec:v', 'mpeg1video',
+       '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -359,9 +472,9 @@ function start_ffmpeg(data) {
                    //'-loglevel', 'panic',
                    '-i', data.file,
                    '-f', 'mpegts',
-		   '-codec:v', 'mpeg1video',
+       '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
+                   '-r', '24',
                    '-strict', '-1',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -369,11 +482,13 @@ function start_ffmpeg(data) {
     if (use_domain_ssl == false && use_dev && use_ssl == false){
     var command =  [
                    //'-loglevel', 'panic',
+                   '-y',
+                   '-r', '10',
                    '-i', data.file,
+                   '-r', '30',
                    '-f', 'mpegts',
-		   '-codec:v', 'mpeg1video',
+       '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '2',
                    '-strict', '-1',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
@@ -390,10 +505,10 @@ function start_ffmpeg(data) {
                    '-strict', '-1',
                    '-i', data.folder_list,
                    '-f', 'mpegts',
-		   '-codec:v', 'mpeg1video',
+       '-codec:v', 'mpeg1video',
                    '-r', '24',
                    '-strict', '-1',
-		   //'-ss', '00:00:30',
+       //'-ss', '00:00:30',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
     }
@@ -404,24 +519,24 @@ function start_ffmpeg(data) {
                    '-strict', '-1',
                    '-i', data.folder_list,
                    '-f', 'mpegts',
-		   '-codec:v', 'mpeg1video',
+       '-codec:v', 'mpeg1video',
                    '-r', '24',
                    '-strict', '-1',
-		   //'-ss', '00:00:30',
+       //'-ss', '00:00:30',
                    "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
     }
     if (use_domain_ssl == false && use_dev && use_ssl == false){
     var command =  [
                    //'-loglevel', 'panic',
-                   '-r', '24',
+                   '-framerate', '10',
                    '-strict', '-1',
                    '-i', data.folder_list,
                    '-f', 'mpegts',
-		   '-codec:v', 'mpeg1video',
+       '-codec:v', 'mpeg1video',
                    '-r', '24',
                    '-strict', '-1',
-		   //'-ss', '00:00:30',
+       //'-ss', '00:00:30',
                    "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
                  ];
     }
@@ -485,4 +600,12 @@ function check_ffmpeg() {
     }
     console.log(TAG,"ffmpeg...good");
   });
+}
+
+function ffmpeg_rotation(degree) {
+  var ffmpeg_rotation = "transpose=2,transpose=1";
+  if (degree == "90") ffmpeg_rotation = "transpose=2";
+  if (degree == "180") ffmpeg_rotation = "transpose=2,transpose=2";
+  if (degree == "270") ffmpeg_rotation = "transpose=1";
+  return ffmpeg_rotation;
 }
