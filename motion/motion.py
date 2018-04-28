@@ -172,11 +172,6 @@ while True:
 
 			else:
 				text = "[MOTION]"
-
-
-
-
-
 			# if we are not already recording, start recording
 
 	cv2.putText(frame, "{}".format(text), (10, 20),
@@ -189,23 +184,21 @@ while True:
 			motionCounter += 1
 
 		if motionCounter >= 2:
-
-
 			FPS = 10
 			consecFrames = 0
-			fourcc = cv2.VideoWriter_fourcc(*'MJPG')			
+			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year)
-                continue
+		                continue
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month)
-                continue
+                		continue
 
 			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day):
 				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day)
-                continue
+                		continue
 			#output = dir_path+'/events/'+month+"/"+day
 
 			if not kcw.recording:
