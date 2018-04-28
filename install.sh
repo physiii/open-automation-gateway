@@ -62,7 +62,7 @@ make -j4
 sudo make install
 
 ## install open-automation
-cd ~
+cd /usr/local/src
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 sudo npm install -g pm2 openzwave-shared
