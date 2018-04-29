@@ -10,7 +10,7 @@ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  v4l2loopback-dkms v4l2loopback-utils libasound2-dev \
+  v4l2loopback-dkms v4l2loopback-utils libasound2-dev ython-pip \
   python-setuptools python-dev build-essential libopencv-dev python-opencv \
 #  speedtest-cli gstreamer1.0  nmap  lua5.2 bc g++ pkg-config \
 #  libjpeg-dev libavformat-dev libavcodec-dev \
