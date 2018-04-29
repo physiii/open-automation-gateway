@@ -16,7 +16,7 @@ sudo apt-get install -y --force-yes \
 #  libjpeg-dev libavformat-dev libavcodec-dev \
 #  libavutil-dev libncurses5-dev \
 #  libc6-dev zlib1g-dev libpq5 libpq-dev raspberrypi-kernel-headers \ \
-sudo ln -s /usr/bin/nodejs /usr/bin/node
+# sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
 sudo python -m pip install pymongo==3.0.3 numpy imutils opencv-python
@@ -48,13 +48,13 @@ sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,20
 
 ## ffmpeg
-cd /usr/src
+cd /usr/local/src
 git clone git://git.videolan.org/x264
 cd x264
 ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
 make
 sudo make install
-cd /usr/src
+cd /usr/local/src
 git clone https://github.com/FFmpeg/FFmpeg.git
 cd FFmpeg
 sudo ./configure --arch=armel --target-os=linux --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
