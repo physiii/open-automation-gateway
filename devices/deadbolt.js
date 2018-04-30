@@ -6,6 +6,7 @@ var socket = require('../socket.js');
 var zwave = require('./zwave.js');
 var TAG = "[deadbolt.js]";
 var test_var = "test variable";
+var set_timeout = config.lock_timer;
 
 
 module.exports = {
@@ -76,6 +77,10 @@ zwave.zwave.on('value changed', function(nodeid, comclass, value) {
   nodes[nodeid]['classes'][comclass][value.index] = value;
 });
 */
+
+function _auto_lock(nodeid) {
+
+}
 
 function add_lock() {
   zwave.add_node(1)
