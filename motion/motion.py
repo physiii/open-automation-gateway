@@ -81,7 +81,7 @@ if connection is not None:
 
 # construct the argument parse and parse the arguments
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = 'pi/usr/lib/gateway/events'
 r_height = 200
 r_width = 300
 xmin = 0
@@ -193,18 +193,18 @@ while True:
 
 			FPS = 10
 			consecFrames = 0
-			fourcc = cv2.VideoWriter_fourcc(*'MJPG')			
+			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
-			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year):
-				os.mkdir(dir_path+'/events'+main_cam+'/'+year)
+			if not os.path.exists(dir_path + main_cam + '/' + year):
+				os.mkdir(dir_path + main_cam + '/' + year)
                 continue
 
-			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month):
-				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month)
+			if not os.path.exists(dir_path + main_cam + '/' + year + '/' + month):
+				os.mkdir(dir_path + main_cam + '/' + year + '/' + month)
                 continue
 
-			if not os.path.exists(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day):
-				os.mkdir(dir_path+'/events'+main_cam+'/'+year+'/'+month+'/'+day)
+			if not os.path.exists(dir_path + main_cam + '/' + year + '/'+ month + '/' + day):
+				os.mkdir(dir_path + main_cam + '/' + year + '/' + month + '/' + day)
                 continue
 			#output = dir_path+'/events/'+month+"/"+day
 
@@ -214,8 +214,8 @@ while True:
     				cv2.imwrite(preview_image,frame)
 				print("Starting video")
 
-				p = "{}/{}.avi".format((dir_path+'/events/'+main_cam+'/'+year+'/'+month+'/'+day),
-					year+'_'+month+'_'+day+'_'+hour)
+				p = "{}/{}.avi".format((dir_path + main_cam + '/' + year + '/' + month + '/' + day),
+					year + '_' + month + '_' + day + '_' + hour)
 
 				kcw.start(p, fourcc, FPS)
 
