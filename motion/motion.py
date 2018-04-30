@@ -81,7 +81,7 @@ if connection is not None:
 
 # construct the argument parse and parse the arguments
 
-dir_path = 'pi/usr/lib/gateway/events'
+dir_path = 'pi/usr/local/lib/gateway/events'
 r_height = 200
 r_width = 300
 xmin = 0
