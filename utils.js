@@ -53,7 +53,7 @@ function check_diskspace() {
 
 function remove_old_files() {
   // Return only base file name without dir
-  var command = "find /usr/local/lib/gateway/events -type f -printf '%T+ %p\n' | sort | head -n 1";
+  var command = "find pi/usr/local/lib/gateway/events -type f -printf '%T+ %p\n' | sort | head -n 1";
   exec(command, (error, stdout, stderr) => {
     if (error) {return console.error(`exec error: ${error}`)}
     if (!stdout) return console.log(TAG,"no motion files found to remove",command);

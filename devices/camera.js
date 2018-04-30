@@ -126,7 +126,7 @@ socket.relay.on('ffmpeg', function (data) {
 // ---------------- //
 
 function recordings_list (data, callback) {
-  var directory = path.join(__dirname, '../', '/motion/events/', data.camera_number.toString());
+  var directory = path.join('pi/usr/local/lib/gateway/events', data.camera_number.toString());
 
   recursive(directory, function (error, files) {
     var recordings_list = [];
