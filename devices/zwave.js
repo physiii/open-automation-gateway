@@ -5,7 +5,7 @@
 var socket = require('../socket.js');
 var os = require('os');
 var config = require('../config.json');
-var deadbolt = require('./deadbolt.js');
+var database = require('../database');
 
 module.exports = {
   add_node: add_node,
@@ -29,19 +29,23 @@ var zwave = new OpenZWave({
 	NetworkKey: "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10"
 });
 
-var zwavedriverpaths = {
-	"darwin" : '/dev/cu.usbmodem1411',
-	"linux"  : '/dev/tty'+config.zwave_dev,
-	"windows": '\\\\.\\COM3'
+function set_value(nodeid, commandclass, index, value) {
+  zwave.setValue(nodeid, commandclass, index, value);
 }
-console.log("connecting to " + zwavedriverpaths[os.platform()]);
-zwave.connect( zwavedriverpaths[os.platform()] );
 
-process.on('SIGINT', function() {
-	console.log('disconnecting...');
-	zwave.disconnect();
-	process.exit();
-});
+function add_node(secure) {
+  zwave.addNode();
+}
+
+function remove_node() {
+  console.log("remove node...");
+  zwave.removeNode();
+}
+
+function hard_reset() {
+  console.log("hard reset...");
+  zwave.hardReset();
+}
 
 //function init_zwave() {
 zwave.on('connected', function(homeid) {
@@ -91,7 +95,7 @@ zwave.on('value changed', function(nodeid, comclass, value) {
 
     console.log("value changed",nodes[nodeid].product);
     database.store_device(nodes[nodeid]);
-  }
+  };
   nodes[nodeid]['classes'][comclass][value.index] = value;
 });
 
@@ -148,22 +152,16 @@ zwave.on('scan complete', function() {
 	console.log('zwave scan complete');
 });
 
-//------------------------------------Functions----------------------------------//
-
-function set_value(nodeid, commandclass, index, value) {
-  zwave.setValue(nodeid, commandclass, index, value);
+var zwavedriverpaths = {
+	"darwin" : '/dev/cu.usbmodem1411',
+	"linux"  : '/dev/tty'+config.zwave_dev,
+	"windows": '\\\\.\\COM3'
 }
+console.log("connecting to " + zwavedriverpaths[os.platform()]);
+zwave.connect( zwavedriverpaths[os.platform()] );
 
-function add_node(secure) {
-  zwave.addNode();
-}
-
-function remove_node() {
-  console.log("remove node...");
-  zwave.removeNode();
-}
-
-function hard_reset() {
-  console.log("hard reset...");
-  zwave.hardReset();
-}
+process.on('SIGINT', function() {
+	console.log('disconnecting...');
+	zwave.disconnect();
+	process.exit();
+});

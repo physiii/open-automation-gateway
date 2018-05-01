@@ -3,6 +3,7 @@
 // -------------------------------- socket.js ----------------------------- //
 
 var exec = require('child_process').exec;
+var config = require('./config.json');
 var TAG = "[socket.js]";
 var use_dev = config.use_dev || false;
 var use_ssl = config.use_ssl || false;
@@ -58,7 +59,7 @@ relay.on('set device settings', function (device) {
 });
 
 relay.on('store_schedule', function (data) {
-  console.log("store_schedule |  " + data);  
+  console.log("store_schedule |  " + data);
 });
 
 relay.on('room_sensor', function (data) {
@@ -179,7 +180,7 @@ relay.on('add thermostat', function (data) {
 relay.on('get thermostat', function (data) {
   device = data.device;
   thermostat.get_therm_state(device.local_ip);
-  //console.log("get thermostat",data);  
+  //console.log("get thermostat",data);
 });
 
 relay.on('set thermostat', function (data) {
@@ -201,4 +202,3 @@ relay.on('disconnect', function(data) {
   console.log("disconnected, setting got_token false",data);
   database.got_token = false;
 });
-

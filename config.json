@@ -1,13 +1,13 @@
 {
   "relay_server":"10.10.10.118",
   "relay_port":5000,
-  "zwave":false,
+  "zwave":true,
   "zwave_dev":"ACM0",
   "use_ssl":false,
   "use_domain_ssl":false,
   "use_dev":true,
   "video_stream_port":5054,
   "rotation": "0",
-  "lock_timer": "0",
+  "lock_timer": "5",
   "device_hw":"plughw:1"
 }

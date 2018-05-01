@@ -4,10 +4,10 @@
 
 var socket = require('../socket.js');
 var zwave = require('./zwave.js');
-var config=require('../config.js');
+var config = require('../config.json');
 var TAG = "[deadbolt.js]";
 var test_var = "test variable";
-var set_timeout = config.lock_timer;
+var set_timer = config.lock_timer;
 
 
 module.exports = {
@@ -71,12 +71,14 @@ function auto_lock(nodeid) {
     lock(nodeid)}, set_timer*1000);
 };
 
+/*
 zwave.on('value changed', function(nodeid, comclass, value){
   if(comclass != 98) return;
   if(value.label != lock) return;
   if(value.value) return;
   auto_lock(nodeid)
 })
+*/
 
 function add_lock() {
   zwave.add_node(1)
