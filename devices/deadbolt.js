@@ -4,6 +4,7 @@
 
 var socket = require('../socket.js');
 var zwave = require('./zwave.js');
+var config=require('../config.js');
 var TAG = "[deadbolt.js]";
 var test_var = "test variable";
 var set_timeout = config.lock_timer;
@@ -13,6 +14,7 @@ module.exports = {
   test_lock: test_lock,
 	unlock: unlock,
 	lock: lock,
+  auto_lock: auto_lock,
 	test_var:test_var
 }
 
@@ -62,25 +64,17 @@ socket.relay.on('set lock group', function(data) {
 
 
 //---------------------------Functions------------------------------------
-/*
-zwave.zwave.on('value changed', function(nodeid, comclass, value) {
 
-  if (nodes[nodeid]['ready']) {
-    console.log(TAG+' node%d: changed: %d:%s:%s->%s', nodeid, comclass,
-      value['label'],
-      nodes[nodeid]['classes'][comclass][value.index]['value'],
-      value['value']);
+function auto_lock(nodeid) {
+    setTimeout(lock, set_timer*1000, nodeid);
+};
 
-    console.log(TAG+" value changed",nodes[nodeid].product);
-    //database.store_device(nodes[nodeid]);
-  }
-  nodes[nodeid]['classes'][comclass][value.index] = value;
-});
-*/
-
-function _auto_lock(nodeid) {
-
-}
+zwave.on('value changed', function(nodeid, comclass, value){
+  if(comclass != 98) return;
+  if(value.label != lock) return;
+  if(value.value) return;
+  auto_lock(nodeid)
+})
 
 function add_lock() {
   zwave.add_node(1)
