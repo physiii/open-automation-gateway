@@ -13,6 +13,8 @@ var set_timer = config.lock_timer;
 module.exports = {
   test_lock: test_lock,
 	unlock: unlock,
+  add_lock: add_lock,
+  remove_lock: remove_lock,
 	lock: lock,
   //check_values: check_values,
   //auto_lock: auto_lock,
