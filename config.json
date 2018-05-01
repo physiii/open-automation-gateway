@@ -1,7 +1,7 @@
 {
   "relay_server":"10.10.10.118",
   "relay_port":5000,
-  "zwave":true,
+  "zwave":false,
   "zwave_dev":"ACM0",
   "use_ssl":false,
   "use_domain_ssl":false,
