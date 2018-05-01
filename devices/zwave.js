@@ -6,6 +6,7 @@ var socket = require('../socket.js');
 var os = require('os');
 var config = require('../config.json');
 var database = require('../database');
+var set_timer = config.lock_timer;
 
 module.exports = {
   add_node: add_node,
@@ -30,7 +31,7 @@ var zwave = new OpenZWave({
 });
 
 function set_value(nodeid, commandclass, index, value) {
-  zwave.setValue(nodeid, commandclass, index, value);
+  zwave.setValue(nodeid, commandclass, 1 , index, value);
 }
 
 function add_node(secure) {
@@ -92,6 +93,15 @@ zwave.on('value changed', function(nodeid, comclass, value) {
       value['label'],
       nodes[nodeid]['classes'][comclass][value.index]['value'],
       value['value']);
+
+      if(value.label == 'Alarm Type') {
+        if(set_timer == "0") return;
+        if(value.value == '22' || value.value == '25' || value.value == '19') {
+          setTimeout(function() {
+            set_value(nodeid,98,0,true)}, set_timer*1000);
+        };
+      };
+
 
     console.log("value changed",nodes[nodeid].product);
     database.store_device(nodes[nodeid]);

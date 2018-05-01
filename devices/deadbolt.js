@@ -14,7 +14,8 @@ module.exports = {
   test_lock: test_lock,
 	unlock: unlock,
 	lock: lock,
-  auto_lock: auto_lock,
+  //check_values: check_values,
+  //auto_lock: auto_lock,
 	test_var:test_var
 }
 
@@ -64,20 +65,20 @@ socket.relay.on('set lock group', function(data) {
 
 
 //---------------------------Functions------------------------------------
-
+/*
 function auto_lock(nodeid) {
   if (set_timer === "0") return;
   setTimeout(function(nodeid) {
     lock(nodeid)}, set_timer*1000);
 };
 
-/*
-zwave.on('value changed', function(nodeid, comclass, value){
+
+function check_values(nodeid,comclass,value){
   if(comclass != 98) return;
   if(value.label != lock) return;
   if(value.value) return;
   auto_lock(nodeid)
-})
+};
 */
 
 function add_lock() {
@@ -89,11 +90,11 @@ function remove_lock() {
 }
 
 function unlock(nodeid) {
-  zwave.set_value(nodeid,98, 1, 0, false);
+  zwave.set_value(nodeid,98, 0, false);
 }
 
 function lock(nodeid) {
-  zwave.set_value(nodeid,98, 1, 0, true);
+  zwave.set_value(nodeid,98, 0, true);
 }
 
 function test_lock(){
