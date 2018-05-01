@@ -5,6 +5,7 @@
 var socket = require('../socket.js');
 var os = require('os');
 var config = require('../config.json');
+var deadbolt = require('./deadbolt.js');
 
 module.exports = {
   add_node: add_node,

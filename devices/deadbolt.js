@@ -66,8 +66,9 @@ socket.relay.on('set lock group', function(data) {
 //---------------------------Functions------------------------------------
 
 function auto_lock(nodeid) {
-    setTimeout(function(nodeid) {
-      lock(nodeid)}, set_timer*1000);
+  if (set_timer === "0") return;
+  setTimeout(function(nodeid) {
+    lock(nodeid)}, set_timer*1000);
 };
 
 zwave.on('value changed', function(nodeid, comclass, value){
