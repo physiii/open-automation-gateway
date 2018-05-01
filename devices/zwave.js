@@ -94,6 +94,7 @@ zwave.on('value changed', function(nodeid, comclass, value) {
       nodes[nodeid]['classes'][comclass][value.index]['value'],
       value['value']);
 
+      // Re-locking Functionality
       if(value.label == 'Alarm Type') {
         if(set_timer == "0") return;
         if(value.value == '22' || value.value == '25' || value.value == '19') {
