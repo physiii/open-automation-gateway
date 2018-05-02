@@ -4,25 +4,26 @@
 
 var exec = require('child_process').exec;
 var config = require('./config.json');
+
 var TAG = "[socket.js]";
 var use_dev = config.use_dev || false;
 var use_ssl = config.use_ssl || false;
-var use_domain_ssl = config.use_domain_ssl || false;
+
 
 if (use_dev == false){
 var relay_server = config.relay_server;
 var relay_port = config.relay_port;
 }
-if (use_domain_ssl || use_ssl) {
+if (use_ssl && use_dev) {
 var relay_server = config.relay_server;
 var relay_port = 4443;
 }
-if (use_dev){
+if (use_dev && !use_ssl){
 var relay_server = config.relay_server;
 var relay_port = 5000;
 }
 
-if (use_domain_ssl || use_ssl) {
+if (use_ssl) {
 var relay = require('socket.io-client')("https://"+relay_server+":"+relay_port);
 console.log('Connected to:',relay_server+":"+relay_port);
 } else {
@@ -51,7 +52,6 @@ relay.on('set settings', function (data) {
   database.store_settings(data);
   console.log("set settings |", data);
 });
-
 
 relay.on('set device settings', function (device) {
   database.store_device_settings(device);
