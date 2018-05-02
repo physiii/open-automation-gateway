@@ -2,17 +2,23 @@
 // ------------  https://github.com/physiii/open-automation-gateway --------------- //
 // --------------------------------- deadbolt.js----------------------------- //
 
+const EventEmitter = require('events');
 var socket = require('../socket.js');
-var zwave = require('./zwave.js');
+var config = require('../config.json');
+
 var TAG = "[deadbolt.js]";
 var test_var = "test variable";
+var set_timer = config.lock_timer;
+var lockDesires = new EventEmitter();
 
 
 module.exports = {
-  test_lock: test_lock,
-	unlock: unlock,
+  add_lock: add_lock,
+  remove_lock: remove_lock,
 	lock: lock,
-	test_var:test_var
+  unlock: unlock,
+	when_unlocked: when_unlocked,
+  lockDesires: lockDesires
 }
 
 /*
@@ -23,17 +29,16 @@ as 4 discrete integer arguments:
 2: Command Class,
 3: Instance and
 4: Index
+5: Value
 --------------------------------------------------------------------------------------
 
-
-data = {token: token, action:"lock"/"unlock", id:""}
 */
 
 console.log("loading test variable _ "+test_var);
 
 
 
-//-------------------------------Socket Calls -----------------------------------------
+//---------------Socket Calls ----------------------------------
 socket.relay.on('set lock', function(data) {
   //if (data.token != token) return console.log(TAG,"invalid token!");
   console.log(TAG,"set lock",data.action);
@@ -61,42 +66,25 @@ socket.relay.on('set lock group', function(data) {
 
 
 //---------------------------Functions------------------------------------
-/*
-zwave.zwave.on('value changed', function(nodeid, comclass, value) {
-
-  if (nodes[nodeid]['ready']) {
-    console.log(TAG+' node%d: changed: %d:%s:%s->%s', nodeid, comclass,
-      value['label'],
-      nodes[nodeid]['classes'][comclass][value.index]['value'],
-      value['value']);
-
-    console.log(TAG+" value changed",nodes[nodeid].product);
-    //database.store_device(nodes[nodeid]);
-  }
-  nodes[nodeid]['classes'][comclass][value.index] = value;
-});
-*/
+function when_unlocked(nodeid){
+  if(set_timer == "0") return;
+    setTimeout(function() {
+      lock(nodeid)
+    }, set_timer*1000);
+}
 
 function add_lock() {
-  zwave.add_node(1)
+  lockDesires.emit('deadbolt/add');
 }
 
 function remove_lock() {
-  zwave.remove_node()
+  lockDesires.emit('deadbolt/remove');
 }
 
 function unlock(nodeid) {
-  zwave.set_value(nodeid,98, 1, 0, false);
+  lockDesires.emit('deadbolt/desiredState', nodeid, false);
 }
 
 function lock(nodeid) {
-  zwave.set_value(nodeid,98, 1, 0, true);
+  lockDesires.emit('deadbolt/desiredState', nodeid, true);
 }
-
-function test_lock(){
-	console.log("running lock test")
-  lock(4, 98, 0);
-  unlock(4, 98, 0);
-};
-
-function check_status(){continue};

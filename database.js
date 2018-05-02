@@ -14,7 +14,7 @@ module.exports = {
   got_token: false,
   set_wifi_from_db: set_wifi_from_db,
   get_devices: get_devices,
-  get_settings: get_settings,  
+  get_settings: get_settings,
   store_settings: store_settings,
   store_device_settings: store_device_settings,
   store_device: store_device,
@@ -65,7 +65,7 @@ function get_settings() {
       module.exports.settings = settings;
       if (!module.exports.got_token) {
         console.log("fetching token");
-        socket.relay.emit('get token',{mac:utils.mac, type:'gateway'});          
+        socket.relay.emit('get token',{mac:utils.mac, type:'gateway'});
         store_settings(settings);
       }
       settings.devices = device_array;
@@ -124,7 +124,7 @@ function store_device_settings(device) {
 function store_device(device) {
   delete device["_id"];
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    console.log(TAG,"storing device",device);
+    //console.log(TAG,"storing device",device);
     if (err) {
       console.log('Unable to connect to the mongoDB server. Error:', err);
     } else {
