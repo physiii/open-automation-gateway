@@ -81,7 +81,7 @@ if connection is not None:
 
 # construct the argument parse and parse the arguments
 
-dir_path = 'pi/usr/local/lib/gateway/events'
+dir_path = '/usr/local/lib'
 r_height = 200
 r_width = 300
 xmin = 0
@@ -187,26 +187,38 @@ while True:
       consecFrames = 0
       fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
-      if not os.path.exists(dir_path + main_cam + '/' + year):
-        os.mkdir(dir_path + main_cam + '/' + year)
+      if not os.path.exists(dir_path + '/gateway'):
+        os.mkdir(dir_path + '/gateway')
         continue
 
-      if not os.path.exists(dir_path + main_cam + '/' + year + '/' + month):
-        os.mkdir(dir_path + main_cam + '/' + year + '/' + month)
+      if not os.path.exists(dir_path + '/gateway' + '/events'):
+        os.mkdir(dir_path + '/gateway' + '/events')
         continue
 
-      if not os.path.exists(dir_path + main_cam + '/' + year + '/'+ month + '/' + day):
-        os.mkdir(dir_path + main_cam + '/' + year + '/' + month + '/' + day)
+      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam):
+        os.mkdir(dir_path + '/gateway' + '/events'+ main_cam)
+        continue
+
+      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam + '/' + year):
+        os.mkdir(dir_path + '/gateway' + '/events' + main_cam + '/' + year)
+        continue
+
+      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month):
+        os.mkdir(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month)
+        continue
+
+      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/'+ month + '/' + day):
+        os.mkdir(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month + '/' + day)
         continue
 
       # if we are not already recording, start recording
       if not kcw.recording:
         print("[MOTION] Detected!")
-        preview_image = dir_path+'/preview.jpg'
+        preview_image = dir_path + '/gateway' + '/events' + '/preview.jpg'
         cv2.imwrite(preview_image,frame)
         print("Starting video")
 
-        p = "{}/{}.avi".format((dir_path + main_cam + '/' + year + '/' + month + '/' + day),
+        p = "{}/{}.avi".format((dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month + '/' + day),
           year + '_' + month + '_' + day + '_' + hour)
 
         kcw.start(p, fourcc, FPS)
