@@ -29,17 +29,16 @@ as 4 discrete integer arguments:
 2: Command Class,
 3: Instance and
 4: Index
+5: Value
 --------------------------------------------------------------------------------------
 
-
-data = {token: token, action:"lock"/"unlock", id:""}
 */
 
 console.log("loading test variable _ "+test_var);
 
 
 
-//-------------------------------Socket Calls -----------------------------------------
+//---------------Socket Calls ----------------------------------
 socket.relay.on('set lock', function(data) {
   //if (data.token != token) return console.log(TAG,"invalid token!");
   console.log(TAG,"set lock",data.action);

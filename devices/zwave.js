@@ -8,7 +8,6 @@ var config = require('../config.json');
 var database = require('../database');
 var deadbolt = require('./deadbolt.js');
 
-var set_timer = config.lock_timer;
 var nodes = [];
 var OpenZWave = require('openzwave-shared');
 var zwave = new OpenZWave({
