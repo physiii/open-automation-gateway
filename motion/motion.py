@@ -195,6 +195,14 @@ while True:
         os.mkdir(dir_path + '/gateway' + '/events')
         continue
 
+      if not os.path.exists(dir_path + '/gateway' + '/events' + '/dev'):
+        os.mkdir(dir_path + '/gateway' + '/events' + '/dev')
+        continue
+
+      if not os.path.exists(dir_path + '/gateway' + '/events' + '/dev' + '/video20'):
+        os.mkdir(dir_path + '/gateway' + '/events' + '/dev' + '/video20')
+        continue
+
       if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam):
         os.mkdir(dir_path + '/gateway' + '/events'+ main_cam)
         continue
