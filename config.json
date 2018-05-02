@@ -8,6 +8,6 @@
   "use_dev":true,
   "video_stream_port":5054,
   "rotation": "0",
-  "lock_timer": "0",
+  "lock_timer": "5",
   "device_hw":"plughw:1"
 }

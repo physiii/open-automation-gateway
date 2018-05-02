@@ -13,14 +13,11 @@ var lockDesires = new EventEmitter();
 
 
 module.exports = {
-  test_lock: test_lock,
-	unlock: unlock,
   add_lock: add_lock,
   remove_lock: remove_lock,
 	lock: lock,
-  //check_values: check_values,
-  //auto_lock: auto_lock,
-	test_var:test_var,
+  unlock: unlock,
+	when_unlocked: when_unlocked,
   lockDesires: lockDesires
 }
 

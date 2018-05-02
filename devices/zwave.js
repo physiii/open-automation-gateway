@@ -25,8 +25,7 @@ module.exports = {
   add_node: add_node,
   remove_node: remove_node,
   hard_reset: hard_reset,
-  set_value: set_value,
-  }
+  set_value: set_value
 }
 
 //function init_zwave() {
@@ -162,11 +161,11 @@ deadbolt.lockDesires.on('deadbolt/remove', function(){
 });
 
 deadbolt.lockDesires.on('deadbolt/desiredState', function(nodeid, desiredState){
-  return set_value(nodeid,98, 0, desiredState);
+  return set_value(nodeid,98, desiredState);
 });
 
-function set_value(nodeid, commandclass, index, value) {
-  zwave.setValue(nodeid, commandclass, 1 , index, value);
+function set_value(nodeid, commandclass, value) {
+  zwave.setValue(nodeid, commandclass, 1 , 0, value);
 }
 
 function add_node(secure) {
