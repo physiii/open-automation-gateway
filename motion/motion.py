@@ -172,12 +172,6 @@ while True:
       else:
         text = "[MOTION]"
 
-
-
-
-
-			# if we are not already recording, start recording
-
   cv2.putText(frame, "{}".format(text), (10, 20),
     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
   cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
@@ -188,7 +182,6 @@ while True:
       motionCounter += 1
 
     if motionCounter >= 2:
-
 
       FPS = 10
       consecFrames = 0
@@ -205,8 +198,8 @@ while True:
       if not os.path.exists(dir_path + main_cam + '/' + year + '/'+ month + '/' + day):
         os.mkdir(dir_path + main_cam + '/' + year + '/' + month + '/' + day)
         continue
-			
 
+      # if we are not already recording, start recording
       if not kcw.recording:
         print("[MOTION] Detected!")
         preview_image = dir_path+'/preview.jpg'
