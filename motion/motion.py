@@ -186,6 +186,7 @@ while True:
       FPS = 10
       consecFrames = 0
       fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+      camera_folder = "/" + main_cam[-2:]
 
       if not os.path.exists(dir_path + '/gateway'):
         os.mkdir(dir_path + '/gateway')
@@ -195,28 +196,20 @@ while True:
         os.mkdir(dir_path + '/gateway' + '/events')
         continue
 
-      if not os.path.exists(dir_path + '/gateway' + '/events' + '/dev'):
-        os.mkdir(dir_path + '/gateway' + '/events' + '/dev')
+      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder):
+        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder)
         continue
 
-      if not os.path.exists(dir_path + '/gateway' + '/events' + '/dev' + '/video20'):
-        os.mkdir(dir_path + '/gateway' + '/events' + '/dev' + '/video20')
+      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder + '/' + year):
+        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder + '/' + year)
         continue
 
-      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam):
-        os.mkdir(dir_path + '/gateway' + '/events'+ main_cam)
+      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month):
+        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month)
         continue
 
-      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam + '/' + year):
-        os.mkdir(dir_path + '/gateway' + '/events' + main_cam + '/' + year)
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month):
-        os.mkdir(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month)
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/'+ month + '/' + day):
-        os.mkdir(dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month + '/' + day)
+      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/'+ month + '/' + day):
+        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month + '/' + day)
         continue
 
       # if we are not already recording, start recording
@@ -226,7 +219,7 @@ while True:
         cv2.imwrite(preview_image,frame)
         print("Starting video")
 
-        p = "{}/{}.avi".format((dir_path + '/gateway' + '/events' + main_cam + '/' + year + '/' + month + '/' + day),
+        p = "{}/{}.avi".format((dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month + '/' + day),
           year + '_' + month + '_' + day + '_' + hour)
 
         kcw.start(p, fourcc, FPS)
