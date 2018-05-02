@@ -27,20 +27,20 @@ from bson.objectid import ObjectId
 # Definitions and Classes
 
 def percentage(percent, wholeNum):
-    if wholeNum == 0:
-         print("Bad value for max number")
-    elif percent >= wholeNum:
-         print("Percentage will return greater than a 100 percent value")
-    else:
-        percent = float(percent)
-        wholeNum = float(wholeNum)
-        return (percent * wholeNum) / 100.0
+  if wholeNum == 0:
+    print("Bad value for max number")
+  elif percent >= wholeNum:
+    print("Percentage will return greater than a 100 percent value")
+  else:
+    percent = float(percent)
+    wholeNum = float(wholeNum)
+    return (percent * wholeNum) / 100.0
 
 class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
+  def default(self, o):
+    if isinstance(o, ObjectId):
+      return str(o)
+    return json.JSONEncoder.default(self, o)
 
 
 ##################################################################################################################
@@ -110,68 +110,67 @@ motionCounter = 0
 
 # keep looping
 while True:
-	# grab the current frame, resize it, and initialize a
-	# boolean used to indicate if the consecutive frames
-	# counter should be updated
-	frame = camera.read()
-	text = ""
-	updateConsecFrames = True
+  # grab the current frame, resize it, and initialize a
+  # boolean used to indicate if the consecutive frames
+  # counter should be updated
+  frame = camera.read()
+  text = ""
+  updateConsecFrames = True
 
-	timestamp = datetime.datetime.now()
-	year = timestamp.strftime("%Y")
-	month = timestamp.strftime("%B")
-	day = timestamp.strftime("%d")
-	hour = timestamp.strftime("%I:%M%p")
+  timestamp = datetime.datetime.now()
+  year = timestamp.strftime("%Y")
+  month = timestamp.strftime("%B")
+  day = timestamp.strftime("%d")
+  hour = timestamp.strftime("%I:%M%p")
 
-	# resize the frame, convert it to grayscale, and blur it
-	frame = imutils.resize(frame, width=600)
-	#print("frames:", frame.shape[1], frame.shape[0])
-	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-	gray = cv2.GaussianBlur(gray, (21, 21), 0)
+  #resize the frame, convert it to grayscale, and blur it
+  frame = imutils.resize(frame, width=600)
+  #print("frames:", frame.shape[1], frame.shape[0])
+  gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+  gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
 
-	# if the first frame is None, initialize it
+  # if the first frame is None, initialize it
 
-	if avg is None:
-		print( "[INFO] Starting background model...")
-  		sys.stdout.flush()
-		avg = gray.copy().astype("float")
-		continue
+  if avg is None:
+    print( "[INFO] Starting background model...")
+    sys.stdout.flush()
+    avg = gray.copy().astype("float")
+    continue
 
-	# accumulate the weighted average between the current frame and
-	# previous frames, then compute the difference between the current
-	# frame and running average
-	cv2.accumulateWeighted(gray, avg, 0.4)
-	frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
-	thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+  # accumulate the weighted average between the current frame and
+  # previous frames, then compute the difference between the current
+  # frame and running average
+  cv2.accumulateWeighted(gray, avg, 0.4)
+  frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
+  thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
 
-	# dilate the thresholded image to fill in holes, then find contours
-	# on thresholded image
-	thresh = cv2.dilate(thresh, None, iterations=2)
-	im2, cnts, heir = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)
+  # dilate the thresholded image to fill in holes, then find contours
+  # on thresholded image
+  thresh = cv2.dilate(thresh, None, iterations=2)
+  im2, cnts, heir = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+    cv2.CHAIN_APPROX_SIMPLE)
 
-	# Draw region detection area
-	if region_detect:
-		cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
+    # Draw region detection area
+  if region_detect:
+    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
 
-	# only proceed if at least one contour was found
-	for c in cnts:
-		# if the contour is too small, ignore it
-		if cv2.contourArea(c) < 5000:
-			continue
+# only proceed if at least one contour was found
+  for c in cnts:
+    # if the contour is too small, ignore it
+    if cv2.contourArea(c) < 5000:
+      continue
 
-		# compute the bounding box for the contour, draw it on the frame,
-		# and update the text
-		(x, y, w, h) = cv2.boundingRect(c)
-		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+      # compute the bounding box for the contour, draw it on the frame,
+      # and update the text
+    (x, y, w, h) = cv2.boundingRect(c)
+    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-		if region_detect:
-			if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
-				text = "[MOTION]"
-
-			else:
-				text = "[MOTION]"
+    if region_detect:
+      if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
+        text = "[MOTION]"
+      else:
+        text = "[MOTION]"
 
 
 
@@ -179,69 +178,69 @@ while True:
 
 			# if we are not already recording, start recording
 
-	cv2.putText(frame, "{}".format(text), (10, 20),
-		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-	cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
-		(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+  cv2.putText(frame, "{}".format(text), (10, 20),
+    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+  cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
+    (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
-	if text == "[MOTION]":
-		if (timestamp - lastUploaded).seconds >= 1.0:
-			motionCounter += 1
+  if text == "[MOTION]":
+    if (timestamp - lastUploaded).seconds >= 1.0:
+      motionCounter += 1
 
-		if motionCounter >= 2:
+    if motionCounter >= 2:
 
 
-			FPS = 10
-			consecFrames = 0
-			fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+      FPS = 10
+      consecFrames = 0
+      fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
-			if not os.path.exists(dir_path + main_cam + '/' + year):
-				os.mkdir(dir_path + main_cam + '/' + year)
-                continue
+      if not os.path.exists(dir_path + main_cam + '/' + year):
+        os.mkdir(dir_path + main_cam + '/' + year)
+        continue
 
-			if not os.path.exists(dir_path + main_cam + '/' + year + '/' + month):
-				os.mkdir(dir_path + main_cam + '/' + year + '/' + month)
-                continue
+      if not os.path.exists(dir_path + main_cam + '/' + year + '/' + month):
+        os.mkdir(dir_path + main_cam + '/' + year + '/' + month)
+        continue
 
-			if not os.path.exists(dir_path + main_cam + '/' + year + '/'+ month + '/' + day):
-				os.mkdir(dir_path + main_cam + '/' + year + '/' + month + '/' + day)
-                continue
-			#output = dir_path+'/events/'+month+"/"+day
+      if not os.path.exists(dir_path + main_cam + '/' + year + '/'+ month + '/' + day):
+        os.mkdir(dir_path + main_cam + '/' + year + '/' + month + '/' + day)
+        continue
+			
 
-			if not kcw.recording:
-				print("[MOTION] Detected!")
-                		preview_image = dir_path+'/preview.jpg'
-    				cv2.imwrite(preview_image,frame)
-				print("Starting video")
+      if not kcw.recording:
+        print("[MOTION] Detected!")
+        preview_image = dir_path+'/preview.jpg'
+        cv2.imwrite(preview_image,frame)
+        print("Starting video")
 
-				p = "{}/{}.avi".format((dir_path + main_cam + '/' + year + '/' + month + '/' + day),
-					year + '_' + month + '_' + day + '_' + hour)
+        p = "{}/{}.avi".format((dir_path + main_cam + '/' + year + '/' + month + '/' + day),
+          year + '_' + month + '_' + day + '_' + hour)
 
-				kcw.start(p, fourcc, FPS)
+        kcw.start(p, fourcc, FPS)
 
-	if updateConsecFrames:
-		consecFrames += 1
+  if updateConsecFrames:
+    consecFrames += 1
 
-	if consecFrames >=  (bufSize + 10):
-		consecFrames = 0
+  if consecFrames >=  (bufSize + 10):
+    consecFrames = 0
 
-	kcw.update(frame)
+  kcw.update(frame)
 
-	if kcw.recording and consecFrames >= bufSize:
-		print("Video Finished Capturing")
-		kcw.finish()
+  if kcw.recording and consecFrames >= bufSize:
+    print("Video Finished Capturing")
+    kcw.finish()
 
-	#cv2.imshow("Security Feed", frame)
-	#cv2.imshow("Thresh Feed", thresh)
-	#key = cv2.waitKey(1) & 0xFF
+  #cv2.imshow("Security Feed", frame)
+  #cv2.imshow("Thresh Feed", thresh)
+  #key = cv2.waitKey(1) & 0xFF
 
-	#if the `q` key was pressed, break from the loop
-	#if key == ord("q"):
-	#	break
+  #if the `q` key was pressed, break from the loop
+  #if key == ord("q"):
+  #	break
 
 # if we are in the middle of recording a clip, wrap it up
 #if kcw.recording:
-	#kcw.finish()
+  #kcw.finish()
 
 # do a bit of cleanup
 #camera.release()
