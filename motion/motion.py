@@ -236,20 +236,3 @@ while True:
   if kcw.recording and consecFrames >= bufSize:
     print("Video Finished Capturing")
     kcw.finish()
-
-  #cv2.imshow("Security Feed", frame)
-  #cv2.imshow("Thresh Feed", thresh)
-  #key = cv2.waitKey(1) & 0xFF
-
-  #if the `q` key was pressed, break from the loop
-  #if key == ord("q"):
-  #	break
->>>>>>> Jeremy-Dev
-
-# if we are in the middle of recording a clip, wrap it up
-#if kcw.recording:
-  #kcw.finish()
-
-# do a bit of cleanup
-#camera.release()
-#cv2.destroyAllWindows()
