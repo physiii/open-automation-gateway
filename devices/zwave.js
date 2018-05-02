@@ -6,18 +6,9 @@ var socket = require('../socket.js');
 var os = require('os');
 var config = require('../config.json');
 var database = require('../database');
+var deadbolt = require('./deadbolt.js');
+
 var set_timer = config.lock_timer;
-
-module.exports = {
-  add_node: add_node,
-  remove_node: remove_node,
-  hard_reset: hard_reset,
-  set_value: set_value,
-  on: function(event_name, callback){
-    return zwave.on(event_name, callback);
-  }
-}
-
 var nodes = [];
 var OpenZWave = require('openzwave-shared');
 var zwave = new OpenZWave({
@@ -30,22 +21,12 @@ var zwave = new OpenZWave({
 	NetworkKey: "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10"
 });
 
-function set_value(nodeid, commandclass, index, value) {
-  zwave.setValue(nodeid, commandclass, 1 , index, value);
-}
-
-function add_node(secure) {
-  zwave.addNode();
-}
-
-function remove_node() {
-  console.log("remove node...");
-  zwave.removeNode();
-}
-
-function hard_reset() {
-  console.log("hard reset...");
-  zwave.hardReset();
+module.exports = {
+  add_node: add_node,
+  remove_node: remove_node,
+  hard_reset: hard_reset,
+  set_value: set_value,
+  }
 }
 
 //function init_zwave() {
@@ -95,14 +76,9 @@ zwave.on('value changed', function(nodeid, comclass, value) {
       value['value']);
 
       // Re-locking Functionality
-      if(value.label == 'Alarm Type') {
-        if(set_timer == "0") return;
-        if(value.value == '22' || value.value == '25' || value.value == '19') {
-          setTimeout(function() {
-            set_value(nodeid,98,0,true)}, set_timer*1000);
-        };
-      };
-
+      if(is_unlock_event(value.label, value.value)) {
+        deadbolt.when_unlocked(nodeid);
+      }
 
     console.log("value changed",nodes[nodeid].product);
     database.store_device(nodes[nodeid]);
@@ -176,3 +152,41 @@ process.on('SIGINT', function() {
 	zwave.disconnect();
 	process.exit();
 });
+
+deadbolt.lockDesires.on('deadbolt/add', function(){
+  return add_node(1);
+});
+
+deadbolt.lockDesires.on('deadbolt/remove', function(){
+  return remove_node();
+});
+
+deadbolt.lockDesires.on('deadbolt/desiredState', function(nodeid, desiredState){
+  return set_value(nodeid,98, 0, desiredState);
+});
+
+function set_value(nodeid, commandclass, index, value) {
+  zwave.setValue(nodeid, commandclass, 1 , index, value);
+}
+
+function add_node(secure) {
+  zwave.addNode();
+}
+
+function remove_node() {
+  console.log("remove node...");
+  zwave.removeNode();
+}
+
+function hard_reset() {
+  console.log("hard reset...");
+  zwave.hardReset();
+}
+
+function is_unlock_event(label, value){
+  if (label != 'Alarm Type') return false;
+  if (value == '19') return true;
+  if (value == '22') return true;
+  if (value == '25') return true;
+  return false;
+}

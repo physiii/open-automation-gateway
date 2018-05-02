@@ -2,12 +2,14 @@
 // ------------  https://github.com/physiii/open-automation-gateway --------------- //
 // --------------------------------- deadbolt.js----------------------------- //
 
+const EventEmitter = require('events');
 var socket = require('../socket.js');
-var zwave = require('./zwave.js');
 var config = require('../config.json');
+
 var TAG = "[deadbolt.js]";
 var test_var = "test variable";
 var set_timer = config.lock_timer;
+var lockDesires = new EventEmitter();
 
 
 module.exports = {
@@ -18,7 +20,8 @@ module.exports = {
 	lock: lock,
   //check_values: check_values,
   //auto_lock: auto_lock,
-	test_var:test_var
+	test_var:test_var,
+  lockDesires: lockDesires
 }
 
 /*
@@ -67,42 +70,25 @@ socket.relay.on('set lock group', function(data) {
 
 
 //---------------------------Functions------------------------------------
-/*
-function auto_lock(nodeid) {
-  if (set_timer === "0") return;
-  setTimeout(function(nodeid) {
-    lock(nodeid)}, set_timer*1000);
-};
-
-
-function check_values(nodeid,comclass,value){
-  if(comclass != 98) return;
-  if(value.label != lock) return;
-  if(value.value) return;
-  auto_lock(nodeid)
-};
-*/
+function when_unlocked(nodeid){
+  if(set_timer == "0") return;
+    setTimeout(function() {
+      lock(nodeid)
+    }, set_timer*1000);
+}
 
 function add_lock() {
-  zwave.add_node(1)
+  lockDesires.emit('deadbolt/add');
 }
 
 function remove_lock() {
-  zwave.remove_node()
+  lockDesires.emit('deadbolt/remove');
 }
 
 function unlock(nodeid) {
-  zwave.set_value(nodeid,98, 0, false);
+  lockDesires.emit('deadbolt/desiredState', nodeid, false);
 }
 
 function lock(nodeid) {
-  zwave.set_value(nodeid,98, 0, true);
+  lockDesires.emit('deadbolt/desiredState', nodeid, true);
 }
-
-function test_lock(){
-	console.log("running lock test")
-  lock(4, 98, 0);
-  unlock(4, 98, 0);
-};
-
-function check_status(){continue};
