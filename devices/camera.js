@@ -301,7 +301,7 @@ function start_motion() {
     //var conf = {test:"testing"};
     //conf = conf.toString();
 
-    motion = spawn('sudo',['python', __dirname+'/../motion/motion.py']);
+    motion = spawn('python',[__dirname+'/../motion/motion.py']);
     //motion = spawn('python',[__dirname+'/../motion/motion.py',conf]);
     //motion = spawn('python',[__dirname+'/../motion/motion.py','-c',__dirname+'/../motion/conf.json']);
 
