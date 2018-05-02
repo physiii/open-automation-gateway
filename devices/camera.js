@@ -10,6 +10,8 @@ var ffmpeg = require('fluent-ffmpeg');
 var path = require('path');
 var fs = require('fs');
 var promiseAllSoftFail = require('promise-all-soft-fail').promiseAllSoftFail;
+
+
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 5054;
 var use_ssl = config.use_ssl || false;
@@ -322,7 +324,7 @@ function start_motion() {
 }
 
 function send_camera_preview(camera_number, socket_id) {
-  var path = __dirname + "../motion/preview.jpg";
+  var path = 'usr/local/lib/gateway/events/preview.jpg';
   fs.readFile(path, function(err, data) {
     if (err) return console.log(err); // Fail if the file can't be read.
     var settings = database.settings;
@@ -376,13 +378,15 @@ function start_ffmpeg(data) {
   var camera_number = camera.camera_number;
   var video_width = camera.resolution.width;
   var video_height = camera.resolution.height;
+  var is_https = "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+  var is_http = "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
   if (!video_width) video_width = "640";
   if (!video_height) video_height = "480";
 
 
   //ffmpeg -f alsa -i hw:1 -s 1280x720 -f v4l2 -i /dev/video20 -f mpegts -codec:a mp2 -ar 44100 -ac 1 -b:a 128k -codec:v mpeg1video -b:v 600k -r 2 -strict -1 http://pyfi.org:8082/09380fc2e0dcf35a04bcc15e254bf4d05cade3047d93ba5b2d87244057add8da260b0a387681bba52e2d9d3cdd4c61474ac5b3918fe75673b7fd70d94bc4418d/20/
   if (data.command == "start_webcam") {
-    if (use_dev == false){
+    if (!use_dev || use_ssl){
     var command =  [
                    //'-loglevel', 'panic',
                    //'-r', '2',
@@ -402,60 +406,13 @@ function start_ffmpeg(data) {
                    '-b:v', '600k',
                    '-r', '24',
                    '-strict', '-1',
-                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+                   if (!use_dev || use_ssl) is_https;
+                   if (use_dev && !use_ssl) is_http;
                  ];
     }
-    if (use_domain_ssl || use_ssl) {
-      var command =  [
-                   //'-loglevel', 'panic',
-                   //'-r', '2',
-                   //'-strict', '-1',
-                   '-f', 'alsa',
-                   '-i', device_hw,
-                   '-s', video_width+"x"+video_height,
-                   '-f', 'v4l2',
-                   '-i', '/dev/video'+camera_number,
-                   '-f', 'mpegts',
-                   '-vf', rotation,
-       '-codec:a', 'mp2',
-       '-ar', '44100',
-       '-ac', '1',
-         '-b:a', '128k',
-       '-codec:v', 'mpeg1video',
-                   '-b:v', '600k',
-                   '-r', '24',
-                   '-strict', '-1',
-                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
-                 ];
-    }
-    if (use_domain_ssl == false && use_dev && use_ssl == false){
-      var command =  [
-                   //'-loglevel', 'panic',
-                   //'-r', '2',
-                   //'-strict', '-1',
-                   '-f', 'alsa',
-                   '-i', device_hw,
-                   '-s', video_width+"x"+video_height,
-                   '-f', 'v4l2',
-                   '-i', '/dev/video'+camera_number,
-                   '-f', 'mpegts',
-                   '-vf', rotation,
-       '-codec:a', 'mp2',
-       '-ar', '44100',
-       '-ac', '1',
-         '-b:a', '128k',
-       '-codec:v', 'mpeg1video',
-                   '-b:v', '600k',
-                   '-r', '24',
-                   '-strict', '-1',
-                   "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
-                 ];
-    }
-  }
   if (data.command == "play_file") {
     /*if (ffmpeg)
       stop_ffmpeg(ffmpeg);*/
-    if (use_dev == false){
     var command =  [
                    //'-loglevel', 'panic',
                    '-i', data.file,
@@ -464,33 +421,8 @@ function start_ffmpeg(data) {
                    '-b:v', '600k',
                    '-r', '24',
                    '-strict', '-1',
-                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
-                 ];
-    }
-    if (use_domain_ssl || use_ssl) {
-    var command =  [
-                   //'-loglevel', 'panic',
-                   '-i', data.file,
-                   '-f', 'mpegts',
-       '-codec:v', 'mpeg1video',
-                   '-b:v', '600k',
-                   '-r', '24',
-                   '-strict', '-1',
-                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
-                 ];
-    }
-    if (use_domain_ssl == false && use_dev && use_ssl == false){
-    var command =  [
-                   //'-loglevel', 'panic',
-                   '-y',
-                   '-r', '10',
-                   '-i', data.file,
-                   '-r', '30',
-                   '-f', 'mpegts',
-       '-codec:v', 'mpeg1video',
-                   '-b:v', '600k',
-                   '-strict', '-1',
-                   "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+                   if (!use_dev || use_ssl) is_https;
+                   if (use_dev && !use_ssl) is_http;
                  ];
     }
     console.log("playing file:",command);
@@ -498,7 +430,6 @@ function start_ffmpeg(data) {
   }
 
   if (data.command == "play_folder") {
-    if (use_dev == false){
     var command =  [
                    //'-loglevel', 'panic',
                    '-r', '24',
@@ -509,37 +440,10 @@ function start_ffmpeg(data) {
                    '-r', '24',
                    '-strict', '-1',
        //'-ss', '00:00:30',
-                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
+                   if (!use_dev || use_ssl) is_https;
+                   if (use_dev && !use_ssl) is_http;
                  ];
-    }
-    if (use_domain_ssl || use_ssl) {
-    var command =  [
-                   //'-loglevel', 'panic',
-                   '-r', '24',
-                   '-strict', '-1',
-                   '-i', data.folder_list,
-                   '-f', 'mpegts',
-       '-codec:v', 'mpeg1video',
-                   '-r', '24',
-                   '-strict', '-1',
-       //'-ss', '00:00:30',
-                   "https://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
-                 ];
-    }
-    if (use_domain_ssl == false && use_dev && use_ssl == false){
-    var command =  [
-                   //'-loglevel', 'panic',
-                   '-framerate', '10',
-                   '-strict', '-1',
-                   '-i', data.folder_list,
-                   '-f', 'mpegts',
-       '-codec:v', 'mpeg1video',
-                   '-r', '24',
-                   '-strict', '-1',
-       //'-ss', '00:00:30',
-                   "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/"
-                 ];
-    }
+    }    
     send_file_duration(data);
     //console.log("ffmpeg play_folder:");
   }
