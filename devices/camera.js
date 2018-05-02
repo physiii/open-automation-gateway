@@ -11,7 +11,6 @@ var path = require('path');
 var fs = require('fs');
 var promiseAllSoftFail = require('promise-all-soft-fail').promiseAllSoftFail;
 
-
 var TAG = "[camera.js]";
 var STREAM_PORT = config.video_stream_port || 5054;
 var use_ssl = config.use_ssl || false;
@@ -351,6 +350,7 @@ function send_file_duration (data) {
 }
 
 var ffmpeg_proc_list = [];
+
 function start_ffmpeg(data) {
   var relay_server = config.relay_server;
   var index = utils.find_index(device_array,"camera_number",data.camera_number);
