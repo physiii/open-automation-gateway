@@ -4,7 +4,6 @@
   "zwave":false,
   "zwave_dev":"ACM0",
   "use_ssl":false,
-  "use_domain_ssl":false,
   "use_dev":true,
   "video_stream_port":5054,
   "rotation": "0",
