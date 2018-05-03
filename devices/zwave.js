@@ -168,7 +168,7 @@ function set_value(nodeid, commandclass, value) {
 }
 
 function add_node(secure) {
-  zwave.addNode();
+  zwave.addNode(secure);
 }
 
 function remove_node() {
