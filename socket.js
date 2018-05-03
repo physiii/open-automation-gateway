@@ -23,7 +23,7 @@ var relay_server = config.relay_server;
 var relay_port = 5000;
 }
 
-if (use_ssl) {
+if (!use_dev || use_ssl) {
 var relay = require('socket.io-client')("https://"+relay_server+":"+relay_port);
 console.log('Connected to:',relay_server+":"+relay_port);
 } else {
