@@ -78,6 +78,10 @@ zwave.on('value changed', function(nodeid, comclass, value) {
         deadbolt.when_unlocked(nodeid);
       }
 
+      if(is_lock_event(value.label, value.value)){
+	deadbolt.when_locked(nodeid);
+      }
+
     console.log("value changed",nodes[nodeid].product);
     database.store_device(nodes[nodeid]);
   };
@@ -179,6 +183,12 @@ function remove_node() {
 function hard_reset() {
   console.log("hard reset...");
   zwave.hardReset();
+}
+
+function is_lock_event(label, value){
+  if (label != 'Alarm Type') return false;
+  if (value == '21') return true;
+  return false;
 }
 
 function is_unlock_event(label, value){

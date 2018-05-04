@@ -8,6 +8,7 @@ var config = require('../config.json');
 
 var TAG = "[deadbolt.js]";
 var test_var = "test variable";
+var lock_timer;
 var set_timer = config.lock_timer;
 var lockDesires = new EventEmitter();
 
@@ -15,9 +16,10 @@ var lockDesires = new EventEmitter();
 module.exports = {
   add_lock: add_lock,
   remove_lock: remove_lock,
-	lock: lock,
+  lock: lock,
   unlock: unlock,
-	when_unlocked: when_unlocked,
+  when_unlocked: when_unlocked,
+  when_locked: when_locked,
   lockDesires: lockDesires
 }
 
@@ -68,9 +70,13 @@ socket.relay.on('set lock group', function(data) {
 //---------------------------Functions------------------------------------
 function when_unlocked(nodeid){
   if(set_timer == "0") return;
-    setTimeout(function() {
+    lock_timer = setTimeout(function() {
       lock(nodeid)
     }, set_timer*1000);
+}
+
+function when_locked(nodeid){
+  clearTimeout(lock_timer);
 }
 
 function add_lock() {

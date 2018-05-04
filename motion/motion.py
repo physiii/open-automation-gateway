@@ -86,7 +86,7 @@ r_height = 200
 r_width = 300
 xmin = 0
 ymin = 100
-region_detect = True
+region_detect = False
 xmax = xmin + r_width
 ymax = ymin + r_height
 avg = None
@@ -170,8 +170,8 @@ while True:
     if region_detect:
       if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
         text = "[MOTION]"
-      else:
-        text = "[MOTION]"
+    else:
+      text = "[MOTION]"
 
   cv2.putText(frame, "{}".format(text), (10, 20),
     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)

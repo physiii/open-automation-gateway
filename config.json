@@ -7,6 +7,6 @@
   "use_dev":false,
   "video_stream_port":8084,
   "rotation": "0",
-  "lock_timer": "0",
+  "lock_timer": "900",
   "device_hw":"plughw:1"
 }
