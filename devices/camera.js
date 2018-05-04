@@ -9,7 +9,7 @@ const recursive = require('recursive-readdir');
 var ffmpeg = require('fluent-ffmpeg');
 var path = require('path');
 var fs = require('fs');
-var sha = require('sha256')
+var crypto = require('crypto')
 var promiseAllSoftFail = require('promise-all-soft-fail').promiseAllSoftFail;
 
 var TAG = "[camera.js]";
@@ -128,7 +128,7 @@ socket.relay.on('ffmpeg', function (data) {
 // ---------------- //
 
 function recordings_list (data, callback) {
-  var directory = path.join('pi/usr/local/lib/gateway/events', data.camera_number.toString());
+  var directory = path.join('/usr/local/lib/gateway/events', data.camera_number.toString());
 
   recursive(directory, function (error, files) {
     var recordings_list = [];
@@ -186,21 +186,22 @@ function recordings_list (data, callback) {
       list_promises.push(
         promiseAllSoftFail([file_promise, date_promise, duration_promise, res_promise]).then(function (file_data) {
           var recording = {
+              id: null,
               file: file_data[0],
-              id: sha.sha256(file_data[0]),
               date: file_data[1],
               duration: file_data[2],
               resolution: file_data[3]
             };
 
+          try {
+            recording.id = crypto.createHash('sha256').update(file_data[0]).digest('hex');
+          } catch (error) {
+            reject(error);
+          }
+
           if (!recording.date || Object.prototype.toString.call(recording.date) === '[object Error]') {
             recording.date = null;
             recording.error = 'Error getting recording date';
-          }
-
-          if (!recording.id || Object.prototype.toString.call(recording.id) === '[object Error]') {
-            recording.id = null;
-            recording.error = 'Error hasing file';
           }
 
           if (!recording.duration || Object.prototype.toString.call(recording.duration) === '[object Error]') {
