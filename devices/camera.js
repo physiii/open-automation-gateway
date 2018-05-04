@@ -223,13 +223,13 @@ function recordings_list (data, callback) {
       );
     };
 
-    recordings_list.sort(function(a,b){
-      if(a.date > b.date) return 1;
-      if(a.date < b.date) return -1;
-      return 0;
-    });
-    
     Promise.all(list_promises).then(function () {
+      recordings_list.sort(function (a, b){
+        if (a.date < b.date) return -1;
+        if (a.date > b.date) return 1;
+        return 0;
+      });
+
       if (typeof callback === 'function') {
         callback(null, recordings_list);
       }
