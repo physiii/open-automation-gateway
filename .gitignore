@@ -3,4 +3,4 @@ node_modules/
 motion/temp
 motion/events
 motion/preview.jpg
-*.pyc
+keyclipwriter.pyc
