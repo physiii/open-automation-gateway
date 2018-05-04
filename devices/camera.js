@@ -9,6 +9,7 @@ const recursive = require('recursive-readdir');
 var ffmpeg = require('fluent-ffmpeg');
 var path = require('path');
 var fs = require('fs');
+var sha = require('sha256')
 var promiseAllSoftFail = require('promise-all-soft-fail').promiseAllSoftFail;
 
 var TAG = "[camera.js]";
@@ -186,6 +187,7 @@ function recordings_list (data, callback) {
         promiseAllSoftFail([file_promise, date_promise, duration_promise, res_promise]).then(function (file_data) {
           var recording = {
               file: file_data[0],
+              id: sha.sha256(file_data[0]),
               date: file_data[1],
               duration: file_data[2],
               resolution: file_data[3]
@@ -195,6 +197,12 @@ function recordings_list (data, callback) {
             recording.date = null;
             recording.error = 'Error getting recording date';
           }
+
+          if (!recording.id || Object.prototype.toString.call(recording.id) === '[object Error]') {
+            recording.id = null;
+            recording.error = 'Error hasing file';
+          }
+
           if (!recording.duration || Object.prototype.toString.call(recording.duration) === '[object Error]') {
             recording.duration = null;
             recording.error = 'Error getting recording duration';
