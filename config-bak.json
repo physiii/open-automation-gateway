@@ -1,9 +1,0 @@
-{
-  "relay_server":"10.10.10.118",
-  "relay_port":5000,
-  "use_ssl":false,
-  "use_domain_ssl":false,
-  "use_dev":true,
-  "video_stream_port":5054,
-  "device_hw":"hw:0"
-}
