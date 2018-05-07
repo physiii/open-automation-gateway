@@ -23,12 +23,15 @@ var relay_server = config.relay_server;
 var relay_port = 5000;
 }
 
-if (!use_dev || use_ssl) {
+if (!use_dev) {
+var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
+console.log('Connected to: http',relay_server+":"+relay_port);
+} else if (use_ssl) {
 var relay = require('socket.io-client')("https://"+relay_server+":"+relay_port);
-console.log('Connected to:',relay_server+":"+relay_port);
+console.log('Connected to:https',relay_server+":"+relay_port);
 } else {
 var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
-console.log('Connected to:',relay_server+":"+relay_port);
+console.log('Connected to: http',relay_server+":"+relay_port);
 }
 //var load_settings_timer;
 
@@ -117,6 +120,7 @@ relay.on('command', function (data) {
 relay.on('update', function (data) {
   utils.update();
 });
+
 
 relay.on('get settings', function (data, callback) {
   var settings = database.settings;
