@@ -6,7 +6,7 @@ var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 const video_duration = require('get-video-duration');
 const recursive = require('recursive-readdir');
-var ffmpeg = require('fluent-ffmpeg');
+var ffmpeg_fluent = require('fluent-ffmpeg');
 var path = require('path');
 var fs = require('fs');
 var crypto = require('crypto')
@@ -167,7 +167,7 @@ function recordings_list (data, callback) {
 
       var res_promise = new Promise(function (resolve, reject) {
         try {
-          ffmpeg(files[i]).ffprobe(function (error, file_info) {
+          ffmpeg_fluent(files[i]).ffprobe(function (error, file_info) {
             if (error) {
               reject(error);
               return;
@@ -338,7 +338,7 @@ function start_motion() {
 }
 
 function send_camera_preview(camera_number, socket_id) {
-  var path = '/usr/local/lib/gateway/events/preview.jpg';
+  var path = '/usr/local/lib/gateway/events/' + camera_number + '/preview.jpg';
   fs.readFile(path, function(err, data) {
     if (err) return console.log(err); // Fail if the file can't be read.
     var settings = database.settings;
@@ -429,11 +429,11 @@ function start_ffmpeg(data) {
       stop_ffmpeg(ffmpeg);*/
     var command =  [
                    //'-loglevel', 'panic',
+                   '-re',
                    '-i', data.file,
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
                    '-b:v', '600k',
-                   '-r', '24',
                    '-strict', '-1',
                    website
                  ];
@@ -446,12 +446,10 @@ function start_ffmpeg(data) {
   if (data.command == "play_folder") {
     var command =  [
                    //'-loglevel', 'panic',
-                   '-r', '24',
-                   '-strict', '-1',
+                   '-re',
                    '-i', data.folder_list,
                    '-f', 'mpegts',
        '-codec:v', 'mpeg1video',
-                   '-r', '24',
                    '-strict', '-1',
        //'-ss', '00:00:30',
                    website

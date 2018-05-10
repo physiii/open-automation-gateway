@@ -36,6 +36,54 @@ def percentage(percent, wholeNum):
     wholeNum = float(wholeNum)
     return (percent * wholeNum) / 100.0
 
+def getCameraFolderName(camera):
+  return camera[-2:]
+
+def createFolderIfNotExists(path):
+  if not os.path.exists(path):
+    os.mkdir(path)
+  return path
+
+def getBasePath():
+  return createFolderIfNotExists('/usr/local/lib/gateway')
+
+def getEventsPath():
+  return createFolderIfNotExists(getBasePath() + '/events')
+
+def getTempPath():
+  return createFolderIfNotExists(getBasePath() + '/temp')
+
+def getCameraPath(camera):
+  return createFolderIfNotExists(getEventsPath() + '/' + getCameraFolderName(camera))
+
+def getCameraTempPath(camera):
+  return createFolderIfNotExists(getTempPath() + '/' + getCameraFolderName(camera))
+
+def getDatePath(camera, date):
+  cameraPath = getCameraPath(camera)
+  yearPath = createFolderIfNotExists(cameraPath + '/' + date.strftime("%Y"))
+  monthPath = createFolderIfNotExists(yearPath + '/' + date.strftime("%m"))
+  datePath = createFolderIfNotExists(monthPath + '/' +  date.strftime("%d"))
+
+  return datePath
+
+def getFileName(date):
+  return date.strftime('%Y-%m-%d_%I:%M:%S%p') + '.avi'
+
+def framerateInterval(framerate):
+  interval = datetime.timedelta(seconds = float(1) / framerate)
+  nextFrameTargetTime = datetime.datetime.now()
+
+  while True:
+    nextFrameTargetTime += interval
+    secondsUntilNextFrame = (nextFrameTargetTime - datetime.datetime.now()).total_seconds()
+    needCatchUpFrame = secondsUntilNextFrame < 0
+
+    if not needCatchUpFrame:
+      time.sleep(secondsUntilNextFrame)
+
+    yield needCatchUpFrame
+
 class JSONEncoder(json.JSONEncoder):
   def default(self, o):
     if isinstance(o, ObjectId):
@@ -81,7 +129,6 @@ if connection is not None:
 
 # construct the argument parse and parse the arguments
 
-dir_path = '/usr/local/lib'
 r_height = 200
 r_width = 300
 xmin = 0
@@ -96,53 +143,44 @@ avg = None
 # initialize the video stream and allow the camera sensor to
 # warmup
 print("[INFO] Warming up camera...")
-camera = VideoStream(src=main_cam, framerate=10).start()
+camera = VideoStream(src=main_cam).start()
 time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
-bufSize = 60
+framerate = 30
+bufSize = 3 * framerate # seconds * framerate
 kcw = KeyClipWriter(bufSize)
 consecFrames = 0
 lastUploaded = datetime.datetime.now()
-firstFrame = None
+frame = None
 motionCounter = 0
 
 # keep looping
-while True:
+for needCatchUpFrame in framerateInterval(framerate):
+  if needCatchUpFrame:
+    kcw.update(frame)
+    continue
 
-	# grab the current frame, resize it, and initialize a
-	# boolean used to indicate if the consecutive frames
-	# counter should be updated
-  frame = camera.read()
-  text = ""
-  updateConsecFrames = True
-
+  motionDetected = False
   timestamp = datetime.datetime.now()
-  year = timestamp.strftime("%Y")
-  month = timestamp.strftime("%B")
-  day = timestamp.strftime("%d")
-  hour = timestamp.strftime("%I:%M%p")
+
+  # grab the current frame
+  frame = camera.read()
 
   #resize the frame, convert it to grayscale, and blur it
-  frame = imutils.resize(frame, width=600)
-  #print("frames:", frame.shape[1], frame.shape[0])
-  gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+  gray = cv2.cvtColor(imutils.resize(frame, width=600), cv2.COLOR_BGR2GRAY)
   gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
-
   # if the first frame is None, initialize it
-
   if avg is None:
     print( "[INFO] Starting background model...")
-    sys.stdout.flush()
     avg = gray.copy().astype("float")
-    continue
 
   # accumulate the weighted average between the current frame and
   # previous frames, then compute the difference between the current
   # frame and running average
-  cv2.accumulateWeighted(gray, avg, 0.4)
+  cv2.accumulateWeighted(gray, avg, 0.2)
   frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
   thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
 
@@ -152,87 +190,74 @@ while True:
   im2, cnts, heir = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
     cv2.CHAIN_APPROX_SIMPLE)
 
-    # Draw region detection area
-  if region_detect:
-    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
-
 # only proceed if at least one contour was found
   for c in cnts:
     # if the contour is too small, ignore it
     if cv2.contourArea(c) < 5000:
       continue
 
-      # compute the bounding box for the contour, draw it on the frame,
-      # and update the text
+    # compute the bounding box for the contour
     (x, y, w, h) = cv2.boundingRect(c)
-    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     if region_detect:
       if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
-        text = "[MOTION]"
+        motionDetected = True
     else:
-      text = "[MOTION]"
+      motionDetected = True
 
-  cv2.putText(frame, "{}".format(text), (10, 20),
-    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-  cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
-    (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-
-  if text == "[MOTION]":
+  if motionDetected:
     if (timestamp - lastUploaded).seconds >= 1.0:
       motionCounter += 1
 
     if motionCounter >= 2:
-
-      FPS = 10
       consecFrames = 0
-      fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-      camera_folder = "/" + main_cam[-2:]
-
-      if not os.path.exists(dir_path + '/gateway'):
-        os.mkdir(dir_path + '/gateway')
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events'):
-        os.mkdir(dir_path + '/gateway' + '/events')
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder):
-        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder)
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder + '/' + year):
-        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder + '/' + year)
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month):
-        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month)
-        continue
-
-      if not os.path.exists(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/'+ month + '/' + day):
-        os.mkdir(dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month + '/' + day)
-        continue
 
       # if we are not already recording, start recording
       if not kcw.recording:
         print("[MOTION] Detected!")
-        preview_image = dir_path + '/gateway' + '/events' + '/preview.jpg'
-        cv2.imwrite(preview_image,frame)
-        print("Starting video")
 
-        p = "{}/{}.avi".format((dir_path + '/gateway' + '/events' + camera_folder + '/' + year + '/' + month + '/' + day),
-          year + '_' + month + '_' + day + '_' + hour)
+        # save a preview image
+        cv2.imwrite(getCameraPath(main_cam) + '/preview.jpg', frame)
 
-        kcw.start(p, fourcc, FPS)
+        fileName = getFileName(timestamp)
+        tempRecordingPath = getCameraTempPath(main_cam) + '/' + fileName
+        finishedRecordingPath = getDatePath(main_cam, timestamp) + '/' + fileName
 
-  if updateConsecFrames:
-    consecFrames += 1
+        kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'PIM1'), framerate)
 
-  if consecFrames >=  (bufSize + 10):
+  consecFrames += 1
+  if consecFrames >= (bufSize + 10):
     consecFrames = 0
+
+  # add timestamp text to frame
+  # text shadow
+  cv2.putText(frame, datetime.datetime.now().strftime("%-m/%-d/%Y %-I:%M:%S %p"),
+    (11, frame.shape[0] - 9), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 4)
+  # text
+  cv2.putText(frame, datetime.datetime.now().strftime("%-m/%-d/%Y %-I:%M:%S %p"),
+    (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 255, 60), 2)
+
+  # Draw region detection area
+  if region_detect:
+    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
 
   kcw.update(frame)
 
   if kcw.recording and consecFrames >= bufSize:
-    print("Video Finished Capturing")
-    kcw.finish()
+    print("Recording finished capturing")
+    sys.stdout.flush()
+
+    def finishedCallback(tempFile, finishedFile):
+      print("Recording finished saving")
+      sys.stdout.flush()
+
+      os.rename(tempFile, finishedFile)
+
+    kcw.finish(finishedCallback, tempRecordingPath, finishedRecordingPath)
+
+    # create a new KeyClipWriter. the existing one continues saving the 
+    # recording in a separate thread
+    kcw = KeyClipWriter(bufSize)
+
+  sys.stdout.flush()
+  continue
