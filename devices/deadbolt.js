@@ -7,13 +7,11 @@ var socket = require('../socket.js');
 var config = require('../config.json');
 var utils = require('../utils');
 
-var TAG = "[deadbolt.js]";
-var test_var = "test variable";
-var lock_timers = [];
-var deadbolts = {}
-var set_timer = config.lock_timer;
-var find_index = utils.find_index;
-var lockDesires = new EventEmitter();
+let TAG = "[deadbolt.js]";
+let timers = {}
+let set_timer = config.lock_timer;
+let find_index = utils.find_index;
+let lockDesires = new EventEmitter();
 
 
 module.exports = {
@@ -38,10 +36,6 @@ as 4 discrete integer arguments:
 --------------------------------------------------------------------------------------
 
 */
-
-console.log("loading test variable _ "+test_var);
-
-
 
 //---------------Socket Calls ----------------------------------
 socket.relay.on('set lock', function(data) {
@@ -72,21 +66,20 @@ socket.relay.on('set lock group', function(data) {
 //---------------------------Functions------------------------------------
 function when_unlocked(nodeid){
   if (!set_timer) return;
-  deadbolts.device_id = nodeid;
-  deadbolts.timer = setTimeout(function() {
-     lock(nodeid)
-   }, set_timer*1000);
-  lock_timers.push(deadbolts);
+  timers[nodeid] = setTimeout(function() {
+    console.log('Door',nodeid,"lock timer expired. Relocking door."); 
+    lock(nodeid);
+   }, set_timer*1000);  
   console.log(TAG,
               'Detected door',
-              deadbolts.device_id,
+              nodeid,
               'unlocked. Setting relock timer.')
 }
 
-function when_locked(nodeid){
-  var lock = lock_timers[find_index(lock_timers,'device_id',nodeid)];
-  console.log(TAG, 'Detected door',lock.device_id,'locked. Removing relock timer.')
-  clearTimeout(lock.timer);
+function when_locked(nodeid){  
+  if (!timers[nodeid]) return console.log(TAG, 'No relock timer detected for door',nodeid);
+  console.log(TAG, 'Detected door',nodeid,'locked. Removing relock timer.')
+  clearTimeout(timers[nodeid]);
 }
 
 function add_lock() {
