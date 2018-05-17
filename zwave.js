@@ -17,14 +17,15 @@ var zwave = new OpenZWave({
 	DriverMaxAttempts: 3,
 	PollInterval: 500,
 	SuppressValueRefresh: true,
-	NetworkKey: "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10"
+	NetworkKey: "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10" // TODO: Don't use the same key for every gateway.
 });
 
 module.exports = {
-  add_node: add_node,
-  remove_node: remove_node,
-  hard_reset: hard_reset,
-  set_value: set_value
+	zwave,
+	add_node: add_node,
+	remove_node: remove_node,
+	hard_reset: hard_reset,
+	set_value: set_value
 }
 
 //function init_zwave() {
@@ -188,6 +189,7 @@ function hard_reset() {
 function is_lock_event(label, value){
   if (label != 'Alarm Type') return false;
   if (value == '21') return true;
+  if (value == '24') return true;
   return false;
 }
 

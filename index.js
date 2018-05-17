@@ -25,6 +25,8 @@ try {
   });
 }
 
+const devices = require('./devices/devices.js');
+
 // ---------------- //
 // global variables //
 // ---------------- //
@@ -40,10 +42,21 @@ media = require('./devices/media.js');
 alarm = require('./devices/alarm.js');
 camera = require('./devices/camera.js');
 if (config.zwave) {
-  zwave = require('./devices/zwave.js');
+  zwave = require('./zwave.js');
 }
 
-device_array= [];
+device_array = [];
+
+
+// Populate devices list
+devices.loadDevicesFromDb();
+
+// Get token
+database.get_settings().then(() => {
+  socket.relay.emit('get token',{mac:utils.mac, type:'gateway'});
+});
+
+
 
 main_loop();
 function main_loop () {

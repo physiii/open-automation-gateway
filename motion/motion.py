@@ -28,16 +28,19 @@ from bson.objectid import ObjectId
 
 def percentage(percent, wholeNum):
   if wholeNum == 0:
-    print("Bad value for max number")
+    print('Bad value for max number')
   elif percent >= wholeNum:
-    print("Percentage will return greater than a 100 percent value")
+    print('Percentage will return greater than a 100 percent value')
   else:
     percent = float(percent)
     wholeNum = float(wholeNum)
     return (percent * wholeNum) / 100.0
 
+def getCameraNumber(camera):
+  return camera.replace('/dev/video', '')
+
 def getCameraFolderName(camera):
-  return camera[-2:]
+  return camera[-1:]
 
 def createFolderIfNotExists(path):
   if not os.path.exists(path):
@@ -61,9 +64,9 @@ def getCameraTempPath(camera):
 
 def getDatePath(camera, date):
   cameraPath = getCameraPath(camera)
-  yearPath = createFolderIfNotExists(cameraPath + '/' + date.strftime("%Y"))
-  monthPath = createFolderIfNotExists(yearPath + '/' + date.strftime("%m"))
-  datePath = createFolderIfNotExists(monthPath + '/' +  date.strftime("%d"))
+  yearPath = createFolderIfNotExists(cameraPath + '/' + date.strftime('%Y'))
+  monthPath = createFolderIfNotExists(yearPath + '/' + date.strftime('%m'))
+  datePath = createFolderIfNotExists(monthPath + '/' +  date.strftime('%d'))
 
   return datePath
 
@@ -90,40 +93,26 @@ class JSONEncoder(json.JSONEncoder):
       return str(o)
     return json.JSONEncoder.default(self, o)
 
+##################################################################################################################
+# Parse arguments
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-c', '--camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
+args = vars(ap.parse_args())
+
+camera_path = args['camera']
 
 ##################################################################################################################
 #Start MongoDB and check for device connections
 
-print("starting motion.py...")
-sys.stdout.flush()
-device_list = []
-
-try:
-  connection = MongoClient('mongodb://localhost:27017')
-  print("Mongodb connected")
-  db = connection.gateway
-except:
-  print('Error: Unable to Connect')
-  sys.stdout.flush()
-  connection = None
-
-
-if connection is not None:
-  devices = db.devices.find()
-  sys.stdout.flush()
-  for device in devices:
-    device_obj = db.devices.find_one(device)
-    if device_obj is None: continue
-    if 'dev' not in device_obj: continue
-    print("dev = "+device_obj['dev'])
-    if device_obj['dev'].find("/dev/video20") < 0: continue
-    for key, value in device_obj['resolution'].iteritems():
-      if key == 'width':
-        total_width = value
-      if key == 'height':
-        total_height = value
-    main_cam=device_obj['dev']
-    sys.stdout.flush()
+# try:
+#   connection = MongoClient('mongodb://localhost:27017')
+#   print('Mongodb connected')
+#   db = connection.gateway
+# except:
+#   print('Error: Unable to Connect')
+#   sys.stdout.flush()
+#   connection = None
 
 ##################################################################################################################
 
@@ -142,8 +131,7 @@ avg = None
 
 # initialize the video stream and allow the camera sensor to
 # warmup
-print("[INFO] Warming up camera...")
-camera = VideoStream(src=main_cam).start()
+camera = VideoStream(src=camera_path).start()
 time.sleep(2.5)
 
 # initialize key clip writer and the consecutive number of
@@ -174,8 +162,7 @@ for needCatchUpFrame in framerateInterval(framerate):
 
   # if the first frame is None, initialize it
   if avg is None:
-    print( "[INFO] Starting background model...")
-    avg = gray.copy().astype("float")
+    avg = gray.copy().astype('float')
 
   # accumulate the weighted average between the current frame and
   # previous frames, then compute the difference between the current
@@ -214,14 +201,14 @@ for needCatchUpFrame in framerateInterval(framerate):
 
       # if we are not already recording, start recording
       if not kcw.recording:
-        print("[MOTION] Detected!")
+        print('[MOTION] Detected motion.')
 
         # save a preview image
-        cv2.imwrite(getCameraPath(main_cam) + '/preview.jpg', frame)
+        cv2.imwrite(getCameraPath(camera_path) + '/preview.jpg', frame)
 
         fileName = getFileName(timestamp)
-        tempRecordingPath = getCameraTempPath(main_cam) + '/' + fileName
-        finishedRecordingPath = getDatePath(main_cam, timestamp) + '/' + fileName
+        tempRecordingPath = getCameraTempPath(camera_path) + '/' + fileName
+        finishedRecordingPath = getDatePath(camera_path, timestamp) + '/' + fileName
 
         kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'PIM1'), framerate)
 
@@ -231,10 +218,10 @@ for needCatchUpFrame in framerateInterval(framerate):
 
   # add timestamp text to frame
   # text shadow
-  cv2.putText(frame, datetime.datetime.now().strftime("%-m/%-d/%Y %-I:%M:%S %p"),
+  cv2.putText(frame, datetime.datetime.now().strftime('%-m/%-d/%Y %-I:%M:%S %p'),
     (11, frame.shape[0] - 9), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 4)
   # text
-  cv2.putText(frame, datetime.datetime.now().strftime("%-m/%-d/%Y %-I:%M:%S %p"),
+  cv2.putText(frame, datetime.datetime.now().strftime('%-m/%-d/%Y %-I:%M:%S %p'),
     (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 255, 60), 2)
 
   # Draw region detection area
@@ -244,11 +231,11 @@ for needCatchUpFrame in framerateInterval(framerate):
   kcw.update(frame)
 
   if kcw.recording and consecFrames >= bufSize:
-    print("Recording finished capturing")
+    print('[NO MOTION] Recording finished capturing.')
     sys.stdout.flush()
 
     def finishedCallback(tempFile, finishedFile):
-      print("Recording finished saving")
+      print('Recording saved.')
       sys.stdout.flush()
 
       os.rename(tempFile, finishedFile)

@@ -4,6 +4,7 @@
 
 var exec = require('child_process').exec;
 var config = require('./config.json');
+const devices = require('./devices/devices.js');
 
 var TAG = "[socket.js]";
 var use_dev = config.use_dev || false;
@@ -33,11 +34,11 @@ console.log('Connected to:https',relay_server+":"+relay_port);
 var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
 console.log('Connected to: http',relay_server+":"+relay_port);
 }
-//var load_settings_timer;
 
 module.exports = {
   relay: relay
 }
+
 
 relay.on('get token', function (data) {
   var settings = database.settings;
@@ -124,7 +125,7 @@ relay.on('update', function (data) {
 
 relay.on('get settings', function (data, callback) {
   var settings = database.settings;
-  settings.devices = device_array;
+  settings.devices = devices.getDbSerializedDevices();
   relay.emit('load settings', settings);
   //console.log(TAG,"load settings |", settings);
 

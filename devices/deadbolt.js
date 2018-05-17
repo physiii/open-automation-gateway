@@ -64,7 +64,7 @@ socket.relay.on('set lock group', function(data) {
 
 
 //---------------------------Functions------------------------------------
-function when_unlocked(nodeid){
+function when_unlocked(nodeid) {
   if (!set_timer) return;
   timers[nodeid] = setTimeout(function() {
     console.log('Door',nodeid,"lock timer expired. Relocking door."); 
@@ -76,7 +76,7 @@ function when_unlocked(nodeid){
               'unlocked. Setting relock timer.')
 }
 
-function when_locked(nodeid){  
+function when_locked(nodeid) {
   if (!timers[nodeid]) return console.log(TAG, 'No relock timer detected for door',nodeid);
   console.log(TAG, 'Detected door',nodeid,'locked. Removing relock timer.')
   clearTimeout(timers[nodeid]);

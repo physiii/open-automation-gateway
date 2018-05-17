@@ -4,7 +4,6 @@
 
 
 var connection = require('./connection.js');
-var socket = require('./socket.js');
 var utils = require('./utils.js');
 var mongodb = require('mongodb');
 var ObjectId = require('mongodb').ObjectID;
@@ -22,8 +21,6 @@ module.exports = {
   device_settings, device_settings
 }
 
-get_settings();
-get_devices();
 get_device_settings();
 
 var TAG = "[database.js]";
@@ -56,24 +53,38 @@ function set_wifi_from_db() {
 
 //-- get and send settings object --//
 function get_settings() {
-  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    if (err) return console.log('Unable to connect to the mongoDB server. Error:', err);
-    var collection = db.collection('settings');
-    collection.find().toArray(function (err, result) {
-      if (err) return console.log(err);
-      if (result[0]) settings = result[0]
-      module.exports.settings = settings;
-      if (!module.exports.got_token) {
-        console.log("fetching token");
-        socket.relay.emit('get token',{mac:utils.mac, type:'gateway'});
-        store_settings(settings);
+  return new Promise((resolve, reject) => {
+    MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
+      if (error) {
+        reject(error);
+        return console.log('Unable to connect to the mongoDB server. Error:', error);
       }
-      settings.devices = device_array;
-      //socket.relay.emit('load settings',settings);
-      //console.log("get_settings",result[0]);
+
+      var collection = db.collection('settings');
+      collection.find().toArray(function (error, result) {
+        if (error) {
+          reject(error);
+          return console.log(error);
+        }
+
+        if (result[0]) {
+          settings = result[0];
+        }
+
+        module.exports.settings = settings;
+
+        if (!module.exports.got_token) {
+          console.log("fetching token");
+          store_settings(settings);
+        }
+
+        settings.devices = device_array;
+        resolve(settings);
+      });
+
+      db.close();
     });
-  db.close();
-});
+  });
 }
 
 //-- get and send settings object --//
@@ -129,7 +140,7 @@ function store_device(device) {
       console.log('Unable to connect to the mongoDB server. Error:', err);
     } else {
       var collection = db.collection('devices');
-      collection.update({id:device.id}, {$set:device}, {upsert:true}, function(err, item){
+      collection.update({id:device.id}, {$set:device.dbSerialize ? device.dbSerialize() : device}, {upsert:true}, function(err, item){
         //console.log("update device: ",item)
       });
       collection.find().toArray(function (err, result) {
@@ -149,18 +160,25 @@ function store_device(device) {
 
 //-- load devices from database --//
 function get_devices() {
-  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    if (err) return console.log('get_devices |', err);
-    var collection = db.collection('devices');
-    collection.find().toArray(function (err, result) {
-      if (err) return console.log(err);
-      if (!result.length) return console.log('get_devices | no results');
-      device_array = result;
-      //var devices_obj = settings;
-      //devices_obj.devices = device_array;
-      //console.log("get_devices", device_array);
+  return new Promise((resolve, reject) => {
+    MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
+      if (error) {
+        reject(error);
+        return console.log('get_devices |', error);
+      }
+
+      const collection = db.collection('devices');
+
+      collection.find().toArray(function (error, result) {
+        if (error) {
+          reject(error);
+          return console.log(error);
+        }
+
+        resolve(result);
+      });
+
+      db.close();
     });
-    db.close();
-   //console.log("!! get_devices !!",device_array);
   });
 }

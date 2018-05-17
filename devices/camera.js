@@ -3,7 +3,6 @@
 // ------------------------------- camera.js ----------------------------------- //
 
 var exec = require('child_process').exec;
-var spawn = require('child_process').spawn;
 const video_duration = require('get-video-duration');
 const recursive = require('recursive-readdir');
 var ffmpeg_fluent = require('fluent-ffmpeg');
@@ -11,38 +10,47 @@ var path = require('path');
 var fs = require('fs');
 var crypto = require('crypto')
 var promiseAllSoftFail = require('promise-all-soft-fail').promiseAllSoftFail;
+const services = require('../services/services.js');
 
 var TAG = "[camera.js]";
-var STREAM_PORT = config.video_stream_port || 5054;
-var use_ssl = config.use_ssl || false;
-var use_domain_ssl = config.use_domain_ssl || false;
-var use_dev = config.use_dev || false;
-var device_hw = config.device_hw || 'hw:0';
-var rotation = ffmpeg_rotation(config.rotation);
-var motion;
-var ffmpeg_pass = [];
-var command = [];
-ffmpeg_timer = setTimeout(function () {}, 1);
-
-// ---------- //
-// initialize //
-// ---------- //
-
-load_cameras();
-pass_camera_stream();
-start_motion();
-
-mac = "init";
-require('getmac').getMac(function(err,macAddress){
-  if (err)  throw err
-  mac = macAddress.replace(/:/g,'').replace(/-/g,'').toLowerCase();
-});
 
 // ------------- //
 // sockets calls //
 // ------------- //
 
+socket.relay.on('camera/recordings/get', function (data, callback) {
+  recordings_list(data, callback)
+});
+
+socket.relay.on('camera/stream/live', (data) => {
+  const camera = services.getServiceById(data.camera_service_id);
+  camera.streamLive();
+});
+
+socket.relay.on('camera/stream/recording', (data) => {
+  // TODO: How do we store/look up recordings?
+});
+
+socket.relay.on('camera/stream/recordings', (data) => {
+  // TODO: How do we store/look up recordings?
+  // TODO: Figure out how ffmpeg plays multiple files.
+});
+
+socket.relay.on('camera/stream/stop', (data) => {
+  const camera = services.getServiceById(data.camera_service_id);
+  camera.stopStream();
+});
+
+socket.relay.on('camera/preview/get', (data) => {
+  const camera = services.getServiceById(data.camera_service_id);
+  // TODO
+});
+
+
+// Deprecated socket events - backwards-compatibility with Open Automation 1
+
 socket.relay.on('folder list', function (data) {
+  // TODO: Figure out migration path to new recordings folder for relay.
   var folder = data.folder;
   var command = "ls -lah --full-time "+folder;
   //console.log('folder list',command);
@@ -61,10 +69,6 @@ socket.relay.on('folder list', function (data) {
   });
 });
 
-socket.relay.on('camera/recordings/get', function (data, callback) {
-  recordings_list(data, callback)
-})
-
 socket.relay.on('get camera preview', function (data) {
   var camera_number = data.camera_number;
   var socket_id = data.socket_id;
@@ -73,18 +77,26 @@ socket.relay.on('get camera preview', function (data) {
 });
 
 socket.relay.on('ffmpeg', function (data) {
+  const camera = services.getServiceById(data.camera_service_id);
+
   if (data.command == "start_webcam") {
-    start_ffmpeg(data);
+    camera.streamLive();
   }
+
   if (data.command == "stop") {
-    console.log(TAG,"stop command received");
-    stop_ffmpeg(ffmpeg);
+    camera.stopStream();
   }
+
   if (data.command == "play_file") {
-    console.log("playing file");
-    start_ffmpeg(data);
+    // TODO
+    // start_ffmpeg(data);
   }
+
   if (data.command == "play_folder") {
+    return;
+
+    // TODO
+
     var folder = data.folder;
     var new_folder_list = "concat:";
     var command = "ls -lah --full-time "+folder;
@@ -241,102 +253,6 @@ function recordings_list (data, callback) {
   })
 }
 
-function load_cameras() {
-  var command = "ls -lah --full-time /dev/video*";
-  exec(command, (error, stdout, stderr) => {
-    if (error) return console.error(`exec error: ${error}`);
-    var parts = stdout.split(/(?:\r\n|\r|\n| )/g);
-    for (var i=0; i<parts.length-1; i++) {
-      var part = parts[i];
-      if (part.indexOf("/dev/video") < 0) continue;
-      var dev = part;
-      var camera_number = part.replace("/dev/video","");
-      var id = mac+"_"+camera_number;
-      var camera = {camera_number:camera_number, dev:dev, id:id, type:"camera"};
-      database.store_device(camera);
-      console.log(TAG,"load_cameras",camera);
-    }
-  });
-}
-
-function pass_camera_stream() {
-  //return;
-
-    command =  [
-                   '-loglevel', 'panic',
-                   '-f', 'v4l2',
-                   '-pix_fmt', 'rgb24',
-                   '-i', '/dev/video0',
-                   '-f', 'v4l2',
-                   '/dev/video10',
-                   '-f', 'v4l2',
-       '/dev/video20'
-                   //'-f', 'v4l2',
-       //'/dev/video30'
-                 ];
-
-
-    /*command2 =  [
-                   '-loglevel', 'panic',
-                   '-f', 'v4l2',
-                   '-pix_fmt', 'rgb24',
-                   '-i', '/dev/video1',
-                   '-f', 'v4l2',
-                   '/dev/video11',
-                   '-f', 'v4l2',
-       '/dev/video21'
-                 ];*/
-
-
-  ffmpeg_pass[0] = spawn('ffmpeg', command);
-  ffmpeg_pass[0].stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
-  ffmpeg_pass[0].stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
-  ffmpeg_pass[0].on('close', (code) => {console.log(TAG,`ffmpeg_pass child process exited with code ${code}`)});
-  //ffmpeg -f v4l2 -pix_fmt rgb24 -i /dev/video0 -f v4l2 /dev/video10 -f v4l2 /dev/video11
-
-  /*ffmpeg_pass2 = spawn('ffmpeg', command2);
-  ffmpeg_pass2.stdout.on('data', (data) => {console.log(TAG,`[pass_camera_stream] ${data}`)});
-  ffmpeg_pass2.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
-  ffmpeg_pass2.on('close', (code) => {console.log(TAG,`ffmpeg_pass2 child process exited with code ${code}`)});*/
-
-  console.log(TAG,"ffmpeg_pass");
-}
-
-function start_motion() {
-
-  var command = "ps aux | grep -v 'log' | grep motion.py";
-  exec(command, (error, stdout, stderr) => {
-    if (stdout.length > 100) return console.log("motion already started", stdout.length);
-    if (error) return console.error(`exec error: ${error}`);
-    console.log(TAG,"length:",stdout.length);
-    console.log(TAG,"launching motion.py");
-   // var conf = { "picamera":0, "device":"/dev/video10", "show_video": false, "min_upload_seconds": 3.0, "min_motion_frames": 8, "camera_warmup_time": 2.5, "delta_thresh": 5, "resolution": [800, 600], "fps": 16, "min_area": 5000 };
-
-    //var conf = "{\"test\":'testing'}";
-    //var conf = {test:"testing"};
-    //conf = conf.toString();
-
-    motion = spawn('python',[__dirname+'/../motion/motion.py']);
-    //motion = spawn('python',[__dirname+'/../motion/motion.py',conf]);
-    //motion = spawn('python',[__dirname+'/../motion/motion.py','-c',__dirname+'/../motion/conf.json']);
-
-    motion.stdout.on('data', (data) => {
-      //console.log(TAG,`[motion] ${data}`)
-      if(data && data.includes("[MOTION]")  ){
-         //console.log('motion detected');
-         socket.relay.emit('motion detected', data);
-      } else if(data && data.includes("[NO MOTION]")) {
-         //console.log('motion stopped');
-         socket.relay.emit('motion stopped', data);
-      }
-    });
-    motion.stderr.on('data', (data) => {
-      console.log(`stderr: ${data}`)
-    });
-  });
-  console.log(TAG,"start_motion");
-}
-
 function send_camera_preview(camera_number, socket_id) {
   var path = '/usr/local/lib/gateway/events/' + camera_number + '/preview.jpg';
   fs.readFile(path, function(err, data) {
@@ -347,182 +263,4 @@ function send_camera_preview(camera_number, socket_id) {
     socket.relay.emit('camera preview',data_obj);
     console.log(TAG,'send_camera_preview',data_obj.mac,data_obj.camera_number);
   });
-}
-
-function send_file_duration (data) {
-
-  var command = "ffmpeg -i \""+data.folder_list+"\" -f null /dev/null";
-  console.log(TAG,"send_file_duration",command);
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      return console.error(TAG,"ffmpeg failed!");
-    }
-    data.info = stdout;
-    socket.relay.emit('file info',data);
-    console.log(TAG,"file info: ",data.info);
-  });
-
-}
-
-var ffmpeg_proc_list = [];
-
-function start_ffmpeg(data) {
-  var relay_server = config.relay_server;
-  var index = utils.find_index(device_array,"camera_number",data.camera_number);
-  if (index < 0) return console.log("camera not found",camera_number);
-  var camera = device_array[index];
-
-  for (var i = 0; i < ffmpeg_proc_list.length; i++) {
-    console.log("ffmpeg_proc_list: ", ffmpeg_proc_list[i].tag.camera_number,data);
-    if (ffmpeg_proc_list[i].tag.camera_number == data.camera_number) {
-      //if (data.command == "start_webcam" && ffmpeg_proc_list[i].tag.command == "start_webcam") return console.log("stream already started");
-      stop_ffmpeg(ffmpeg_proc_list[i]);
-      console.log(TAG,"killing current ffmpeg process",ffmpeg_proc_list[i].tag);
-      /*if (data.command == "play_file") {
-        stop_ffmpeg(ffmpeg_proc_list[i]);
-        console.log(TAG,"killing current ffmpeg process",ffmpeg_proc_list[i].tag.camera_number);
-      }
-      if (data.command == "play_folder") {
-        stop_ffmpeg(ffmpeg_proc_list[i]);
-        console.log(TAG,"killing current ffmpeg process",ffmpeg_proc_list[i].tag.camera_number);
-      }*/
-    }
-  }
-
-  var settings = database.settings;
-  var camera_number = camera.camera_number;
-  var video_width = camera.resolution.width;
-  var video_height = camera.resolution.height;
-  var website;
-  if (!video_width) video_width = "640";
-  if (!video_height) video_height = "480";
-  if (!use_dev || use_ssl) website = "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/";
-  if (use_dev && !use_ssl) website = "http://"+relay_server+":"+STREAM_PORT+"/"+settings.token+"/"+camera_number+"/";
-
-
-  //ffmpeg -f alsa -i hw:1 -s 1280x720 -f v4l2 -i /dev/video20 -f mpegts -codec:a mp2 -ar 44100 -ac 1 -b:a 128k -codec:v mpeg1video -b:v 600k -r 2 -strict -1 http://pyfi.org:8082/09380fc2e0dcf35a04bcc15e254bf4d05cade3047d93ba5b2d87244057add8da260b0a387681bba52e2d9d3cdd4c61474ac5b3918fe75673b7fd70d94bc4418d/20/
-  if (data.command == "start_webcam") {
-    console.log(TAG,'Starting webcam at:', website);
-    var command =  [
-                   //'-loglevel', 'panic',
-                   //'-r', '2',
-                   //'-strict', '-1',
-                   '-f', 'alsa',
-                   '-i', device_hw,
-                   '-s', video_width+"x"+video_height,
-                   '-f', 'v4l2',
-                   '-i', '/dev/video'+camera_number,
-                   '-f', 'mpegts',
-                   '-vf', rotation,
-       '-codec:a', 'mp2',
-       '-ar', '44100',
-       '-ac', '1',
-         '-b:a', '128k',
-       '-codec:v', 'mpeg1video',
-                   '-b:v', '600k',
-                   '-r', '24',
-                   '-strict', '-1',
-                   website
-                 ];
-    }
-  if (data.command == "play_file") {
-    /*if (ffmpeg)
-      stop_ffmpeg(ffmpeg);*/
-    var command =  [
-                   //'-loglevel', 'panic',
-                   '-re',
-                   '-i', data.file,
-                   '-f', 'mpegts',
-       '-codec:v', 'mpeg1video',
-                   '-b:v', '600k',
-                   '-strict', '-1',
-                   website
-                 ];
-
-    console.log("playing file:",command);
-    }
-    //console.log("ng file:",data.file);
-
-
-  if (data.command == "play_folder") {
-    var command =  [
-                   //'-loglevel', 'panic',
-                   '-re',
-                   '-i', data.folder_list,
-                   '-f', 'mpegts',
-       '-codec:v', 'mpeg1video',
-                   '-strict', '-1',
-       //'-ss', '00:00:30',
-                   website
-                 ];
-
-    send_file_duration(data);
-    }
-    //console.log("ffmpeg play_folder:");
-
-   //console.log("ffmpeg command:",command);
-   ffmpeg = spawn('ffmpeg', command);
-   ffmpeg.tag = data;
-   //ffmpeg.stdout.on('data', (data) => {console.log(`stdout: ${data}`)});
-   //ffmpeg.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
-   ffmpeg_proc_list.push(ffmpeg);
-   ffmpeg.on('close', (code) => {
-    //stop_ffmpeg(ffmpeg);
-    for (var i = 0; i < ffmpeg_proc_list.length; i++) {
-      console.log("closed: ", ffmpeg_proc_list[i].tag.camera_number);
-      if (ffmpeg_proc_list[i].tag.camera_number == data.camera_number) {
-        stop_ffmpeg(ffmpeg_proc_list[i]);
-        ffmpeg_proc_list.splice(i,1);
-        //console.log(TAG,"ffmpeg closed");
-      }
-    }
-    console.log(`child process exited with code ${code}`);
-  });
-
-  if (camera.stream_timeout) {
-    setTimeout(
-      (function(f) {
-        return function() {
-          stop_ffmpeg(f);
-          console.log(TAG,"timeout",f.tag.camera_number,camera.stream_timeout);
-        }
-    })(ffmpeg), camera.stream_timeout*60*1000);
-    console.log(TAG,"timeout",camera.stream_timeout);
-  }
-
-  ffmpeg_started = true;
-  socket.relay.emit('ffmpeg started',settings);
-}
-
-function stop_ffmpeg(ffmpeg) {
-    ffmpeg.kill();
-    ffmpeg_started = false;
-    console.log(TAG,'ffmpeg stop',ffmpeg.tag.camera_number);
-}
-
-camera_loop();
-function camera_loop () {
-  setTimeout(function () {
-    camera_loop();
-  }, 2*60*1000);
-  check_ffmpeg();
-}
-
-function check_ffmpeg() {
-  var command = "ps aux | grep -v 'grep' | grep ffmpeg";
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      pass_camera_stream();
-      return console.error(TAG,"check_ffmpeg failed...restarting ffmpeg!");
-    }
-    console.log(TAG,"ffmpeg...good");
-  });
-}
-
-function ffmpeg_rotation(degree) {
-  var ffmpeg_rotation = "transpose=2,transpose=1";
-  if (degree == "90") ffmpeg_rotation = "transpose=2";
-  if (degree == "180") ffmpeg_rotation = "transpose=2,transpose=2";
-  if (degree == "270") ffmpeg_rotation = "transpose=1";
-  return ffmpeg_rotation;
 }
