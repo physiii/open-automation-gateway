@@ -1,12 +1,14 @@
 const Service = require('./service.js'),
-	CameraService = require('./camera-service.js');
+	CameraService = require('./camera-service.js'),
+	LockService = require('./lock-service.js'),
+	ZwaveLockDriver = require('./drivers/lock-zwave.js');
 
 class Services {
 	constructor () {
 		this.services = [];
 	}
 
-	createService (data) {
+	createService (data, device) {
 		let service = this.getServiceById(data.id);
 
 		if (service) {
@@ -17,10 +19,15 @@ class Services {
 			case 'camera':
 				service = new CameraService(data);
 				break;
+			case 'lock':
+				service = new LockService(data, ZwaveLockDriver);
+				break;
 			default:
 				service = new Service(data);
 				break;
 		}
+
+		service.device = device;
 
 		this.services.push(service);
 

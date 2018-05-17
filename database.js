@@ -3,32 +3,34 @@
 // -------------------------------- database.js --------------------------- //
 
 
-var connection = require('./connection.js');
-var utils = require('./utils.js');
-var mongodb = require('mongodb');
-var ObjectId = require('mongodb').ObjectID;
-var MongoClient = mongodb.MongoClient;
+const connection = require('./connection.js'),
+  utils = require('./utils.js'),
+  mongodb = require('mongodb'),
+  ObjectId = require('mongodb').ObjectID,
+  MongoClient = mongodb.MongoClient,
+  TAG = '[database.js]';
 
 module.exports = {
   got_token: false,
-  set_wifi_from_db: set_wifi_from_db,
-  get_devices: get_devices,
-  get_settings: get_settings,
-  store_settings: store_settings,
-  store_device_settings: store_device_settings,
-  store_device: store_device,
-  settings, settings,
-  device_settings, device_settings
+  set_wifi_from_db,
+  get_devices,
+  get_settings,
+  store_settings,
+  store_device_settings,
+  store_device,
+  store_zwave_node,
+  get_zwave_nodes,
+  settings,
+  device_settings
 }
 
 get_device_settings();
 
-var TAG = "[database.js]";
 //-- initialize variables --//
 var settings = {};
 var device_settings = {};
 
-function set_wifi_from_db() {
+function set_wifi_from_db () {
   console.log("set_wifi_from_db");
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
     if (err) {
@@ -52,7 +54,7 @@ function set_wifi_from_db() {
 }
 
 //-- get and send settings object --//
-function get_settings() {
+function get_settings () {
   return new Promise((resolve, reject) => {
     MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
       if (error) {
@@ -88,7 +90,7 @@ function get_settings() {
 }
 
 //-- get and send settings object --//
-function get_device_settings() {
+function get_device_settings () {
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
     if (err) return console.log('Unable to connect to the mongoDB server. Error:', err);
     var collection = db.collection('devices');
@@ -103,7 +105,7 @@ function get_device_settings() {
 }
 
 //-- store setting --//
-function store_settings(data) {
+function store_settings (data) {
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
     if (err) return console.log(err);
     var collection = db.collection('settings');
@@ -117,7 +119,7 @@ function store_settings(data) {
 }
 
 //-- store device setting --//
-function store_device_settings(device) {
+function store_device_settings (device) {
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
     if (err) return console.log(err);
     var collection = db.collection('devices');
@@ -132,7 +134,7 @@ function store_device_settings(device) {
 }
 
 //-- store new device --//
-function store_device(device) {
+function store_device (device) {
   delete device["_id"];
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
     //console.log(TAG,"storing device",device);
@@ -159,12 +161,12 @@ function store_device(device) {
 }
 
 //-- load devices from database --//
-function get_devices() {
+function get_devices () {
   return new Promise((resolve, reject) => {
     MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
       if (error) {
         reject(error);
-        return console.log('get_devices |', error);
+        return console.log(TAG, 'get_devices |', error);
       }
 
       const collection = db.collection('devices');
@@ -172,7 +174,51 @@ function get_devices() {
       collection.find().toArray(function (error, result) {
         if (error) {
           reject(error);
-          return console.log(error);
+          return console.log(TAG, error);
+        }
+
+        resolve(result);
+      });
+
+      db.close();
+    });
+  });
+}
+
+function store_zwave_node (node) {
+  delete device['_id'];
+  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
+    //console.log(TAG,"storing device",device);
+    if (err) {
+      console.log('Unable to connect to the mongoDB server. Error:', err);
+    } else {
+      var collection = db.collection('zwave_nodes');
+
+      collection.update({id:node.id}, {$set:node}, {upsert:true}, function (err) {
+        if (err) {
+          console.error(TAG, err);
+        }
+      });
+
+      db.close();
+    }
+  });
+}
+
+function get_zwave_nodes () {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
+      if (error) {
+        reject(error);
+        return console.log(TAG, 'get_zwave_nodes |', error);
+      }
+
+      const collection = db.collection('zwave_nodes');
+
+      collection.find().toArray(function (error, result) {
+        if (error) {
+          reject(error);
+          return console.log(TAG, error);
         }
 
         resolve(result);

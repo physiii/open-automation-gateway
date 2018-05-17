@@ -2,51 +2,44 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- zwave.js ----------------------------- //
 
-var socket = require('../socket.js');
-var os = require('os');
-var config = require('../config.json');
-var database = require('../database');
-var deadbolt = require('./deadbolt.js');
-
-var nodes = [];
-var OpenZWave = require('openzwave-shared');
-var zwave = new OpenZWave({
-	ConsoleOutput: false,
-	Logging: false,
-	SaveConfiguration: false,
-	DriverMaxAttempts: 3,
-	PollInterval: 500,
-	SuppressValueRefresh: true,
-	NetworkKey: "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10" // TODO: Don't use the same key for every gateway.
-});
+const socket = require('../socket.js'),
+  os = require('os'),
+  config = require('../config.json'),
+  database = require('../database'),
+  OpenZWave = require('openzwave-shared'),
+  zwave = new OpenZWave({
+  	ConsoleOutput: false,
+  	Logging: false,
+  	SaveConfiguration: false,
+  	DriverMaxAttempts: 3,
+  	PollInterval: 500,
+  	SuppressValueRefresh: true,
+    // TODO: Don't use the same key for every gateway.
+  	NetworkKey: '0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10'
+  }),
+  nodes = {},
+  TAG = '[zwave.js]';
 
 module.exports = {
 	zwave,
-	add_node: add_node,
-	remove_node: remove_node,
-	hard_reset: hard_reset,
-	set_value: set_value
-}
+	add_node,
+	remove_node,
+  get_node,
+  get_value
+};
 
-//function init_zwave() {
-zwave.on('connected', function(homeid) {
-	//console.log('=================== CONNECTED! ====================');
+zwave.on('driver ready', function (home_id) {
+	console.log(TAG, '=================== DRIVER READY! ====================');
+	console.log(TAG, 'scanning home_id=0x%s...', home_id.toString(16));
 });
 
-zwave.on('driver ready', function(homeid) {
-	console.log('=================== DRIVER READY! ====================');
-	console.log('scanning homeid=0x%s...', homeid.toString(16));
+zwave.on('driver failed', function () {
+	console.log(TAG, 'failed to start driver');
 });
 
-zwave.on('driver failed', function() {
-	console.log('failed to start driver');
-	//zwave.disconnect();
-	//process.exit();
-});
-
-zwave.on('node added', function(nodeid) {
-	console.log('=================== NODE ADDED! ====================',nodeid);
-	nodes[nodeid] = {
+zwave.on('node added', function (node_id) {
+	console.log(TAG, '=================== NODE ADDED! ====================', node_id);
+	nodes[node_id] = {
 		manufacturer: '',
 		manufacturerid: '',
 		product: '',
@@ -60,143 +53,106 @@ zwave.on('node added', function(nodeid) {
 	};
 });
 
-zwave.on('value added', function(nodeid, comclass, value) {
-  if (!nodes[nodeid]['classes'][comclass])
-    nodes[nodeid]['classes'][comclass] = {};
-  nodes[nodeid]['classes'][comclass][value.index] = value;
+zwave.on('value added', function (node_id, com_class, value) {
+  if (!nodes[node_id]['classes'][com_class]) {
+    nodes[node_id]['classes'][com_class] = {};
+  }
+
+  nodes[node_id]['classes'][com_class][value.index] = value;
+
+  database.store_zwave_node(nodes[node_id]);
 });
 
-zwave.on('value changed', function(nodeid, comclass, value) {
-
-  if (nodes[nodeid]['ready']) {
-    console.log('node%d: changed: %d:%s:%s->%s', nodeid, comclass,
+zwave.on('value changed', function (node_id, com_class, value) {
+  if (nodes[node_id]['ready']) {
+    console.log(TAG, 'node%d: changed: %d:%s:%s->%s', node_id, com_class,
       value['label'],
-      nodes[nodeid]['classes'][comclass][value.index]['value'],
+      nodes[node_id]['classes'][com_class][value.index]['value'],
       value['value']);
 
-      // Re-locking Functionality
-      if(is_unlock_event(value.label, value.value)) {
-        deadbolt.when_unlocked(nodeid);
-      }
+    console.log(TAG, 'value changed', nodes[node_id].product);
 
-      if(is_lock_event(value.label, value.value)){
-	deadbolt.when_locked(nodeid);
-      }
-
-    console.log("value changed",nodes[nodeid].product);
-    database.store_device(nodes[nodeid]);
+    database.store_zwave_node(nodes[node_id]);
   };
-  nodes[nodeid]['classes'][comclass][value.index] = value;
+
+  nodes[node_id]['classes'][com_class][value.index] = value;
 });
 
-zwave.on('value removed', function(nodeid, comclass, index) {
-	if (nodes[nodeid]['classes'][comclass] &&
-	    nodes[nodeid]['classes'][comclass][index])
-		delete nodes[nodeid]['classes'][comclass][index];
+zwave.on('value removed', function (node_id, com_class, index) {
+	if (nodes[node_id]['classes'][com_class] && nodes[node_id]['classes'][com_class][index]) {
+		delete nodes[node_id]['classes'][com_class][index];
+  }
+
+  database.store_zwave_node(nodes[node_id]);
 });
 
-zwave.on('node ready', function(nodeid, nodeinfo) {
-	nodes[nodeid]['manufacturer'] = nodeinfo.manufacturer;
-	nodes[nodeid]['manufacturerid'] = nodeinfo.manufacturerid;
-	nodes[nodeid]['product'] = nodeinfo.product;
-	nodes[nodeid]['producttype'] = nodeinfo.producttype;
-	nodes[nodeid]['productid'] = nodeinfo.productid;
-	nodes[nodeid]['type'] = nodeinfo.type;
-	nodes[nodeid]['name'] = nodeinfo.name;
-	nodes[nodeid]['loc'] = nodeinfo.loc;
-	nodes[nodeid]['ready'] = true;
-	nodes[nodeid]['id'] = nodeid;
-	nodes[nodeid]['type'] = nodeinfo.type;
-	//nodes[nodeid]['local_ip'] = connection.local_ip;
+zwave.on('node ready', function (node_id, node_info) {
+  nodes[node_id]['id'] = node_id;
+  nodes[node_id]['info'] = node_info;
+	nodes[node_id]['ready'] = true;
 
-	console.log('node%d: %s, %s', nodeid,
-		    nodeinfo.manufacturer ? nodeinfo.manufacturer
-					  : 'id=' + nodeinfo.manufacturerid,
-		    nodeinfo.product ? nodeinfo.product
-				     : 'product=' + nodeinfo.productid +
-				       ', type=' + nodeinfo.producttype);
-	console.log('node%d: name="%s", type="%s", location="%s"', nodeid,
-		    nodeinfo.name,
-		    nodeinfo.type,
-		    nodeinfo.loc);
-   	database.store_device(nodes[nodeid]);
-	for (var comclass in nodes[nodeid]['classes']) {
-		switch (comclass) {
-		case 0x25: // COMMAND_CLASS_SWITCH_BINARY
-		case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
-			zwave.enablePoll(nodeid, comclass);
-			break;
+	console.log(TAG, 'node%d: %s, %s', node_id,
+		    node_info.manufacturer ? node_info.manufacturer
+					  : 'id=' + node_info.manufacturerid,
+		    node_info.product ? node_info.product
+				     : 'product=' + node_info.productid +
+				       ', type=' + node_info.producttype);
+	console.log(TAG, 'node%d: name="%s", type="%s", location="%s"', node_id,
+		    node_info.name,
+		    node_info.type,
+		    node_info.loc);
+
+ 	database.store_zwave_node(nodes[node_id]);
+
+	for (var com_class in nodes[node_id]['classes']) {
+		switch (com_class) {
+  		case 0x25: // COMMAND_CLASS_SWITCH_BINARY
+  		case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
+  			zwave.enablePoll(node_id, com_class);
+  			break;
 		}
-		var values = nodes[nodeid]['classes'][comclass];
-		console.log('node%d: class %d', nodeid, comclass);
-		for (var idx in values)
-			console.log('node%d:   %s=%s', nodeid, values[idx]['label'], values[idx]['value']);
 	}
 });
 
-zwave.on('notification', function(nodeid, notif, help) {
-	console.log('node%d: notification(%d): %s', nodeid, notif, help);
+zwave.on('notification', function (node_id, notif, help) {
+	console.log(TAG, 'node%d: notification(%d): %s', node_id, notif, help);
 });
 
-zwave.on('scan complete', function() {
-	console.log('zwave scan complete');
+zwave.on('scan complete', function () {
+	console.log(TAG, 'zwave scan complete');
 });
 
-var zwavedriverpaths = {
-	"darwin" : '/dev/cu.usbmodem1411',
-	"linux"  : '/dev/tty'+config.zwave_dev,
-	"windows": '\\\\.\\COM3'
-}
-console.log("connecting to " + zwavedriverpaths[os.platform()]);
-zwave.connect( zwavedriverpaths[os.platform()] );
+var zwave_driver_paths = {
+	'darwin' : '/dev/cu.usbmodem1411',
+	'linux'  : '/dev/tty'+config.zwave_dev,
+	'windows': '\\\\.\\COM3'
+};
 
-process.on('SIGINT', function() {
-	console.log('disconnecting...');
+database.get_zwave_nodes().then((zwave_nodes) => {
+  nodes = zwave_nodes;
+  console.log(TAG, 'connecting to ' + zwave_driver_paths[os.platform()]);
+  zwave.connect(zwave_driver_paths[os.platform()]);
+});
+
+process.on('SIGINT', function () {
+	console.log(TAG, 'disconnecting...');
 	zwave.disconnect();
 	process.exit();
 });
-
-deadbolt.lockDesires.on('deadbolt/add', function(){
-  return add_node(1);
-});
-
-deadbolt.lockDesires.on('deadbolt/remove', function(){
-  return remove_node();
-});
-
-deadbolt.lockDesires.on('deadbolt/desiredState', function(nodeid, desiredState){
-  return set_value(nodeid,98, desiredState);
-});
-
-function set_value(nodeid, commandclass, value) {
-  zwave.setValue(nodeid, commandclass, 1 , 0, value);
-}
 
 function add_node(secure) {
   zwave.addNode(secure);
 }
 
 function remove_node() {
-  console.log("remove node...");
+  console.log(TAG, 'remove node...');
   zwave.removeNode();
 }
 
-function hard_reset() {
-  console.log("hard reset...");
-  zwave.hardReset();
+function get_node (node_id) {
+  return nodes[node_id];
 }
 
-function is_lock_event(label, value){
-  if (label != 'Alarm Type') return false;
-  if (value == '21') return true;
-  if (value == '24') return true;
-  return false;
-}
-
-function is_unlock_event(label, value){
-  if (label != 'Alarm Type') return false;
-  if (value == '19') return true;
-  if (value == '22') return true;
-  if (value == '25') return true;
-  return false;
+function get_value (node_id, com_class, index) {
+  return nodes[node_id]['classes'][com_class][index]['value'];
 }

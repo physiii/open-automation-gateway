@@ -12,7 +12,7 @@ class Device {
 		};
 
 		if (Array.isArray(data.services)) {
-			this.services = data.services.map((service) => services.createService(service));
+			this.services = data.services.map((service) => services.createService(service, this));
 		} else {
 			this.services = [];
 		}
