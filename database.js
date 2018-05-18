@@ -186,9 +186,8 @@ function get_devices () {
 }
 
 function store_zwave_node (node) {
-  delete device['_id'];
+  delete node['_id'];
   MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    //console.log(TAG,"storing device",device);
     if (err) {
       console.log('Unable to connect to the mongoDB server. Error:', err);
     } else {

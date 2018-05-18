@@ -2,10 +2,10 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- zwave.js ----------------------------- //
 
-const socket = require('../socket.js'),
+const socket = require('./socket.js'),
   os = require('os'),
-  config = require('../config.json'),
-  database = require('../database'),
+  config = require('./config.json'),
+  database = require('./database.js'),
   OpenZWave = require('openzwave-shared'),
   zwave = new OpenZWave({
   	ConsoleOutput: false,
@@ -17,109 +17,114 @@ const socket = require('../socket.js'),
     // TODO: Don't use the same key for every gateway.
   	NetworkKey: '0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10'
   }),
-  nodes = {},
   TAG = '[zwave.js]';
+let nodes = {};
 
 module.exports = {
-	zwave,
+  on,
+  poll,
 	add_node,
-	remove_node,
   get_node,
-  get_value
+  get_value,
+  set_value,
+  is_node_ready
 };
 
 zwave.on('driver ready', function (home_id) {
-	console.log(TAG, '=================== DRIVER READY! ====================');
-	console.log(TAG, 'scanning home_id=0x%s...', home_id.toString(16));
+	console.log(TAG, 'Driver ready. Scanning home_id 0x' + home_id.toString(16));
 });
 
 zwave.on('driver failed', function () {
-	console.log(TAG, 'failed to start driver');
+	console.error(TAG, 'Failed to start driver.');
 });
 
 zwave.on('node added', function (node_id) {
-	console.log(TAG, '=================== NODE ADDED! ====================', node_id);
+	console.log(TAG, 'Node ' + node_id + ' added.');
+
+  if (nodes[node_id]) {
+    return;
+  }
+
 	nodes[node_id] = {
-		manufacturer: '',
-		manufacturerid: '',
-		product: '',
-		producttype: '',
-		productid: '',
-		type: '',
-		name: '',
-		loc: '',
+    id: node_id,
+    info: {},
 		classes: {},
 		ready: false,
 	};
 });
 
 zwave.on('value added', function (node_id, com_class, value) {
-  if (!nodes[node_id]['classes'][com_class]) {
-    nodes[node_id]['classes'][com_class] = {};
+  const node = nodes[node_id];
+
+  if (!node.classes[com_class]) {
+    node.classes[com_class] = {};
   }
 
-  nodes[node_id]['classes'][com_class][value.index] = value;
+  node.classes[com_class][value.index] = value;
 
-  database.store_zwave_node(nodes[node_id]);
+  db_store_node(node);
 });
 
 zwave.on('value changed', function (node_id, com_class, value) {
-  if (nodes[node_id]['ready']) {
-    console.log(TAG, 'node%d: changed: %d:%s:%s->%s', node_id, com_class,
+  const node = nodes[node_id],
+    original_value = node.classes[com_class][value.index],
+    is_changed = original_value['value'] !== value['value'];
+
+  // Update the value on the stored node.
+  node.classes[com_class][value.index] = value;
+
+  if (node.ready && is_changed) {
+    console.log(
+      TAG + ' Value changed. Node %d "%s" changed from "%s" to "%s" (command class %d).',
+      node_id,
       value['label'],
-      nodes[node_id]['classes'][com_class][value.index]['value'],
-      value['value']);
-
-    console.log(TAG, 'value changed', nodes[node_id].product);
-
-    database.store_zwave_node(nodes[node_id]);
+      original_value['value'],
+      value['value'],
+      com_class
+    );
   };
-
-  nodes[node_id]['classes'][com_class][value.index] = value;
 });
 
 zwave.on('value removed', function (node_id, com_class, index) {
-	if (nodes[node_id]['classes'][com_class] && nodes[node_id]['classes'][com_class][index]) {
-		delete nodes[node_id]['classes'][com_class][index];
+  const node = nodes[node_id];
+
+	if (node.classes[com_class] && node.classes[com_class][index]) {
+		delete node.classes[com_class][index];
   }
 
-  database.store_zwave_node(nodes[node_id]);
+  db_store_node(node);
 });
 
 zwave.on('node ready', function (node_id, node_info) {
-  nodes[node_id]['id'] = node_id;
-  nodes[node_id]['info'] = node_info;
-	nodes[node_id]['ready'] = true;
+  const node = nodes[node_id];
 
-	console.log(TAG, 'node%d: %s, %s', node_id,
-		    node_info.manufacturer ? node_info.manufacturer
-					  : 'id=' + node_info.manufacturerid,
-		    node_info.product ? node_info.product
-				     : 'product=' + node_info.productid +
-				       ', type=' + node_info.producttype);
-	console.log(TAG, 'node%d: name="%s", type="%s", location="%s"', node_id,
-		    node_info.name,
-		    node_info.type,
-		    node_info.loc);
+  node.id = node_id;
+  node.info = node_info;
+  node.ready = true;
 
- 	database.store_zwave_node(nodes[node_id]);
+  console.log(
+    TAG + ' Node %d%s ready. %s, %s',
+    node_id,
+    node_info.name
+      ? ' "' + node_info.name + '"'
+      : '',
+    node_info.type
+      ? node_info.type
+      : node_info.producttype,
+    node_info.manufacturer
+      ? node_info.manufacturer
+      : node_info.manufacturerid
+  );
 
-	for (var com_class in nodes[node_id]['classes']) {
-		switch (com_class) {
-  		case 0x25: // COMMAND_CLASS_SWITCH_BINARY
-  		case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
-  			zwave.enablePoll(node_id, com_class);
-  			break;
-		}
-	}
+ 	db_store_node(node);
 });
 
 zwave.on('notification', function (node_id, notif, help) {
-	console.log(TAG, 'node%d: notification(%d): %s', node_id, notif, help);
+	console.log(TAG + ' Node %d: %s (%d)', node_id, help, notif);
 });
 
 zwave.on('scan complete', function () {
-	console.log(TAG, 'zwave scan complete');
+	console.log(TAG, 'Scan complete.');
 });
 
 var zwave_driver_paths = {
@@ -130,23 +135,29 @@ var zwave_driver_paths = {
 
 database.get_zwave_nodes().then((zwave_nodes) => {
   nodes = zwave_nodes;
-  console.log(TAG, 'connecting to ' + zwave_driver_paths[os.platform()]);
+  console.log(TAG, 'Connecting to ' + zwave_driver_paths[os.platform()]);
   zwave.connect(zwave_driver_paths[os.platform()]);
+}).catch((error) => {
+  console.error(TAG, error);
 });
 
 process.on('SIGINT', function () {
-	console.log(TAG, 'disconnecting...');
+	console.log(TAG, 'Disconnecting...');
 	zwave.disconnect();
 	process.exit();
 });
 
-function add_node(secure) {
-  zwave.addNode(secure);
+function on () {
+  zwave.on.apply(zwave, arguments);
 }
 
-function remove_node() {
-  console.log(TAG, 'remove node...');
-  zwave.removeNode();
+function poll (node_id, com_class, value, intensity) {
+  zwave.enablePoll(get_node(node_id).classes[com_class][value], intensity || 1);
+}
+
+function add_node(secure) {
+  console.log(TAG, 'Add node...');
+  zwave.addNode(secure);
 }
 
 function get_node (node_id) {
@@ -154,5 +165,26 @@ function get_node (node_id) {
 }
 
 function get_value (node_id, com_class, index) {
-  return nodes[node_id]['classes'][com_class][index]['value'];
+  return nodes[node_id].classes[com_class][index].value;
+}
+
+function set_value () {
+  zwave.setValue(arguments);
+}
+
+function is_node_ready (node_id) {
+  return Boolean(get_node(node_id).ready);
+}
+
+function db_store_node (node) {
+  database.store_zwave_node(db_serialize_node(node));
+}
+
+function db_serialize_node (node) {
+  return {
+    id: node.id,
+    info: node.info,
+    classes: {},
+    ready: false
+  };
 }

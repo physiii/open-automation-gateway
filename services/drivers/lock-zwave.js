@@ -1,8 +1,8 @@
-const zwave = require('../../zwave.js').zwave,
+const zwave = require('../../zwave.js'),
   EventEmitter = require('events'),
-	zCommandClass = 98,
+	zDoorLockCC = 98,
+	zDoorLockLocked = 0,
 	zInstance = 1,
-	zLockedIndex = 0,
 	TAG = '[ZwaveLockDriver]';
 
 class ZwaveLockDriver {
@@ -10,48 +10,65 @@ class ZwaveLockDriver {
 		this.id = nodeId;
 		this.events = new EventEmitter();
 
-		this.listenForZwaveChanges();
+		if (zwave.is_node_ready(this.id)) {
+			this.listenForZwaveChanges();
+		} else {
+			zwave.on('node ready', (nodeId) => {
+				if (nodeId !== this.id) {
+					return;
+				}
+
+				this.listenForZwaveChanges();
+			});
+		}
 	}
 
-  on () {
-    return this.events.on.apply(this.events, arguments);
-  }
+	on () {
+		return this.events.on.apply(this.events, arguments);
+	}
 
 	lock () {
-		zwave.setValue(this.id, zCommandClass, zInstance, zLockedIndex, true);
+		zwave.set_value(this.id, zDoorLockCC, zInstance, zDoorLockLocked, true);
 	}
 
 	unlock () {
-		zwave.setValue(this.id, zCommandClass, zInstance, zLockedIndex, false);
+		zwave.set_value(this.id, zDoorLockCC, zInstance, zDoorLockLocked, false);
 	}
 
 	listenForZwaveChanges () {
-		zwave.on('value changed', (nodeId, comClass, value) => {
+		const polledValuesCache = {};
+
+		// TODO: Get the current locked state from zwave.
+
+		// Poll Door Lock Command Class / Locked for changes.
+		zwave.poll(this.id, zDoorLockCC, zDoorLockLocked);
+		zwave.on('value changed', (nodeId, commandClass, value) => {
+			const cachedValueKey = String(commandClass) + '/' + String(value.index);
+
 			if (nodeId !== this.id) {
 				return;
 			}
 
-			if (this.isLockEvent(value.label, value.value)) {
+			// Check to see if the value actually changed.
+			if (polledValuesCache[cachedValueKey] === value.value) {
+				return;
+			}
+			polledValuesCache[cachedValueKey] = value.value;
+
+			if (this.isLockEvent(commandClass, value)) {
 				this.events.emit('locked');
-			} else if (this.isUnlockEvent(value.label, value.value)) {
+			} else if (this.isUnlockEvent(commandClass, value)) {
 				this.events.emit('unlocked');
 			}
 		});
 	}
 
-	isLockEvent (label, value) {
-	  if (label != 'Alarm Type') return false;
-	  if (value == '21') return true;
-	  if (value == '24') return true;
-	  return false;
+	isLockEvent (commandClass, value) {
+		return (value.index === zDoorLockLocked) && value.value;
 	}
 
-	isUnlockEvent (label, value) {
-	  if (label != 'Alarm Type') return false;
-	  if (value == '19') return true;
-	  if (value == '22') return true;
-	  if (value == '25') return true;
-	  return false;
+	isUnlockEvent (commandClass, value) {
+		return (value.index === zDoorLockLocked) && !value.value;
 	}
 }
 
