@@ -7,6 +7,7 @@ class LockService extends Service {
 
 		this.zwave_node_id = data.zwave_node_id;
 		this.locked = data.locked || false;
+		this.available = data.available || false;
 		this.settings.relock_timer = data.settings && data.settings.relock_timer || false;
 
 		this.driver = new driverClass(this.zwave_node_id);
@@ -14,16 +15,24 @@ class LockService extends Service {
 	}
 
 	subscribeToDriver () {
-		this.driver.on('locked', () => this.setLockState(true));
-		this.driver.on('unlocked', () => this.setLockState(false));
+		this.driver.on('ready', (data) => this.onReady(data));
+		this.driver.on('timedout', () => this.onTimeout());
+		this.driver.on('reconnected', () => this.onConnected());
+		this.driver.on('locked', () => this.setLockedState(true));
+		this.driver.on('unlocked', () => this.setLockedState(false));
 	}
 
-	lock () {
-		this.driver.lock();
+	onReady (data) {
+		this.onConnected();
+		this.locked = data.locked;
 	}
 
-	unlock () {
-		this.driver.unlock();
+	onConnected () {
+		this.available = true;
+	}
+
+	onTimeout () {
+		this.available = false;
 	}
 
 	onLock () {
@@ -34,7 +43,15 @@ class LockService extends Service {
 		this.setUpAutoRelock();
 	}
 
-	setLockState (isLocked) {
+	lock () {
+		this.driver.lock();
+	}
+
+	unlock () {
+		this.driver.unlock();
+	}
+
+	setLockedState (isLocked) {
 		if (!this.locked && isLocked) { // If changed from unlocked to locked.
 			this.onLock();
 		} else if (this.locked && !isLocked) { // If changed from locked to unlocked.
@@ -45,27 +62,54 @@ class LockService extends Service {
 		this.locked = isLocked;
 	}
 
-	setUpAutoRelock(){
-			if (this.settings.relock_timer === false) {
-				return;
-			}
+	setUpAutoRelock (isSubsequentTry) {
+		if (this.settings.relock_timer === false) {
+			return;
+		}
 
-			console.log(TAG, this.device.settings.name, 'Detected door unlocked. Setting relock timer.' + new Date());
+		if (!isSubsequentTry) {
+			console.log(
+				TAG,
+				'Door unlocked'
+				+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+				+ '. Setting relock timer. '
+				+ new Date()
+			);
+		}
 
-			this.relock_timeout = setTimeout(() => {
-				console.log(TAG, this.device.settings.name, 'Relocking door.' + new Date());
-				this.lock();
-			}, this.settings.relock_timer * 1000);
+		this.relock_timeout = setTimeout(() => {
+			console.log(
+				TAG,
+				'Relocking door'
+				+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+				+ '.'
+				+ new Date()
+			);
+
+			this.relock_timeout = null;
+			this.lock();
+
+			// Try to auto-relock again. This covers scenarios where the lock 
+			// is unlocked again during window between relock and the next poll.
+			this.setUpAutoRelock(true);
+		}, this.settings.relock_timer * 1000);
 	}
 
-	clearAutoRelock() {
+	clearAutoRelock () {
 		if (!this.relock_timeout) {
 			return;
 		}
 
-		console.log(TAG, this.device.settings.name, 'Detected door locked. Removing relock timer.' + new Date());
+		console.log(
+			TAG,
+			'Door locked'
+			+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+			+ '. Removing relock timer. '
+			+ new Date()
+		);
 
 		clearTimeout(this.relock_timeout);
+		this.relock_timeout = null;
 	}
 }
 

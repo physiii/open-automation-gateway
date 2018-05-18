@@ -8,14 +8,14 @@ const socket = require('./socket.js'),
   database = require('./database.js'),
   OpenZWave = require('openzwave-shared'),
   zwave = new OpenZWave({
-  	ConsoleOutput: false,
-  	Logging: false,
-  	SaveConfiguration: false,
-  	DriverMaxAttempts: 3,
-  	PollInterval: 500,
-  	SuppressValueRefresh: true,
+    ConsoleOutput: false,
+    Logging: false,
+    SaveConfiguration: false,
+    DriverMaxAttempts: 3,
+    PollInterval: 500,
+    SuppressValueRefresh: true,
     // TODO: Don't use the same key for every gateway.
-  	NetworkKey: '0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10'
+    NetworkKey: '0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10'
   }),
   TAG = '[zwave.js]';
 let nodes = {};
@@ -23,7 +23,7 @@ let nodes = {};
 module.exports = {
   on,
   poll,
-	add_node,
+  add_node,
   get_node,
   get_value,
   set_value,
@@ -31,26 +31,26 @@ module.exports = {
 };
 
 zwave.on('driver ready', function (home_id) {
-	console.log(TAG, 'Driver ready. Scanning home_id 0x' + home_id.toString(16));
+  console.log(TAG, 'Driver ready. Scanning home_id 0x' + home_id.toString(16));
 });
 
 zwave.on('driver failed', function () {
-	console.error(TAG, 'Failed to start driver.');
+  console.error(TAG, 'Failed to start driver.');
 });
 
 zwave.on('node added', function (node_id) {
-	console.log(TAG, 'Node ' + node_id + ' added.');
+  console.log(TAG, 'Node ' + node_id + ' added.');
 
   if (nodes[node_id]) {
     return;
   }
 
-	nodes[node_id] = {
+  nodes[node_id] = {
     id: node_id,
     info: {},
-		classes: {},
-		ready: false,
-	};
+    classes: {},
+    ready: false,
+  };
 });
 
 zwave.on('value added', function (node_id, com_class, value) {
@@ -88,8 +88,8 @@ zwave.on('value changed', function (node_id, com_class, value) {
 zwave.on('value removed', function (node_id, com_class, index) {
   const node = nodes[node_id];
 
-	if (node.classes[com_class] && node.classes[com_class][index]) {
-		delete node.classes[com_class][index];
+  if (node.classes[com_class] && node.classes[com_class][index]) {
+    delete node.classes[com_class][index];
   }
 
   db_store_node(node);
@@ -116,21 +116,21 @@ zwave.on('node ready', function (node_id, node_info) {
       : node_info.manufacturerid
   );
 
- 	db_store_node(node);
+  db_store_node(node);
 });
 
 zwave.on('notification', function (node_id, notif, help) {
-	console.log(TAG + ' Node %d: %s (%d)', node_id, help, notif);
+  console.log(TAG + ' Node %d: %s (%d)', node_id, help, notif);
 });
 
 zwave.on('scan complete', function () {
-	console.log(TAG, 'Scan complete.');
+  console.log(TAG, 'Scan complete.');
 });
 
 var zwave_driver_paths = {
-	'darwin' : '/dev/cu.usbmodem1411',
-	'linux'  : '/dev/tty'+config.zwave_dev,
-	'windows': '\\\\.\\COM3'
+  'darwin' : '/dev/cu.usbmodem1411',
+  'linux'  : '/dev/tty'+config.zwave_dev,
+  'windows': '\\\\.\\COM3'
 };
 
 database.get_zwave_nodes().then((zwave_nodes) => {
@@ -142,9 +142,9 @@ database.get_zwave_nodes().then((zwave_nodes) => {
 });
 
 process.on('SIGINT', function () {
-	console.log(TAG, 'Disconnecting...');
-	zwave.disconnect();
-	process.exit();
+  console.log(TAG, 'Disconnecting...');
+  zwave.disconnect();
+  process.exit();
 });
 
 function on () {
@@ -155,7 +155,7 @@ function poll (node_id, com_class, value, intensity) {
   zwave.enablePoll(get_node(node_id).classes[com_class][value], intensity || 1);
 }
 
-function add_node(secure) {
+function add_node (secure) {
   console.log(TAG, 'Add node...');
   zwave.addNode(secure);
 }
@@ -169,11 +169,12 @@ function get_value (node_id, com_class, index) {
 }
 
 function set_value () {
-  zwave.setValue(arguments);
+  zwave.setValue.apply(zwave, arguments);
 }
 
 function is_node_ready (node_id) {
-  return Boolean(get_node(node_id).ready);
+  const node = get_node(node_id);
+  return Boolean(node && node.ready);
 }
 
 function db_store_node (node) {

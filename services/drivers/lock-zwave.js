@@ -1,24 +1,27 @@
 const zwave = require('../../zwave.js'),
-  EventEmitter = require('events'),
+	EventEmitter = require('events'),
 	zDoorLockCC = 98,
 	zDoorLockLocked = 0,
 	zInstance = 1,
+	zwaveDeadNotification = 5,
+	zwaveAliveNotification = 6,
 	TAG = '[ZwaveLockDriver]';
 
 class ZwaveLockDriver {
 	constructor (nodeId) {
 		this.id = nodeId;
 		this.events = new EventEmitter();
+		this.ready = false;
 
 		if (zwave.is_node_ready(this.id)) {
-			this.listenForZwaveChanges();
+			this.onNodeReady();
 		} else {
 			zwave.on('node ready', (nodeId) => {
 				if (nodeId !== this.id) {
 					return;
 				}
 
-				this.listenForZwaveChanges();
+				this.onNodeReady();
 			});
 		}
 	}
@@ -35,10 +38,14 @@ class ZwaveLockDriver {
 		zwave.set_value(this.id, zDoorLockCC, zInstance, zDoorLockLocked, false);
 	}
 
+	onNodeReady () {
+		this.ready = true;
+		this.events.emit('ready', {locked: zwave.get_value(this.id, zDoorLockCC, zDoorLockLocked)});
+		this.listenForZwaveChanges();
+	}
+
 	listenForZwaveChanges () {
 		const polledValuesCache = {};
-
-		// TODO: Get the current locked state from zwave.
 
 		// Poll Door Lock Command Class / Locked for changes.
 		zwave.poll(this.id, zDoorLockCC, zDoorLockLocked);
@@ -53,12 +60,29 @@ class ZwaveLockDriver {
 			if (polledValuesCache[cachedValueKey] === value.value) {
 				return;
 			}
+
 			polledValuesCache[cachedValueKey] = value.value;
 
 			if (this.isLockEvent(commandClass, value)) {
 				this.events.emit('locked');
 			} else if (this.isUnlockEvent(commandClass, value)) {
 				this.events.emit('unlocked');
+			}
+		});
+
+		// Listen for node dead/alive notifications.
+		zwave.on('notification', (nodeId, notification) => {
+			if (nodeId !== this.id) {
+				return;
+			}
+
+			switch (notification) {
+				case zwaveDeadNotification:
+					this.events.emit('timedout');
+					break;
+				case zwaveAliveNotification:
+					this.events.emit('reconnected');
+					break;
 			}
 		});
 	}
