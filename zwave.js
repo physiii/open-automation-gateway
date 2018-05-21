@@ -24,6 +24,7 @@ module.exports = {
   on,
   poll,
   add_node,
+  remove_node,
   get_node,
   get_value,
   set_value,
@@ -158,6 +159,11 @@ function poll (node_id, com_class, value, intensity) {
 function add_node (secure) {
   console.log(TAG, 'Add node...');
   zwave.addNode(secure);
+}
+
+function remove_node() {
+  console.log("remove node...");
+  zwave.removeNode();
 }
 
 function get_node (node_id) {
