@@ -72,23 +72,23 @@ class KeyClipWriter:
 			else:
 				time.sleep(self.timeout)
 
-	def flush(self, callback, tempFilePath, finishedFilePath):
+	def flush(self, callback, callbackData):
 		# empty the queue by flushing all remaining frames to file
 		while not self.Q.empty():
 			frame = self.Q.get()
 			self.writer.write(frame)
 
-		callback(tempFilePath, finishedFilePath)
+		callback(callbackData)
 
 		self.writer.release()
 
-	def finish(self, callback, tempFilePath, finishedFilePath):
+	def finish(self, callback, callbackData):
 		# indicate that we are done recording, join the thread,
 		# flush all remaining frames in the queue to file, and
 		# release the writer pointer
 		self.recording = False
 		self.thread.join()
 
-		self.thread = Thread(target=self.flush, args=(callback, tempFilePath, finishedFilePath,))
+		self.thread = Thread(target=self.flush, args=(callback, callbackData,))
 		self.thread.daemon = True
 		self.thread.start()

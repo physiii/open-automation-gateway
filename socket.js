@@ -10,34 +10,37 @@ var TAG = "[socket.js]";
 var use_dev = config.use_dev || false;
 var use_ssl = config.use_ssl || false;
 
-
-if (use_dev == false){
-var relay_server = config.relay_server;
-var relay_port = config.relay_port;
+if (use_dev == false) {
+  var relay_server = config.relay_server;
+  var relay_port = config.relay_port;
 }
 if (use_ssl && use_dev) {
-var relay_server = config.relay_server;
-var relay_port = 4443;
+  var relay_server = config.relay_server;
+  var relay_port = 4443;
 }
-if (use_dev && !use_ssl){
-var relay_server = config.relay_server;
-var relay_port = 5000;
+if (use_dev && !use_ssl) {
+  var relay_server = config.relay_server;
+  var relay_port = 5000;
 }
 
 if (!use_dev) {
-var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
-console.log('Connected to: http',relay_server+":"+relay_port);
+  var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
+  console.log('Connected to: http',relay_server+":"+relay_port);
 } else if (use_ssl) {
-var relay = require('socket.io-client')("https://"+relay_server+":"+relay_port);
-console.log('Connected to:https',relay_server+":"+relay_port);
+  var relay = require('socket.io-client')("https://"+relay_server+":"+relay_port);
+  console.log('Connected to:https',relay_server+":"+relay_port);
 } else {
-var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
-console.log('Connected to: http',relay_server+":"+relay_port);
+  var relay = require('socket.io-client')("http://"+relay_server+":"+relay_port);
+  console.log('Connected to: http',relay_server+":"+relay_port);
 }
 
 module.exports = {
   relay: relay
 }
+
+
+// Devices API
+require('./api/camera.js');
 
 
 relay.on('get token', function (data) {

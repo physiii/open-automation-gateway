@@ -18,6 +18,9 @@ module.exports = {
   store_settings,
   store_device_settings,
   store_device,
+  get_camera_recordings,
+  get_camera_recording,
+  delete_camera_recording,
   store_zwave_node,
   get_zwave_nodes,
   settings,
@@ -182,6 +185,80 @@ function get_devices () {
 
       db.close();
     });
+  });
+}
+
+function get_camera_recordings (camera_id) {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
+      let query;
+
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      if (camera_id) {
+        query = db.collection('camera_recordings').find({camera_id: camera_id});
+      } else {
+        query = db.collection('camera_recordings').find();
+      }
+
+      query.toArray(function (error, result) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result);
+      });
+
+      db.close();
+    }
+  });
+}
+
+function get_camera_recording (recording_id) {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      db.collection('camera_recordings').find({id: recording_id}, function (error, result) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result);
+      });
+
+      db.close();
+    }
+  });
+}
+
+function delete_camera_recording (recording_id) {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (error, db) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      db.collection('camera_recordings').remove({id: recording_id}, function (error, result) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result);
+      });
+
+      db.close();
+    }
   });
 }
 

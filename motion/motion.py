@@ -8,13 +8,14 @@ from imutils.video import VideoStream
 import argparse
 import warnings
 import datetime
+import time
 import imutils
 import json
-import time
 import cv2
 import os
 import shutil
 import sys
+import uuid
 
 from bson import BSON
 from bson import json_util
@@ -74,7 +75,7 @@ def getFileName(date):
   return date.strftime('%Y-%m-%d_%I:%M:%S%p') + '.avi'
 
 def framerateInterval(framerate):
-  interval = datetime.timedelta(seconds = float(1) / framerate)
+  interval = datetime.timedelta(seconds=float(1) / framerate)
   nextFrameTargetTime = datetime.datetime.now()
 
   while True:
@@ -87,32 +88,50 @@ def framerateInterval(framerate):
 
     yield needCatchUpFrame
 
-class JSONEncoder(json.JSONEncoder):
-  def default(self, o):
-    if isinstance(o, ObjectId):
-      return str(o)
-    return json.JSONEncoder.default(self, o)
+def localDateToUtc(date):
+  utcOffsetSec = time.altzone if time.localtime().tm_isdst else time.timezone
+  utcOffset = datetime.timedelta(seconds=utcOffsetSec)
+  return date + utcOffset;
+
+def saveRecording(data):
+  db.camera_recordings.insert_one({
+    'id': str(uuid.uuid4()),
+    'camera_id': camera_id,
+    'file': data['finishedPath'],
+    'date': localDateToUtc(data['date']),
+    'duration': data['duration'],
+    'width': data['width'],
+    'height': data['height']
+  })
+
+  # move the file from the temporary location
+  os.rename(data['tempPath'], data['finishedPath'])
+
+  print('[NEW RECORDING] Recording saved.')
+  sys.stdout.flush()
 
 ##################################################################################################################
 # Parse arguments
 
 ap = argparse.ArgumentParser()
-ap.add_argument('-c', '--camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
+ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
+ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
 args = vars(ap.parse_args())
 
 camera_path = args['camera']
+camera_id = args['camera-id']
 
 ##################################################################################################################
-#Start MongoDB and check for device connections
+# Start MongoDB
 
-# try:
-#   connection = MongoClient('mongodb://localhost:27017')
-#   print('Mongodb connected')
-#   db = connection.gateway
-# except:
-#   print('Error: Unable to Connect')
-#   sys.stdout.flush()
-#   connection = None
+try:
+  connection = MongoClient('mongodb://localhost:27017')
+  print('Database connected')
+  db = connection.gateway
+except:
+  print('Error: Unable to connect to database')
+  sys.stdout.flush()
+  connection = None
 
 ##################################################################################################################
 
@@ -140,6 +159,7 @@ framerate = 30
 bufSize = 3 * framerate # seconds * framerate
 kcw = KeyClipWriter(bufSize)
 consecFrames = 0
+fileFramesLength = 0
 lastUploaded = datetime.datetime.now()
 frame = None
 motionCounter = 0
@@ -151,7 +171,7 @@ for needCatchUpFrame in framerateInterval(framerate):
     continue
 
   motionDetected = False
-  timestamp = datetime.datetime.now()
+  frameTimestamp = datetime.datetime.now()
 
   # grab the current frame
   frame = camera.read()
@@ -193,7 +213,7 @@ for needCatchUpFrame in framerateInterval(framerate):
       motionDetected = True
 
   if motionDetected:
-    if (timestamp - lastUploaded).seconds >= 1.0:
+    if (frameTimestamp - lastUploaded).seconds >= 1.0:
       motionCounter += 1
 
     if motionCounter >= 2:
@@ -206,22 +226,25 @@ for needCatchUpFrame in framerateInterval(framerate):
         # save a preview image
         cv2.imwrite(getCameraPath(camera_path) + '/preview.jpg', frame)
 
-        fileName = getFileName(timestamp)
+        fileFramesLength = 0
+        fileTimestamp = frameTimestamp
+        fileName = getFileName(fileTimestamp)
         tempRecordingPath = getCameraTempPath(camera_path) + '/' + fileName
-        finishedRecordingPath = getDatePath(camera_path, timestamp) + '/' + fileName
+        finishedRecordingPath = getDatePath(camera_path, fileTimestamp) + '/' + fileName
 
         kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'PIM1'), framerate)
 
   consecFrames += 1
+  fileFramesLength += 1
   if consecFrames >= (bufSize + 10):
     consecFrames = 0
 
-  # add timestamp text to frame
+  # add frameTimestamp text to frame
   # text shadow
-  cv2.putText(frame, datetime.datetime.now().strftime('%-m/%-d/%Y %-I:%M:%S %p'),
+  cv2.putText(frame, frameTimestamp.strftime('%-m/%-d/%Y %-I:%M:%S %p'),
     (11, frame.shape[0] - 9), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 4)
   # text
-  cv2.putText(frame, datetime.datetime.now().strftime('%-m/%-d/%Y %-I:%M:%S %p'),
+  cv2.putText(frame, frameTimestamp.strftime('%-m/%-d/%Y %-I:%M:%S %p'),
     (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 255, 60), 2)
 
   # Draw region detection area
@@ -234,13 +257,16 @@ for needCatchUpFrame in framerateInterval(framerate):
     print('[NO MOTION] Recording finished capturing.')
     sys.stdout.flush()
 
-    def finishedCallback(tempFile, finishedFile):
-      print('Recording saved.')
-      sys.stdout.flush()
+    recordingData = {
+      'tempPath': tempRecordingPath,
+      'finishedPath': finishedRecordingPath,
+      'date': fileTimestamp,
+      'duration': float(fileFramesLength) / framerate,
+      'width': frame.shape[1],
+      'height': frame.shape[0]
+    }
 
-      os.rename(tempFile, finishedFile)
-
-    kcw.finish(finishedCallback, tempRecordingPath, finishedRecordingPath)
+    kcw.finish(saveRecording, recordingData)
 
     # create a new KeyClipWriter. the existing one continues saving the 
     # recording in a separate thread
