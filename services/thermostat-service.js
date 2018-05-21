@@ -7,8 +7,9 @@ const Service = require('./service.js'),
       super(data);
 
       this.id = data.id;
-      this.settings.systen_info = data.settings && data.settings.system_info;
-      this.settings.program_info = data.settings && data.settings.program_info;
+      this.settings.systen_info = data.settings && data.settings.system_info || undefined;
+      this.settings.program_info = data.settings && data.settings.program_info || undefined;
+      this.settings.hold_mode = data.settings && data.settings.hold_mode || false;
       this.mode = data.mode; // Determines Heating or Cooling
       this.fan_mode = data.fan_mode; // Determines whether the fan is on or off
       this.target_temp = data.target_temp;
@@ -17,4 +18,14 @@ const Service = require('./service.js'),
       //this.driver = new driverClass(this.id);
       //this.subscribeToDriver();
     }
+
+    //sybscribeToDriver() {}
+
+    setTemp(){}
+
+    getMode(){}
+
+    getCurrentProgram(){}
+
+
   }
