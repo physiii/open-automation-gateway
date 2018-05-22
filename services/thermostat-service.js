@@ -7,6 +7,7 @@ class ThermostatService extends Service {
     super(data);
 
     this.id = data.id;
+    this.ip = data.ip
     this.settings.systen_info = data.settings && data.settings.system_info || undefined;
     this.settings.program_info = data.settings && data.settings.program_info || undefined;
     this.settings.hold_mode = data.settings && data.settings.hold_mode || false;
@@ -15,13 +16,31 @@ class ThermostatService extends Service {
     this.target_temp = data.target_temp;
     this.current_temp = data.current_temp;
 
-    //this.driver = new driverClass(this.id);
-    //this.subscribeToDriver();
+    this.driver = new driverClass(this.ip);
+    this.subscribeToDriver();
   }
 
-  //sybscribeToDriver() {}
+  subscribeToDriver() {
+    return;
+  }
 
-  setTemp(){}
+  setTemp(temp, mode, hold){
+    if (mode == 'heat') {
+      if (hold) {
+        this.driver.setHoldHeat(temp);
+        return;
+      }
+    this.driver.setHeatTemp (temp);
+    } else if (mode == 'cool') {
+      if (hold) {
+        setHoldCool (temp);
+        return;
+      }
+      setCoolTemp (temp);
+    }
+
+    return;
+  }
 
   getMode(){}
 
