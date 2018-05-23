@@ -8,9 +8,6 @@ class ThermostatService extends Service {
 
     this.id = data.id;
     this.ip = data.ip
-    this.settings.systen_info = data.settings && data.settings.system_info || undefined;
-    this.settings.program_info = data.settings && data.settings.program_info || undefined;
-    this.settings.hold_mode = data.settings && data.settings.hold_mode || false;
     this.mode = data.mode; // Determines Heating or Cooling
     this.fan_mode = data.fan_mode; // Determines whether the fan is on or off
     this.target_temp = data.target_temp;
@@ -42,9 +39,19 @@ class ThermostatService extends Service {
     return;
   }
 
-  getMode(){}
+  fanMode () {
+    if (this.fan_mode === "1") {
+      this.driver.fanOn();
+    } else if (this.fan_mode === "2") {
+      this.driver.fanAuto();
+    }
 
-  getCurrentProgram(){}
+    return;
+  }
+
+  getCurrentProgram () {
+    return;
+  }
 
 
 }

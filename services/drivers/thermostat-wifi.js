@@ -116,7 +116,39 @@ class ThermostatWiFiDriver {
     });
   }
 
+  fanOn () {
+    return new Promise((resolve, reject) => {
+      request.post({
+        headers: {'content-type' : 'application/x-www-form-urlencoded'},
+        url:     'http://'+this.ip+'/tstat',
+        body:    JSON.stringify({fmode: 2 })
+      }, function (error, response, body) {
+        if (error) {
+          reject(error);
+          return;
+        }
 
+        resolve(response, body);
+      });
+    });
+  }
+
+  fanAuto () {
+    return new Promise((resolve, reject) => {
+      request.post({
+        headers: {'content-type' : 'application/x-www-form-urlencoded'},
+        url:     'http://'+this.ip+'/tstat',
+        body:    JSON.stringify({fmode: 1 })
+      }, function (error, response, body) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response, body);
+      });
+    });
+  }
 
 }
 module.exports = ThermostatWiFiDriver;
