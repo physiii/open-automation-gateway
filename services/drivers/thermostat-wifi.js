@@ -26,10 +26,10 @@ class ThermostatWiFiDriver {
           }
           this.ready = true;
           resolve(response, data)
-          }
+        });
       })
-    });
-  }
+    };
+
 
   setCoolTemp (temperature) {
     return new Promise((resolve, reject) => {

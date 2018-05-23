@@ -21,10 +21,10 @@ class ThermostatService extends Service {
     this.driver.on('ready', (data) => this.onReady(data));
   }
 
-  this.onReady () {
+  onReady () {
     return;
   }
-  
+
   setTemp(temp, mode, hold){
     if (mode == 'heat') {
       if (hold) {
