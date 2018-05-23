@@ -1,4 +1,5 @@
 const spawn = require('child_process').spawn,
+	config = require('./config.json'),
 	database = require('./database.js'),
 	defaultStreamPort = 5054,
 	defaultAudioDevice = config.device_hw || 'hw:0',

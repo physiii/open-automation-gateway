@@ -11,27 +11,33 @@ const connection = require('./connection.js'),
   TAG = '[database.js]';
 
 module.exports = {
-  got_token: false,
   set_wifi_from_db,
   get_devices,
   get_settings,
   store_settings,
-  store_device_settings,
   store_device,
   get_camera_recordings,
   get_camera_recording,
   delete_camera_recording,
   store_zwave_node,
   get_zwave_nodes,
-  settings,
-  device_settings
+  settings
 }
-
-get_device_settings();
 
 //-- initialize variables --//
 var settings = {};
-var device_settings = {};
+
+function connect (callback) {
+  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', (error, db) => {
+    if (error) {
+      console.error('Unable to connect to the mongoDB server. Error:', error);
+      callback('Unable to connect to gateway database.');
+      return;
+    }
+
+    callback(null, db);
+  });
+}
 
 function set_wifi_from_db () {
   console.log("set_wifi_from_db");
@@ -77,13 +83,6 @@ function get_settings () {
         }
 
         module.exports.settings = settings;
-
-        if (!module.exports.got_token) {
-          console.log("fetching token");
-          store_settings(settings);
-        }
-
-        settings.devices = device_array;
         resolve(settings);
       });
 
@@ -92,75 +91,45 @@ function get_settings () {
   });
 }
 
-//-- get and send settings object --//
-function get_device_settings () {
-  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    if (err) return console.log('Unable to connect to the mongoDB server. Error:', err);
-    var collection = db.collection('devices');
-    collection.find().toArray(function (err, result) {
-      if (err) return console.log(err);
-      if (result[0]) device_settings = result[0]
-      module.exports.device_settings = device_settings;
-      //console.log("get_device_settings",device_settings);
-    });
-  db.close();
-});
-}
-
 //-- store setting --//
 function store_settings (data) {
-  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    if (err) return console.log(err);
-    var collection = db.collection('settings');
+  connect(function (error, db) {
+    if (error) {
+      return;
+    }
+
     settings[Object.keys(data)[0]] = data[Object.keys(data)[0]];
-   //console.log('store_settings',settings);
-    collection.update({}, {$set:data}, {upsert:true}, function(err, item){
+
+    db.collection('settings').update({}, {$set: data}, {upsert: true}, function (error, item) {
         //console.log("item",item)
     });
-    db.close();
-  });
-}
 
-//-- store device setting --//
-function store_device_settings (device) {
-  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    if (err) return console.log(err);
-    var collection = db.collection('devices');
-    //device_settings[Object.keys(device)[0]] = device[Object.keys(device)[0]];
-    console.log(device)
-    collection.update({id:device.id}, {$set:device.settings}, {upsert:true}, function(err, item){
-        console.log("item",item)
-    });
     db.close();
-    console.log('store_device_settings',device);
   });
 }
 
 //-- store new device --//
 function store_device (device) {
-  delete device["_id"];
-  MongoClient.connect('mongodb://127.0.0.1:27017/gateway', function (err, db) {
-    //console.log(TAG,"storing device",device);
-    if (err) {
-      console.log('Unable to connect to the mongoDB server. Error:', err);
-    } else {
-      var collection = db.collection('devices');
-      collection.update({id:device.id}, {$set:device.dbSerialize ? device.dbSerialize() : device}, {upsert:true}, function(err, item){
-        //console.log("update device: ",item)
-      });
-      collection.find().toArray(function (err, result) {
-        if (err) {
-          console.log(err);
-        } else if (result.length) {
-	  device_array = result;
-        } else {
-          console.log(TAG,'store_device | no results');
+  return new Promise((resolve, reject) => {
+    connect(function (error, db) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      db.collection('devices').update({id: device.id}, {$set: device.dbSerialize()}, {upsert: true}, (error, record) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve(record);
         }
-      });
+      );
+
       db.close();
-    }
+    });
   });
-  get_devices();
 }
 
 //-- load devices from database --//
@@ -214,7 +183,7 @@ function get_camera_recordings (camera_id) {
       });
 
       db.close();
-    }
+    });
   });
 }
 
@@ -236,7 +205,7 @@ function get_camera_recording (recording_id) {
       });
 
       db.close();
-    }
+    });
   });
 }
 
@@ -258,7 +227,7 @@ function delete_camera_recording (recording_id) {
       });
 
       db.close();
-    }
+    });
   });
 }
 

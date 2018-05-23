@@ -2,8 +2,7 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- zwave.js ----------------------------- //
 
-const socket = require('./socket.js'),
-  os = require('os'),
+const os = require('os'),
   config = require('./config.json'),
   database = require('./database.js'),
   OpenZWave = require('openzwave-shared'),

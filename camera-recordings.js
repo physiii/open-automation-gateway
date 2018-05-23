@@ -1,5 +1,5 @@
 const database = require('./database.js'),
-	VideoStreamer = require('../video-streamer.js'),
+	VideoStreamer = require('./video-streamer.js'),
 	TAG = '[CameraRecordings]';
 
 class CameraRecordings {
@@ -23,7 +23,7 @@ class CameraRecordings {
 		});
 	}
 
-	getRecording (recordingId) {
+	getRecordingById (recordingId) {
 		return new Promise((resolve, reject) => {
 			database.get_camera_recording(recordingId).then(resolve).catch((error) => {
 				console.error(TAG, error);
@@ -34,7 +34,7 @@ class CameraRecordings {
 
 	streamRecording (recordingId) {
 		return new Promise((resolve, reject) => {
-			this.getRecording(recordingId).then((recording) => {
+			this.getRecordingById(recordingId).then((recording) => {
 				VideoStreamer.streamFile(recording.id, recording.file);
 				resolve(recordingId);
 			}).catch((error) => {
