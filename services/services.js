@@ -1,6 +1,8 @@
 const Service = require('./service.js'),
 	CameraService = require('./camera-service.js'),
 	LockService = require('./lock-service.js'),
+	thermostatService = require ('./thermostat-service.js'),
+	thermostatWifiDriver = require ('./thermostat-wifi.js'),
 	ZwaveLockDriver = require('./drivers/lock-zwave.js');
 
 class Services {
@@ -21,6 +23,9 @@ class Services {
 				break;
 			case 'lock':
 				service = new LockService(data, ZwaveLockDriver);
+				break;
+			case: 'thermostat':
+				service = new ThermostatService(data, thermostatWifiDriver);
 				break;
 			default:
 				service = new Service(data);

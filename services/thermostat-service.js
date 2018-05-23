@@ -3,7 +3,7 @@ const Service = require('./service.js'),
   TAG = '[ThermostatService]';
 
 class ThermostatService extends Service {
-  constructor(data) { // TODO: Add driverClass arguement when ready
+  constructor(data, driverClass) { // TODO: Add driverClass arguement when ready
     super(data);
 
     this.id = data.id;
@@ -18,9 +18,13 @@ class ThermostatService extends Service {
   }
 
   subscribeToDriver() {
-    return;
+    this.driver.on('ready', (data) => this.onReady(data));
   }
 
+  this.onReady () {
+    return;
+  }
+  
   setTemp(temp, mode, hold){
     if (mode == 'heat') {
       if (hold) {
