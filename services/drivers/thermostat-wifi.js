@@ -18,7 +18,7 @@ class ThermostatWiFiDriver {
   getThermostatState () {
     return new Promise ((resolve, reject) => {
       request.get(
-        'http://'+this.is+'/tstat',
+        'http://'+this.ip+'/tstat',
         function(error, response, data){
           if (error){
             reject(error);
@@ -27,7 +27,7 @@ class ThermostatWiFiDriver {
         this.ready = true;
         resolve(response, data)
       });
-    })
+    });
   };
 
 
