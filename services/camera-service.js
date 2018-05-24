@@ -52,6 +52,7 @@ class CameraService extends Service {
 	streamLive () {
 		VideoStreamer.streamLive(
 			this.id,
+			this.device.token,
 			this.getLoopbackDevicePath(),
 			{
 				width: this.settings.resolution_w,
