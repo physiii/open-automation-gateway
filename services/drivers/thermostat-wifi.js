@@ -1,6 +1,7 @@
 //Placeholder for WiFi driver
 const request = require('request'),
   EventEmitter = require('events'),
+  poll_delay = 30,
   TAG = '[ThermostatWiFiDriver]';
 
 class ThermostatWiFiDriver {
@@ -18,12 +19,29 @@ class ThermostatWiFiDriver {
         hold_mode: data.hold
       });
       this.ready = true;
-    })
+    }).then(function() {
+      this.startPolling();
+    });
   }
 
   on () {
 		return this.events.on.apply(this.events, arguments);
 	}
+
+  startPolling () {
+    console.log(TAG, 'Begin Update polling for Thermostat...');
+    setInterval (function () {
+      getThermostatState ().then((data) => {
+        this.events.emit('state update', {
+          mode: data.tmode,
+          current_temp: data.temp,
+          target_temp: data.t_cool || data.t_heat,
+          fan_mode: data.fmode,
+          hold_mode: data.hold
+        });
+      })
+    }, poll_delay * 1000);
+  }
 
   getThermostatState () {
     return new Promise ((resolve, reject) => {
@@ -52,7 +70,7 @@ class ThermostatWiFiDriver {
           reject(error);
           return;
         }
-
+        console.log('setCoolTemp',response, body )
         resolve(response, body);
       });
     });
