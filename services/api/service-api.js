@@ -11,7 +11,7 @@ class ServiceApi {
 			// Ensure callback is always a function so we don't have to check that it is anywhere else.
 			const callback = typeof remoteCallback === 'function' ? remoteCallback : noOp;
 
-			localCallback(data, callback);
+			localCallback.call(this, data, callback);
 		});
 	}
 }

@@ -21,14 +21,9 @@ function createDeviceSocket (deviceId) {
 
 	socket.on('disconnect', () => console.log(TAG, deviceId, 'Device was disconnected from relay.'));
 	socket.on('reconnect_failed', () => console.log(TAG, deviceId, 'Device failed to reconnect to relay.'));
-	socket.on('connect_error', (error) => { onConnectError(deviceId, error); });
-	socket.on('reconnect_error', (error) => { onConnectError(deviceId, error); });
+	socket.on('connect_error', (error) => console.error(TAG, deviceId, 'Error connecting device to relay:', error.type, error.description));
 
 	return socket;
-}
-
-function onConnectError (deviceId, error) {
-	console.error(TAG, deviceId, 'Error connecting device to relay:', error);
 }
 
 module.exports = {
