@@ -1,7 +1,7 @@
 //Placeholder for WiFi driver
 const request = require('request'),
   EventEmitter = require('events'),
-  poll_delay = 30,
+  poll_delay = 30 * 1000,
   TAG = '[ThermostatWiFiDriver]';
 
 class ThermostatWiFiDriver {
@@ -11,17 +11,21 @@ class ThermostatWiFiDriver {
     this.ready = false;
 
     this.getThermostatState().then((data) => {
-      this.events.emit('ready', {
-        mode: data.tmode,
-        current_temp: data.temp,
-        target_temp: data.t_cool || data.t_heat,
-        fan_mode: data.fmode,
-        hold_mode: data.hold
-      });
+      const state = JSON.parse(data);
+
+      this.settings = {
+        mode: state.tmode,
+        current_temp: state.temp,
+        target_temp: state.t_cool || state.t_heat,
+        fan_mode: state.fmode,
+        hold_mode: state.hold
+      };
+      this.events.emit('ready', this.settings);
+      console.log(TAG,'Settings:', this.settings);
       this.ready = true;
-    }).then(function() {
-      this.startPolling();
     });
+
+    this.startPolling();
   }
 
   on () {
@@ -30,17 +34,21 @@ class ThermostatWiFiDriver {
 
   startPolling () {
     console.log(TAG, 'Begin Update polling for Thermostat...');
-    setInterval (function () {
-      getThermostatState ().then((data) => {
-        this.events.emit('state update', {
-          mode: data.tmode,
-          current_temp: data.temp,
-          target_temp: data.t_cool || data.t_heat,
-          fan_mode: data.fmode,
-          hold_mode: data.hold
-        });
+
+    setInterval((self) => {
+      self.getThermostatState().then((data) => {
+        const update = JSON.parse(data);
+        self.settings = {
+          mode: update.tmode,
+          current_temp: update.temp,
+          target_temp: update.t_cool || update.t_heat,
+          fan_mode: update.fmode,
+          hold_mode: update.hold
+        };
+        self.events.emit('state update', self.settings)
+        console.log(TAG, 'Poll Update sent:', self.settings);
       })
-    }, poll_delay * 1000);
+    }, poll_delay, this);
   }
 
   getThermostatState () {
