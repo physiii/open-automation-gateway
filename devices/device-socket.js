@@ -1,8 +1,9 @@
 const config = require('../config.json'),
-	socketIo = require('socket.io-client'),
+	io = require('socket.io-client'),
 	useDev = config.use_dev || false,
 	useSsl = config.use_ssl || false,
-	relayProtocol = useSsl ? 'https' : 'http';
+	relayProtocol = useSsl ? 'https' : 'http',
+	TAG = '[device-socket.js]';
 let relayPort = config.relay_port,
 	relayUrl;
 
@@ -15,10 +16,19 @@ if (useDev && useSsl) {
 
 relayUrl = relayProtocol + '://' + config.relay_server + ':' + relayPort;
 
-function createDeviceSocket (deviceId, callback) {
-	const socket = socketIo(relayUrl);
-	socket.emit('gateway/device/connect', {id: deviceId}, callback);
+function createDeviceSocket (deviceId) {
+	const socket = io(relayUrl);
+
+	socket.on('disconnect', () => console.log(TAG, deviceId, 'Device was disconnected from relay.'));
+	socket.on('reconnect_failed', () => console.log(TAG, deviceId, 'Device failed to reconnect to relay.'));
+	socket.on('connect_error', (error) => { onConnectError(deviceId, error); });
+	socket.on('reconnect_error', (error) => { onConnectError(deviceId, error); });
+
 	return socket;
+}
+
+function onConnectError (deviceId, error) {
+	console.error(TAG, deviceId, 'Error connecting device to relay:', error);
 }
 
 module.exports = {

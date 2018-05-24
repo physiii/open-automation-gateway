@@ -44,18 +44,18 @@ class ServicesManager {
 
 	addServices (services) {
 		services.forEach((service) => {
-			this.addService(service, this.device);
+			this.addService(service);
 		});
 	}
 
-	setSocket (socket) {
+	setRelaySocket (socket) {
 		this.services.forEach((service) => {
 			switch (service.type) {
 				case 'gateway':
-					new GatewayApi(this.device.socket, service);
+					new GatewayApi(socket, service);
 					break;
 				case 'camera':
-					new CameraApi(this.device.socket, service);
+					new CameraApi(socket, service);
 					break;
 				case 'lock':
 					break;
