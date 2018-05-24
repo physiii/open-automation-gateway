@@ -62,6 +62,12 @@ class ThermostatService extends Service {
     return;
   }
 
+  dbSerialize () {
+    return {
+      ...Service.prototype.dbSerialize.apply(this.arguments),
+      ip_address: this.ip
+    };
+  }
 
 }
 module.exports = ThermostatService;

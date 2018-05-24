@@ -8,7 +8,7 @@ class LockService extends Service {
 		this.zwave_node_id = data.zwave_node_id;
 		this.locked = data.locked || false;
 		this.available = data.available || false;
-		this.settings.relock_timer = data.settings && data.settings.relock_timer || false;
+		this.settings.relock_delay = data.settings && data.settings.relock_delay || false;
 
 		this.driver = new driverClass(this.zwave_node_id);
 		this.subscribeToDriver();
@@ -77,7 +77,7 @@ class LockService extends Service {
 			);
 		}
 
-		this.relock_timeout = setTimeout(() => {
+		this.relock_delay = setTimeout(() => {
 			console.log(
 				TAG,
 				'Relocking door'
@@ -86,17 +86,17 @@ class LockService extends Service {
 				+ new Date()
 			);
 
-			this.relock_timeout = null;
+			this.relock_delay = null;
 			this.lock();
 
-			// Try to auto-relock again. This covers scenarios where the lock 
+			// Try to auto-relock again. This covers scenarios where the lock
 			// is unlocked again during window between relock and the next poll.
 			this.setUpAutoRelock(true);
 		}, this.settings.relock_timer * 1000);
 	}
 
 	clearAutoRelock () {
-		if (!this.relock_timeout) {
+		if (!this.relock_delay) {
 			return;
 		}
 
@@ -108,8 +108,16 @@ class LockService extends Service {
 			+ new Date()
 		);
 
-		clearTimeout(this.relock_timeout);
-		this.relock_timeout = null;
+		clearTimeout(this.relock_delay);
+		this.relock_delay = null;
+	}
+
+	dbSerialize () {
+		return {
+			...Service.prototype.dbSerialize.apply(this, arguments),
+			zwave_node_id: this.zwave_node_id,
+			settings.relock_delay: this.settings.relock_timer
+		};
 	}
 }
 
