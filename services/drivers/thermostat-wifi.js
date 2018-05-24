@@ -47,6 +47,8 @@ class ThermostatWiFiDriver {
         };
         self.events.emit('state update', self.settings)
         console.log(TAG, 'Poll Update sent:', self.settings);
+      }).catch((error) => {
+        console.log(TAG, 'Polling Error:', error);
       })
     }, poll_delay, this);
   }
