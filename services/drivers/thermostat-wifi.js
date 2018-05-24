@@ -9,6 +9,16 @@ class ThermostatWiFiDriver {
     this.events = new EventEmitter();
     this.ready = false;
 
+    this.getThermostatState().then((data) => {
+      this.events.emit('ready', {
+        mode: data.tmode,
+        current_temp: data.temp,
+        target_temp: data.t_cool || data.t_heat,
+        fan_mode: data.fmode,
+        hold_mode: data.hold
+      });
+      this.ready = true;
+    })
   }
 
   on () {
@@ -24,8 +34,8 @@ class ThermostatWiFiDriver {
             reject(error);
             return;
           }
-        this.ready = true;
-        resolve(response, data)
+
+        resolve(data)
       });
     });
   };
@@ -36,7 +46,7 @@ class ThermostatWiFiDriver {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({tmode: 2, t_cool: temperature })
+        body:    JSON.stringify({tmode: 2, t_cool: temperature, hold: 0 })
       }, function (error, response, body) {
         if (error) {
           reject(error);
@@ -53,7 +63,7 @@ class ThermostatWiFiDriver {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({tmode: 1, t_heat: temperature })
+        body:    JSON.stringify({tmode: 1, t_heat: temperature, hold: 0 })
       }, function (error, response, body) {
         if (error) {
           reject(error);
