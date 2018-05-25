@@ -1,5 +1,5 @@
 const spawn = require('child_process').spawn,
-	database = require('./database.js'),
+	config = require('./config.json'),
 	defaultStreamPort = 5054,
 	defaultAudioDevice = config.device_hw || 'hw:0',
 	defaultWidth = 640,
@@ -12,8 +12,8 @@ class VideoStreamer {
 		this.ffmpegProcesses = {};
 	}
 
-	getStreamUrl (streamId) {
-		const url = config.relay_server + ':' + (config.video_stream_port || defaultStreamPort) + '/' + database.settings.token + '/' + streamId + '/'; // TODO: urlify streamId (on relay too)
+	getStreamUrl (streamId, streamToken) {
+		const url = config.relay_server + ':' + (config.video_stream_port || defaultStreamPort) + '/' + streamId + '/' + streamToken + '/';
 
 		if (!config.use_dev || config.use_ssl) {
 			return 'https://' + url;
@@ -22,21 +22,7 @@ class VideoStreamer {
 		}
 	}
 
-	getRotationFromDegrees (degree) {
-		switch (Number(degree)) {
-			case 90:
-				return 'transpose=2';
-			case 180:
-				return 'transpose=2,transpose=2';
-			case 270:
-				return 'transpose=1';
-			case 0:
-			default:
-				return 'transpose=2,transpose=1';
-		}
-	}
-
-	streamLive (streamId, videoDevice, {
+	streamLive (streamId, streamToken, videoDevice, {
 		audioDevice = defaultAudioDevice,
 		width = defaultWidth,
 		height = defaultHeight,
@@ -58,11 +44,11 @@ class VideoStreamer {
 			'-b:v', '600k',
 			'-r', '24',
 			'-strict', '-1',
-			this.getStreamUrl(streamId)
+			this.getStreamUrl(streamId, streamToken)
 		], streamId);
 	}
 
-	streamFile (streamId, file) {
+	streamFile (streamId, streamToken, file) {
 		this.stream([
 			'-re',
 			'-i', file,
@@ -70,11 +56,11 @@ class VideoStreamer {
 			'-codec:v', 'mpeg1video',
 			'-b:v', '600k',
 			'-strict', '-1',
-			this.getStreamUrl(streamId)
+			this.getStreamUrl(streamId, streamToken)
 		], streamId);
 	}
 
-	streamFiles (streamId, files) {
+	streamFiles (streamId, streamToken, files) {
 		// TODO
 	}
 
@@ -82,9 +68,15 @@ class VideoStreamer {
 		const existingProcess = this.ffmpegProcesses[streamId];
 
 		if (existingProcess) {
-			this.stop(streamId);
+			this.stop(streamId).then(() => {
+				this.start(command, streamId);
+			});
+		} else {
+			this.start(command, streamId);
 		}
+	}
 
+	start (command, streamId) {
 		console.log(TAG, 'Starting ffmpeg stream.');
 		const ffmpegProcess = spawn('ffmpeg', command);
 
@@ -96,20 +88,40 @@ class VideoStreamer {
 			console.log(TAG, `ffmpeg exited with code ${code}.`);
 			this.stop(streamId);
 		});
-
-		return ffmpegProcess;
 	}
 
 	stop (streamId) {
-		const ffmpegProcess = this.ffmpegProcesses[streamId];
+		return new Promise((resolve, reject) => {
+			const ffmpegProcess = this.ffmpegProcesses[streamId];
 
-		console.log(TAG, 'Stopping ffmpeg stream.');
+			if (ffmpegProcess && ffmpegProcess.kill) {
+				console.log(TAG, 'Stopping ffmpeg stream.');
 
-		if (ffmpegProcess && ffmpegProcess.kill) {
-			ffmpegProcess.kill();
+				ffmpegProcess.on('close', () => {
+					resolve();
+				});
+
+				ffmpegProcess.kill();
+			} else {
+				resolve();
+			}
+
+			delete this.ffmpegProcesses[streamId];
+		});
+	}
+
+	getRotationFromDegrees (degree) {
+		switch (Number(degree)) {
+			case 90:
+				return 'transpose=2';
+			case 180:
+				return 'transpose=2,transpose=2';
+			case 270:
+				return 'transpose=1';
+			case 0:
+			default:
+				return 'transpose=2,transpose=1';
 		}
-
-		delete this.ffmpegProcesses[streamId];
 	}
 }
 

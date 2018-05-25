@@ -56,16 +56,27 @@ class ZwaveLockDriver {
 				return;
 			}
 
+			// TODO: HACK DO NOT COMMIT
+			if (value.label !== 'Locked') {
+				return;
+			}
+
+			console.log(TAG, 'value changed?', commandClass, value.label, polledValuesCache[cachedValueKey] + ' -> ' + value.value);
+
 			// Check to see if the value actually changed.
 			if (polledValuesCache[cachedValueKey] === value.value) {
 				return;
 			}
+			console.log(TAG, 'changed', commandClass, value.label, polledValuesCache[cachedValueKey] + ' -> ' + value.value);
+			console.log('');
 
 			polledValuesCache[cachedValueKey] = value.value;
 
 			if (this.isLockEvent(commandClass, value)) {
+				console.log(TAG, 'locked');
 				this.events.emit('locked');
 			} else if (this.isUnlockEvent(commandClass, value)) {
+				console.log(TAG, 'unlocked');
 				this.events.emit('unlocked');
 			}
 		});

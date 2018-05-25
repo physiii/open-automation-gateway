@@ -2,8 +2,7 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- zwave.js ----------------------------- //
 
-const socket = require('./socket.js'),
-  os = require('os'),
+const os = require('os'),
   config = require('./config.json'),
   database = require('./database.js'),
   OpenZWave = require('openzwave-shared'),
@@ -134,13 +133,16 @@ var zwave_driver_paths = {
   'windows': '\\\\.\\COM3'
 };
 
-database.get_zwave_nodes().then((zwave_nodes) => {
-  nodes = zwave_nodes;
-  console.log(TAG, 'Connecting to ' + zwave_driver_paths[os.platform()]);
-  zwave.connect(zwave_driver_paths[os.platform()]);
-}).catch((error) => {
-  console.error(TAG, error);
-});
+// Connect to zwave network.
+if (config.zwave) {
+  database.get_zwave_nodes().then((zwave_nodes) => {
+    nodes = zwave_nodes;
+    console.log(TAG, 'Connecting to ' + zwave_driver_paths[os.platform()]);
+    zwave.connect(zwave_driver_paths[os.platform()]);
+  }).catch((error) => {
+    console.error(TAG, error);
+  });
+}
 
 process.on('SIGINT', function () {
   console.log(TAG, 'Disconnecting...');

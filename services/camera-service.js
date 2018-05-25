@@ -1,6 +1,7 @@
 const spawn = require('child_process').spawn,
 	exec = require('child_process').exec,
 	path = require('path'),
+	fs = require('fs'),
 	Service = require('./service.js'),
 	VideoStreamer = require('../video-streamer.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
@@ -31,9 +32,27 @@ class CameraService extends Service {
 		return '/dev/video10' + this.getCameraNumber();
 	}
 
+	getPreviewImage () {
+		return new Promise((resolve, reject) => {
+			try {
+				fs.readFile('/usr/local/lib/gateway/events/' + this.getCameraNumber() + '/preview.jpg', (error, file) => {
+					if (error) {
+						reject(error);
+						return;
+					}
+
+					resolve(file.toString('base64'));
+				});
+			} catch (error) {
+				reject(error);
+			}
+		});
+	}
+
 	streamLive () {
 		VideoStreamer.streamLive(
 			this.id,
+			this.device.token,
 			this.getLoopbackDevicePath(),
 			{
 				width: this.settings.resolution_w,
@@ -53,14 +72,16 @@ class CameraService extends Service {
 
 		this.isMotionDetectionStarted().then((isStarted) => {
 			if (isStarted) {
-				return console.log(METHOD_TAG, 'Motion detection already started.');
+				console.log(METHOD_TAG, 'Motion detection already started.');
+				return;
 			}
 			console.log(METHOD_TAG, 'Starting motion detection.');
 
 			// Launch the motion detection script.
 			const motionProcess = spawn('python', [
 				motionScriptPath,
-				'--camera', this.getLoopbackDevicePath()
+				'--camera', this.getLoopbackDevicePath(),
+				'--camera-id', this.id
 			]);
 
 			// Listen for motion events.
@@ -75,6 +96,9 @@ class CameraService extends Service {
 					// TODO: Tell Relay motion stopped.
 					// socket.relay.emit('motion stopped', data);
 				}
+				if (data && data.includes('[NEW RECORDING]')) {
+					// TODO: Tell Relay there's a new recording.
+				}
 			});
 			motionProcess.stderr.on('data', (data) => {
 				console.error(MOTION_TAG, data.toString());
@@ -88,8 +112,10 @@ class CameraService extends Service {
 		return new Promise((resolve, reject) => {
 			exec('ps aux | grep -v \'log\' | grep motion.py', (error, stdout, stderr) => { // TODO: This doesn't support multiple cameras.
 				if (error) {
-					return reject(error);
+					reject(error);
+					return;
 				}
+
 				resolve(stdout.length > 100);
 			});
 		});
@@ -106,7 +132,7 @@ class CameraService extends Service {
 			exec('ps aux | grep -v \'grep\' | grep ffmpeg', (error, stdout, stderr) => { // TODO: Should we be greping for a specific ffmpeg here (multiple cameras)?
 				if (error) {
 					this.forwardStreamToLoopback();
-					return console.error(this.TAG, 'ffmpeg not running. Re-forwarding stream.');
+					console.error(this.TAG, 'ffmpeg not running. Re-forwarding stream.');
 				}
 			});
 		}, intervalTimeout);

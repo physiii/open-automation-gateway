@@ -1,26 +1,15 @@
 const exec = require('child_process').exec,
-	database = require('../database.js'),
-	Device = require('./device.js');
+	Service = require('./service.js'),
+	devices = require('../devices/devices-manager.js'),
+	TAG = '[GatewayService]';
 
-class Devices {
-	constructor () {
-		this.devices = [];
+class GatewayService extends Service {
+	constructor (data) {
+		super(data);
 	}
 
-	loadDevicesFromDb () {
-		database.get_devices().then((devices) => {
-			this.devices = devices.map((device) => new Device(device));
-		})
-	}
-
-	getDbSerializedDevices () {
-		return this.devices.map((device) => device.dbSerialize());
-	}
-
-	getDeviceByServiceId (serviceId) {
-		return this.devices.find((device) => {
-			return device.services.find((service) => (service.id === serviceId));
-		});
+	addDevice (data) {
+		return devices.addDevice(data);
 	}
 
 	getOsCamerasList () {
@@ -57,4 +46,4 @@ class Devices {
 	}
 }
 
-module.exports = new Devices();
+module.exports = GatewayService;
