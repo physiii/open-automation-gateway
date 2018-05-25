@@ -77,7 +77,7 @@ class LockService extends Service {
 			);
 		}
 
-		this.relock_delay = setTimeout(() => {
+		this.relockTimeout = setTimeout(() => {
 			console.log(
 				TAG,
 				'Relocking door'
@@ -86,7 +86,7 @@ class LockService extends Service {
 				+ new Date()
 			);
 
-			this.relock_delay = null;
+			this.relockTimeout = null;
 			this.lock();
 
 			// Try to auto-relock again. This covers scenarios where the lock
@@ -96,7 +96,7 @@ class LockService extends Service {
 	}
 
 	clearAutoRelock () {
-		if (!this.relock_delay) {
+		if (!this.relockTimeout) {
 			return;
 		}
 
@@ -108,15 +108,14 @@ class LockService extends Service {
 			+ new Date()
 		);
 
-		clearTimeout(this.relock_delay);
-		this.relock_delay = null;
+		clearTimeout(this.relockTimeout);
+		this.relockTimeout = null;
 	}
 
 	dbSerialize () {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
-			zwave_node_id: this.zwave_node_id,
-			settings.relock_delay: this.settings.relock_timer
+			zwave_node_id: this.zwave_node_id
 		};
 	}
 }
