@@ -195,13 +195,13 @@ function get_camera_recording (recording_id) {
         return;
       }
 
-      db.collection('camera_recordings').find({id: recording_id}, function (error, result) {
+      db.collection('camera_recordings').find({id: recording_id}).toArray(function (error, result) {
         if (error) {
           reject(error);
           return;
         }
 
-        resolve(result);
+        resolve(result[0]);
       });
 
       db.close();

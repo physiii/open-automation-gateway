@@ -13,18 +13,18 @@ class CameraApi extends ServiceApi {
 		this.on('stream/live', (data, callback) => {
 			this.camera.streamLive();
 			// TODO: Error handling
-			callback(null, this.camera.id);
+			callback(null, {stream_token: this.camera.device.token});
 		});
 
 		this.on('stream/stop', (data, callback) => {
 			this.camera.stopStream();
 			// TODO: Error handling
-			callback(null, this.camera.id);
+			callback(null, {});
 		});
 
 		this.on('preview/get', (data, callback) => {
 			this.camera.getPreviewImage().then((image) => {
-				callback(null, image);
+				callback(null, {preview: image});
 			}).catch((error) => {
 				callback(error);
 			});
@@ -39,8 +39,8 @@ class CameraApi extends ServiceApi {
 		});
 
 		this.on('recording/stream', (data, callback) => {
-			CameraRecordings.streamRecording(data.recording_id).then(() => {
-				callback(null, {recording_id: data.recording_id});
+			CameraRecordings.streamRecording(data.recording_id, this.camera.device.token).then(() => {
+				callback(null, {stream_token: this.camera.device.token});
 			}).catch((error) => {
 				callback(error);
 			});
@@ -50,7 +50,7 @@ class CameraApi extends ServiceApi {
 			CameraRecordings.stopStream(data.recording_id);
 			// TODO: Error handling
 
-			callback(null, {recording_id: data.recording_id});
+			callback(null, {});
 		});
 
 		this.on('recordings/stream', (data, callback) => {

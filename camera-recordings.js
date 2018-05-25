@@ -32,10 +32,10 @@ class CameraRecordings {
 		});
 	}
 
-	streamRecording (recordingId) {
+	streamRecording (recordingId, streamToken) {
 		return new Promise((resolve, reject) => {
 			this.getRecordingById(recordingId).then((recording) => {
-				VideoStreamer.streamFile(recording.id, recording.file);
+				VideoStreamer.streamFile(recording.id, streamToken, recording.file);
 				resolve(recordingId);
 			}).catch((error) => {
 				console.error(TAG, error);
