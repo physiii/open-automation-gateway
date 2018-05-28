@@ -6,7 +6,6 @@ class ThermostatService extends Service {
   constructor(data, driverClass) { // TODO: Add driverClass arguement when ready
     super(data);
 
-    this.id = data.id;
     this.ip = data.ip;
     this.mode = data.mode; // Determines Heating or Cooling
     this.fan_mode = data.fan_mode; // Determines whether the fan is on or off
@@ -65,8 +64,8 @@ class ThermostatService extends Service {
 
   dbSerialize () {
     return {
-      ...Service.prototype.dbSerialize.apply(this.arguments),
-      ip_address: this.ip
+      ...Service.prototype.dbSerialize.apply(this, arguments),
+      ip: this.ip
     };
   }
 

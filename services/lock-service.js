@@ -63,7 +63,7 @@ class LockService extends Service {
 	}
 
 	setUpAutoRelock (isSubsequentTry) {
-		if (this.settings.relock_timer === false) {
+		if (this.settings.relock_delay === false) {
 			return;
 		}
 
@@ -92,7 +92,7 @@ class LockService extends Service {
 			// Try to auto-relock again. This covers scenarios where the lock
 			// is unlocked again during window between relock and the next poll.
 			this.setUpAutoRelock(true);
-		}, this.settings.relock_timer * 1000);
+		}, this.settings.relock_delay * 1000);
 	}
 
 	clearAutoRelock () {

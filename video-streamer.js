@@ -15,9 +15,9 @@ class VideoStreamer {
 	getStreamUrl (streamId, streamToken) {
 		const url = config.relay_server + ':' + (config.video_stream_port || defaultStreamPort) + '/' + streamId + '/' + streamToken + '/';
 
-		if (!config.use_dev || config.use_ssl) {
+		if (config.use_ssl) {
 			return 'https://' + url;
-		} else if (config.use_dev && !config.use_ssl) {
+		} else {
 			return 'http://' + url;
 		}
 	}
