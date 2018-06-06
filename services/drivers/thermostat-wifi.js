@@ -67,7 +67,6 @@ class ThermostatWiFiDriver {
     });
   };
 
-
   setCoolTemp (temperature) {
     return new Promise((resolve, reject) => {
       request.post({
@@ -176,6 +175,55 @@ class ThermostatWiFiDriver {
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
         body:    JSON.stringify({fmode: 1 })
+      }, function (error, response, body) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response, body);
+      });
+    });
+  }
+
+  getSchedule (mode) {
+    return new Promise ((resolve, reject) => {
+      request.get(
+        'http://'+this.ip+'/tstat/program/'+mode,
+        function(error, response, data){
+          if (error){
+            reject(error);
+            return;
+          }
+
+        resolve(data)
+      });
+    });
+  }
+
+  setCoolSchedule (data) {
+    return new Promise((resolve, reject) => {
+      request.post({
+        headers: {'content-type' : 'application/x-www-form-urlencoded'},
+        url:     'http://'+this.ip+'/tstat/program/cool/'+data.day,
+        body:    JSON.stringify({data.dayNumber: data.schedule})
+      }, function (error, response, body) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response, body);
+      });
+    });
+  }
+
+  setHeatSchedule (data) {
+    return new Promise((resolve, reject) => {
+      request.post({
+        headers: {'content-type' : 'application/x-www-form-urlencoded'},
+        url:     'http://'+this.ip+'/tstat/program/heat/'+data.day,
+        body:    JSON.stringify({data.dayNumber: data.schedule})
       }, function (error, response, body) {
         if (error) {
           reject(error);
