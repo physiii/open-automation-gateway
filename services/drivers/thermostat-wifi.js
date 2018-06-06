@@ -201,11 +201,11 @@ class ThermostatWiFiDriver {
     });
   }
 
-  setCoolSchedule (data) {
+  setSchedule (data) {
     return new Promise((resolve, reject) => {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat/program/cool/'+data.day,
+        url:     'http://'+this.ip+'/tstat/program/'+data.mode'/'+data.day,
         body:    JSON.stringify({data.dayNumber: data.schedule})
       }, function (error, response, body) {
         if (error) {
@@ -218,22 +218,7 @@ class ThermostatWiFiDriver {
     });
   }
 
-  setHeatSchedule (data) {
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat/program/heat/'+data.day,
-        body:    JSON.stringify({data.dayNumber: data.schedule})
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
 
-        resolve(response, body);
-      });
-    });
-  }
 
 }
 module.exports = ThermostatWiFiDriver;

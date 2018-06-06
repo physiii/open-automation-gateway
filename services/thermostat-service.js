@@ -58,13 +58,8 @@ class ThermostatService extends Service {
     return;
   }
 
-  getCurrentProgram (mode) {
-    if (mode ==='heat'){
-      this.driver.getHeatSchedule();
-    }
-    if (mode === 'cool'){
-      this.driver.getCoolSchedule()
-    }
+  getSchedule (mode) {
+    this.driver.getSchedule(mode);
   }
 
   setSchedule(day, daynumber, schedule, mode){
@@ -72,13 +67,9 @@ class ThermostatService extends Service {
     data.day = day;
     data.daynumber = daynumber;
     data.schedule = schedule;
-    if (mode === 'heat'){
-      this.driver.setHeatSchedule(data);
-    if (mode === 'cool') {
-      this.driver.setCoolSchedule(data);
-    }
-    }
+    data.mode = mode;
 
+    this.driver.setSchedule(data);
   }
 
   dbSerialize () {
