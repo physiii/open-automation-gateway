@@ -63,11 +63,12 @@ class ThermostatService extends Service {
   }
 
   setSchedule(day, daynumber, schedule, mode){
-    let data = {};
-    data.day = day;
-    data.daynumber = daynumber;
-    data.schedule = schedule;
-    data.mode = mode;
+    let data = {
+      day: day,
+      daynumber: daynumber,
+      schedule: schedule,
+      mode: mode
+    };
 
     this.driver.setSchedule(data);
   }
