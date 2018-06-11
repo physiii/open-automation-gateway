@@ -1,9 +1,16 @@
+/*
+TODO:
+-Create Database storage for previous found bridges.
+-Create alternate connection HueApi that checks against any pre-existing Bridges
+
+*/
 const database = require('./database.js'),
+  Service = require('./service.js'),
   hue = require ('node-hue-api'),
   hueApi = hue.HueApi,
   TAG = '[Hue.js]';
 
-class HueBridge {
+class HueBridgeService extends Service {
   constructor () {
     this.searchForBridge();
     this.api = new HueApi();
@@ -45,4 +52,4 @@ class HueBridge {
 
 }
 
-module.exports = new HueBridge();
+module.exports = HueBridgeService;
