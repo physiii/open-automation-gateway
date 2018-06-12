@@ -1,4 +1,4 @@
-const hue = require('../../hue.js'),
+const hueBridge = require('../hue-bridge-service.js'),
   TAG = '[HueLightDriver]';
 
   class HueLightDriver {
