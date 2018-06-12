@@ -2,19 +2,30 @@ const hueBridge = require('../hue-bridge-service.js'),
   TAG = '[HueLightDriver]';
 
   class HueLightDriver {
-    constructor () {};
+    constructor (light_id) {
+      this.light_id = light_id;
+      this.bridge = new hueBridge();
+    };
 
-    lightOn () {};
+    lightOn () {
+      this.bridge.setLightOn(this.light_id);
+    };
 
-    lightOff () {};
+    lightOff () {
+      this.bridge.setLightOff(this.light_id);
+    };
 
-    incrementBrightness () {};
+    setBrightness (brightness) {
+      this.bridge.setBrightness(this.light_id, brightness);
+    };
 
-    setBrightness () {};
+    incrementBrightness () {return;};
 
-    setColor () {};
+    setColor (color) {
+      this.bridge.setColor(this.light_id, color);
+    };
 
-    setAlarm () {};
+    setAlarm () {return;};
 
   }
 

@@ -1,22 +1,30 @@
-/*
-TODO:
--Create Database storage for previous found bridges.
--Create alternate connection HueApi that checks against any pre-existing Bridges
-
-*/
 const database = require('./database.js'),
   Service = require('./service.js'),
   hue = require ('node-hue-api'),
-  hueApi = require ('node-hue-api').HueApi,
+  hueApi = hue.HueApi,
+  lightState = hue.lightState,
   TAG = '[Hue.js]';
-
-let device_array = database.get_devices();
 
 class HueBridgeService extends Service {
   constructor (data) {
     super(data);
 
-    this.linkBridge();
+    this.id = data.id || false;
+    this.ip = data.ip || false;
+    this.user = data.user || false;
+    this.state = lightState.create();
+
+    if (!this.id) {
+      console.log(TAG, 'No Bridge ID found. Creating new Bridge.')
+      this.linkBridge();
+    } else if (!this.user) {
+      console.log(TAG, "No users found. Creating user...")
+      this.createUser()
+    } else {
+      console.log(TAG, 'Bridge exists. Connecting...')
+      this.api = new HueApi(this.ip, this.user);
+      this.findAttachedLights();
+    }
 
   }
 
@@ -25,57 +33,82 @@ class HueBridgeService extends Service {
       if (err) {
         throw err;
       };
-      let bridgeExist = false;
-	    console.log(TAG, "Hue Bridges Found: "+ JSON.stringify(result));
-      for (let i = 0; i < device_array.length; i++) {
-        if (device_array[i].id == result[0].id) {
-	         console.log(TAG, "Bridge found, establishing link...");
-	         this.api = new HueApi(device_array[i].ipaddress, device_array[i].user);
-           this.device = device_array[i];
-	         bridgeExist = true;
-        };
-      };
-      if (bridgeExist == false) {
-        console.log(TAG, "Bridge not found, Configuring and Storing Bridge...");
-        this.createUser(result[0]).then((device) => {
-          this.findAttachedLights(device);
-        }).then((device) => {
-          storeDevice(device);
-        });
-      };
+      console.log(TAG, "Bridge not found, Configuring and Storing Bridge...");
+      this.id = result[0].id;
+      this.ip = result[0].ipaddress;
+      this.createUser();
     });
   }
 
-  createUser (device) {
+  createUser () {
     return new Promise(resolve, reject) {
       this.api = new HueApi();
-      this.api.createUser(device.ipaddress, function(err, user) {
+      this.api.createUser(this.ip, function(err, user) {
         if (err) {
           throw err;
         };
         console.log(TAG, "Created User: " + JSON.stringify(user));
-        device.user = user;
+        this.user = user;
       });
-      resolve(device);
+      this.findAttachedLights();
+      resolve();
     };
   }
 
-  findAttachedLights (device) {
+  findAttachedLights () {
     return new Promise(resolve,reject) {
       this.api.lights(function(err, lights) {
         if (err) {
           throw err;
         };
-        device.lights = lights;
+        this.lights = lights;
       });
-      resolve(device);
+      resolve();
     };
   }
 
-  storeDevice (device) {
-    this.device = device;
-    device_array.push(device);
-    database.store_device(device);
+  setLightOn (device_id) {
+    console.log(TAG, 'Set light: on');
+    this.api.setLightState(device_id, this.state.on(), function(err, result) {
+      if (err) {
+        throw err;
+      };
+      console.log(TAG, result)
+
+    })
+  }
+
+  setLightOff (device_id) {
+    console.log(TAG, 'Set light: off');
+    this.api.setLightState(device_id, this.state.off(), function(err, result) {
+      if (err) {
+        throw err;
+      };
+      console.log(TAG, result)
+
+    })
+  }
+
+  setColor (device_id, color) {
+    console.log(TAG, 'Set color');
+    this.api.setLightState(device_id, this.state.rgb(color), function(err, result) {
+      if (err) {
+        throw err;
+      };
+      console.log(TAG, result)
+
+    })
+  }
+
+  setBrightness (device_id, brightness) {
+    console.log(TAG, 'Set brightness to ' + brightness);
+    this.api.setLightState(device_id, this.state.brightness(brightness), function(err, result) {
+      if (err) {
+        throw err;
+      };
+      console.log(TAG, result)
+
+    })
   }
 
 }
