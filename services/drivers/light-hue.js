@@ -1,10 +1,12 @@
 const hueBridge = require('../hue-bridge-service.js'),
+  EventEmitter = require('events'),
   TAG = '[HueLightDriver]';
 
   class HueLightDriver {
-    constructor (light_id) {
+    constructor (light_id, bridgeService) {
       this.light_id = light_id;
-      this.bridge = new hueBridge();
+      this.bridge = new bridgeService();
+
     };
 
     lightOn () {

@@ -14,8 +14,8 @@ class HueBridgeService extends Service {
     this.user = data.user || false;
     this.state = lightState.create();
 
-    if (!this.id) {
-      console.log(TAG, 'No Bridge ID found. Creating new Bridge.')
+    if (!this.id || !this.ip) {
+      console.log(TAG, 'No Bridge ID/IP found. Creating new Bridge Link.')
       this.linkBridge();
     } else if (!this.user) {
       console.log(TAG, "No users found. Creating user...")
