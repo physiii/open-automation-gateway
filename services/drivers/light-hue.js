@@ -1,5 +1,4 @@
-const hueBridge = require('../hue-bridge-service.js'),
-  EventEmitter = require('events'),
+const EventEmitter = require('events'),
   TAG = '[HueLightDriver]';
 
   class HueLightDriver {

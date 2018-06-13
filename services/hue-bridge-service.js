@@ -1,70 +1,28 @@
-const database = require('./database.js'),
-  Service = require('./service.js'),
+const Service = require('./service.js'),
   hue = require ('node-hue-api'),
-  hueApi = hue.HueApi,
+  HueApi = hue.HueApi,
   lightState = hue.lightState,
-  TAG = '[Hue.js]';
+  TAG = '[hue-bridge-service.js]';
 
 class HueBridgeService extends Service {
   constructor (data) {
     super(data);
 
-    this.id = data.id || false;
-    this.ip = data.ip || false;
-    this.user = data.user || false;
+    this.id = data.id || '';
+    this.user = data.user || 'CbJnDROdyKEfqjlfTJvsm8VXaqxUguGrD-9O5Plk';
+
+    this.api = new HueApi(this.ip, this.user);
     this.state = lightState.create();
 
-    if (!this.id || !this.ip) {
-      console.log(TAG, 'No Bridge ID/IP found. Creating new Bridge Link.')
-      this.linkBridge();
-    } else if (!this.user) {
-      console.log(TAG, "No users found. Creating user...")
-      this.createUser()
-    } else {
-      console.log(TAG, 'Bridge exists. Connecting...')
-      this.api = new HueApi(this.ip, this.user);
-      this.findAttachedLights();
-    }
-
-  }
-
-  linkBridge () {
-    hue.nupnpSearch(function(err, result) {
-      if (err) {
-        throw err;
-      };
-      console.log(TAG, "Bridge not found, Configuring and Storing Bridge...");
-      this.id = result[0].id;
-      this.ip = result[0].ipaddress;
-      this.createUser();
-    });
-  }
-
-  createUser () {
-    return new Promise(resolve, reject) {
-      this.api = new HueApi();
-      this.api.createUser(this.ip, function(err, user) {
-        if (err) {
-          throw err;
-        };
-        console.log(TAG, "Created User: " + JSON.stringify(user));
-        this.user = user;
-      });
-      this.findAttachedLights();
-      resolve();
-    };
   }
 
   findAttachedLights () {
-    return new Promise(resolve,reject) {
-      this.api.lights(function(err, lights) {
-        if (err) {
-          throw err;
-        };
-        this.lights = lights;
-      });
-      resolve();
-    };
+    this.api.lights(function(err, lights) {
+      if (err) {
+        throw err;
+      };
+      console.log(lights);
+    });
   }
 
   setLightOn (device_id) {
