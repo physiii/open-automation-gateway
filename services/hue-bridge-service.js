@@ -9,6 +9,7 @@ class HueBridgeService extends Service {
     super(data);
 
     this.id = data.id || '';
+    this.ip = data.ip || '10.10.10.102'
     this.user = data.user || 'CbJnDROdyKEfqjlfTJvsm8VXaqxUguGrD-9O5Plk';
 
     this.api = new HueApi(this.ip, this.user);
