@@ -2,8 +2,8 @@ const EventEmitter = require('events'),
   TAG = '[HueLightDriver]';
 
   class HueLightDriver {
-    constructor (id, bridge) {
-      this.id = id;
+    constructor (light_id, bridge) {
+      this.light_id = light_id;
       this.bridge = bridge;
 
 
@@ -25,13 +25,15 @@ const EventEmitter = require('events'),
 
     setBrightness (brightness) {
       this.bridge.setBrightness(this.light_id, brightness);
-    };
-
-    incrementBrightness () {return;};
+    };    
 
     setColor (color) {
       this.bridge.setColor(this.light_id, color);
     };
+
+    setLightName (name) {
+      this.bridge.setLightName(this.light_id, name);
+    }
 
     setAlarm () {return;};
 

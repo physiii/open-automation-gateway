@@ -22,8 +22,33 @@ class HueBridgeService extends Service {
       if (err) {
         throw err;
       };
-      console.log(lights);
+      console.log(JSON.stringify(lights));
     });
+  }
+
+  addNewLights () {
+    this.api.searchForNewLights().then(() => {
+      this.api.newLights()
+    }).done();
+  }
+
+  setLightName (device_id, name) {
+    this.api.setLightName(device_id, name, (err,result) => {
+      if (err) {
+        throw err;
+      }
+      console.log(TAG, 'Setting light' + device_id + '\'s name to ' + name);
+    })
+  }
+
+  findLightState (device_id) {
+    console.log(TAG, 'Finding state informaiton for ' + device_id);
+    api.lightStatusWithRGB(device_id, (err, result) => {
+      if (err) {
+        throw err;
+      }
+      console.log(JSON.stringify(result));
+    })
   }
 
   setLightOn (device_id) {
