@@ -4,7 +4,9 @@ const Service = require('./service.js'),
 	CameraService = require('./camera-service.js'),
 	CameraApi = require('./api/camera-api.js'),
 	LockService = require('./lock-service.js'),
+	LockApi = require('./api/lock-api.js'),
 	ThermostatService = require ('./thermostat-service.js'),
+	ThermostatApi = require('./api/thermostat-api.js'),
 	ThermostatWifiDriver = require ('./drivers/thermostat-wifi.js'),
 	ZwaveLockDriver = require('./drivers/lock-zwave.js');
 
@@ -63,6 +65,10 @@ class ServicesManager {
 					new CameraApi(socket, service);
 					break;
 				case 'lock':
+					new LockApi(socket, service);
+					break;
+				case 'thermostat':
+					new ThermostatApi(socket, service);
 					break;
 			}
 		});

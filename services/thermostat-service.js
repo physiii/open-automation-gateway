@@ -48,10 +48,10 @@ class ThermostatService extends Service {
     return;
   }
 
-  fanMode () {
-    if (this.fan_mode === "1") {
+  fanMode (mode) {
+    if (mode === "on") {
       this.driver.fanOn();
-    } else if (this.fan_mode === "2") {
+    } else if (mode === "auto") {
       this.driver.fanAuto();
     }
 
@@ -59,6 +59,7 @@ class ThermostatService extends Service {
   }
 
   getSchedule (mode) {
+    // mode is either cool or heat modes
     this.driver.getSchedule(mode);
   }
 
