@@ -98,6 +98,7 @@ class VideoStreamer {
 				console.log(TAG, 'Stopping ffmpeg stream.');
 
 				ffmpegProcess.on('close', () => {
+					delete this.ffmpegProcesses[streamId];
 					resolve();
 				});
 
@@ -105,8 +106,6 @@ class VideoStreamer {
 			} else {
 				resolve();
 			}
-
-			delete this.ffmpegProcesses[streamId];
 		});
 	}
 
