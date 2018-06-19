@@ -14,10 +14,10 @@ class ThermostatApi extends ServiceApi {
       callback(null, {});
     });
 
-    this.on('thermostat/fan/set', (data, callback) => {
+    this.on('thermostat/fanMode', (data, callback) => {
       this.thermostat.fanMode(data.mode);
       callback(null, {});
-    });    
+    });
   }
 }
 

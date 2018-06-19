@@ -9,12 +9,12 @@ class LockApi extends ServiceApi {
   }
 
   listen () {
-    this.on('lock/set/lock', (data, callback) => {
+    this.on('lock/setlock', (data, callback) => {
       this.lock.lock();
       callback(null, {});
     });
 
-    this.on('lock/set/unlock', (data, callback) => {
+    this.on('lock/setunlock', (data, callback) => {      
       this.lock.unlock();
       callback(null, {});
     });

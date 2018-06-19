@@ -7,11 +7,6 @@ class ThermostatService extends Service {
     super(data);
 
     this.ip = data.ip;
-    this.mode = data.mode; // Determines Heating or Cooling
-    this.fan_mode = data.fan_mode; // Determines whether the fan is on or off
-    this.target_temp = data.target_temp;
-    this.current_temp = data.current_temp;
-    this.hold_mode = data.hold_mode;
 
     this.driver = new driverClass(this.ip);
     this.subscribeToDriver();
@@ -39,10 +34,10 @@ class ThermostatService extends Service {
     this.driver.setHeatTemp (temp);
     } else if (mode == 'cool') {
       if (hold) {
-        setHoldCool (temp);
+        this.driver.setHoldCool (temp);
         return;
       }
-      setCoolTemp (temp);
+      this.driver.setCoolTemp (temp);
     }
 
     return;
