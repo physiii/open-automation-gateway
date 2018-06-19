@@ -11,7 +11,7 @@ const os = require('os'),
     Logging: false,
     SaveConfiguration: false,
     DriverMaxAttempts: 3,
-    PollInterval: 500,
+    PollInterval: 30000,
     SuppressValueRefresh: true,
     // TODO: Don't use the same key for every gateway.
     NetworkKey: '0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10'

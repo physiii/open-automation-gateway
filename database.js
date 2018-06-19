@@ -102,9 +102,8 @@ function store_settings (data) {
 
     db.collection('settings').update({}, {$set: data}, {upsert: true}, function (error, item) {
         //console.log("item",item)
+db.close();
     });
-
-    db.close();
   });
 }
 

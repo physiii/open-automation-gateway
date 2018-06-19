@@ -29,7 +29,7 @@ class CameraService extends Service {
 	}
 
 	getLoopbackDevicePath () {
-		return '/dev/video10' + this.getCameraNumber();
+		return '/dev/video1' + this.getCameraNumber();
 	}
 
 	getPreviewImage () {
