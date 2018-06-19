@@ -203,10 +203,13 @@ class ThermostatWiFiDriver {
 
   setSchedule (data) {
     return new Promise((resolve, reject) => {
+      let dayNumber = data.dayNumber,
+        schedule = data.schedule;
+
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat/program/'+data.mode'/'+data.day,
-        body:    JSON.stringify({data.dayNumber: data.schedule})
+        url:     'http://'+this.ip+'/tstat/program/'+data.mode+'/'+data.day,
+        body:    JSON.stringify({dayNumber: schedule})
       }, function (error, response, body) {
         if (error) {
           reject(error);
