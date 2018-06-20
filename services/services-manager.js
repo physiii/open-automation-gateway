@@ -3,11 +3,11 @@ const Service = require('./service.js'),
 	GatewayApi = require('./api/gateway-api.js'),
 	CameraService = require('./camera-service.js'),
 	CameraApi = require('./api/camera-api.js'),
-	LockService = require('./lock-service.js'),
-	LockApi = require('./api/lock-api.js'),
 	ThermostatService = require ('./thermostat-service.js'),
 	ThermostatApi = require('./api/thermostat-api.js'),
 	ThermostatWifiDriver = require ('./drivers/thermostat-wifi.js'),
+	LockService = require('./lock-service.js'),
+	LockApi = require('./api/lock-api.js'),
 	ZwaveLockDriver = require('./drivers/lock-zwave.js');
 
 class ServicesManager {
