@@ -82,14 +82,6 @@ class ThermostatWiFiDriver {
   };
 
   setThermostatMode (mode) {
-    this.ThermostatMode(mode).then(() => {
-      this.setHoldMode(this.settings.hold_mode);
-    }).then(() => {
-      this.setTemp(this.settings.target_temp);
-    });
-  }
-
-  ThermostatMode (mode) {
     return new Promise((resolve, reject) => {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
@@ -100,8 +92,12 @@ class ThermostatWiFiDriver {
           reject(error);
           return;
         }
-        console.log(TAG, 'setThermostatMode',response, body )
-        resolve(response, body);
+        console.log(TAG, 'setThermostatMode',response, body);
+
+        Promise.all([
+          this.setHoldMode(this.settings.hold_mode),
+          this.setTemp(this.settings.target_temp)
+        ], resolve);
       });
     });
   }
@@ -131,7 +127,7 @@ class ThermostatWiFiDriver {
           return;
         }
         console.log(TAG, 'setTemp', body )
-        resolve(response, body);
+        resolve();
         return;
       });
     });
@@ -149,7 +145,7 @@ class ThermostatWiFiDriver {
           return;
         }
         this.settings.hold_mode = mode;
-        resolve(response, body);
+        resolve();
       });
     });
   }
@@ -166,7 +162,7 @@ class ThermostatWiFiDriver {
           return;
         }
         this.settings.fan_mode = mode;
-        resolve(response, body);
+        resolve();
       });
     });
   }
