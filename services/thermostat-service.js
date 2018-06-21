@@ -29,9 +29,9 @@ class ThermostatService extends Service {
     if (mode == 'off' || mode == 'heat' || mode == 'cool' || mode == 'auto'){
       this.mode = mode;
       this.driver.setThermostatMode(mode).then(() => {
-        this.HoldMode(this.hold_mode);        
+        this.HoldMode(this.hold_mode);
       }).then (() => {
-        this.setTemp(this.target_temp);
+        this.setTemp(mode, this.target_temp);
       });
       return;
     }
