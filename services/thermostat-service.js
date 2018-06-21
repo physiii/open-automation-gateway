@@ -25,25 +25,33 @@ class ThermostatService extends Service {
     this.hold_mode = data.hold_mode;
   }
 
-  setTemp(temp, mode, hold){
-    if (mode == 'heat') {
-      if (hold) {
+  setTemp(temp){
+    if (this.mode == 'heat') {
+      if (this.hold_mode == 'on') {
+        this.target_temp = temp;
         this.driver.setHoldHeat(temp);
         return;
       }
-    this.driver.setHeatTemp (temp);
-    } else if (mode == 'cool') {
-      if (hold) {
+      this.target_temp = temp;
+      this.driver.setHeatTemp (temp);
+    }
+    if (this.mode == 'cool') {
+      if (this.hold_mode == 'on') {
+        this.target_temp = temp;
         this.driver.setHoldCool (temp);
         return;
       }
+      this.target_temp = temp;
       this.driver.setCoolTemp (temp);
     }
-
-    return;
   }
 
-  fanMode (mode) {
+  setHoldMode (mode) {
+    this.hold_mode = mode;
+    this.driver.setHoldMode (mode);
+  }
+
+  setFanMode (mode) {
     if (mode === "on") {
       this.driver.fanOn();
     } else if (mode === "auto") {

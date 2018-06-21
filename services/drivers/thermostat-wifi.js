@@ -1,7 +1,7 @@
 //Placeholder for WiFi driver
 const request = require('request'),
   EventEmitter = require('events'),
-  poll_delay = 30 * 1000,
+  poll_delay = 5 * 1000,
   TAG = '[ThermostatWiFiDriver]';
 
 class ThermostatWiFiDriver {
@@ -13,13 +13,7 @@ class ThermostatWiFiDriver {
     this.getThermostatState().then((data) => {
       const state = JSON.parse(data);
 
-      this.settings = {
-        mode: state.tmode,
-        current_temp: state.temp,
-        target_temp: state.t_cool || state.t_heat,
-        fan_mode: state.fmode,
-        hold_mode: state.hold
-      };
+      this.settings = this.configureData(state);
       this.events.emit('ready', this.settings);
       console.log(TAG,'Settings:', this.settings);
       this.ready = true;
@@ -38,13 +32,8 @@ class ThermostatWiFiDriver {
     setInterval((self) => {
       self.getThermostatState().then((data) => {
         const update = JSON.parse(data);
-        self.settings = {
-          mode: update.tmode,
-          current_temp: update.temp,
-          target_temp: update.t_cool || update.t_heat,
-          fan_mode: update.fmode,
-          hold_mode: update.hold
-        };
+
+        self.settings = self.configureData(update);
         self.events.emit('state update', self.settings)
         console.log(TAG,'Settings:', self.settings)
       }).catch((error) => {
@@ -67,6 +56,8 @@ class ThermostatWiFiDriver {
       });
     });
   };
+
+  setMode () {}
 
   setCoolTemp (temperature) {
     return new Promise((resolve, reject) => {
@@ -100,6 +91,43 @@ class ThermostatWiFiDriver {
         resolve(response, body);
       });
     });
+  }
+
+  setHoldMode (mode) {
+    if (mode === 'on') {
+      return new Promise((resolve, reject) => {
+        request.post({
+          headers: {'content-type' : 'application/x-www-form-urlencoded'},
+          url:     'http://'+this.ip+'/tstat',
+          body:    JSON.stringify({hold: 1 })
+        }, function (error, response, body) {
+          if (error) {
+            reject(error);
+            return;
+          }
+          this.settings.hold_mode = 'on';
+          resolve(response, body);
+        });
+      });
+    } else if ( mode === 'off') {
+      return new Promise((resolve, reject) => {
+        request.post({
+          headers: {'content-type' : 'application/x-www-form-urlencoded'},
+          url:     'http://'+this.ip+'/tstat',
+          body:    JSON.stringify({hold: 0 })
+        }, function (error, response, body) {
+          if (error) {
+            reject(error);
+            return;
+          }
+          this.settings.hold_mode = 'off';
+          resolve(response, body);
+        });
+      });
+    } else {
+      console.log (TAG, 'Selected Fan Mode doesnt exist')
+      return;
+    }
   }
 
   setHoldCool (temperature) {
@@ -220,6 +248,27 @@ class ThermostatWiFiDriver {
         resolve(response, body);
       });
     });
+  }
+
+  configureData (data) {
+    let settings = {
+      mode: data.tmode,
+      fan_mode: data.fmode,
+      hold_mode: data.hold,
+      current_temp: data.temp,
+      target_temp: data.t_cool || data.t_heat,
+    };
+
+    if (settings.mode == '0') settings.mode = 'off';
+    if (settings.mode == '1') settings.mode = 'heat';
+    if (settings.mode == '2') settings.mode = 'cool';
+    if (settings.mode == '3') settings.mode = 'auto';
+    if (settings.fan_mode == '1') settings.fan_mode = 'auto';
+    if (settings.fan_mode == '2') settings.fan_mode = 'on';
+    if (settings.hold_mode == '0')settings.hold_mode = 'off';
+    if (settings.hold_mode == '1')settings.hold_mode = 'on';
+
+    return settings;
   }
 
 
