@@ -28,7 +28,11 @@ class ThermostatService extends Service {
   setThermostatMode (mode) {
     if (mode == 'off' || mode == 'heat' || mode == 'cool' || mode == 'auto'){
       this.mode = mode;
-      this.driver.setThermostatMode(mode);
+      this.driver.setThermostatMode(mode).then(() => {
+        this.HoldMode(this.hold_mode);        
+      }).then (() => {
+        this.setTemp(this.target_temp);
+      });
       return;
     }
     console.log(TAG, 'Mode not defined. Choices: off, heat, cool, auto');

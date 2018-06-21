@@ -58,16 +58,17 @@ class ThermostatWiFiDriver {
   };
 
   setThermostatMode (mode) {
-    if (mode == 'off') let mode = 0;
-    if (mode == 'heat') let mode = 1;
-    if (mode == 'cool') let mode = 2;
-    if (mode == 'auto') let mode = 3;
+    let setMode;
+    if (mode == 'off') setMode = 0;
+    if (mode == 'heat') setMode = 1;
+    if (mode == 'cool') setMode = 2;
+    if (mode == 'auto') setMode = 3;
 
     return new Promise((resolve, reject) => {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({ tmode: mode })
+        body:    JSON.stringify({ tmode: setMode })
       }, function (error, response, body) {
         if (error) {
           reject(error);
