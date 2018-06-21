@@ -186,15 +186,17 @@ class ThermostatWiFiDriver {
     });
   }
 
-  setSchedule (data) {
+  setSchedule (day, daynumber, schedule, mode) {
+    let daySet = { dayNumber: schedule };
+
     return new Promise((resolve, reject) => {
       let dayNumber = data.dayNumber,
         schedule = data.schedule;
 
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat/program/'+data.mode+'/'+data.day,
-        body:    JSON.stringify({dayNumber: schedule})
+        url:     'http://'+this.ip+'/tstat/program/'+mode+'/'+ day,
+        body:    JSON.stringify(daySet)
       }, function (error, response, body) {
         if (error) {
           reject(error);

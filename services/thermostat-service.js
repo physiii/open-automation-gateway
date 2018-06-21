@@ -46,15 +46,8 @@ class ThermostatService extends Service {
     this.driver.getSchedule(mode);
   }
 
-  setSchedule(day, daynumber, schedule, mode){
-    let data = {
-      day: day,
-      daynumber: daynumber,
-      schedule: schedule,
-      mode: mode
-    };
-
-    this.driver.setSchedule(data);
+  setSchedule (day, daynumber, schedule, mode) {
+    this.driver.setSchedule(day, daynumber, schedule, mode);
   }
 
   dbSerialize () {
