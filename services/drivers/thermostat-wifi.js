@@ -64,13 +64,13 @@ class ThermostatWiFiDriver {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({tmode: 2, t_cool: temperature, hold: 0 })
+        body:    JSON.stringify({ tmode: 2, t_cool: temperature })
       }, function (error, response, body) {
         if (error) {
           reject(error);
           return;
         }
-        console.log('setCoolTemp',response, body )
+        console.log(TAG, 'setCoolTemp',response, body )
         resolve(response, body);
       });
     });
@@ -81,7 +81,7 @@ class ThermostatWiFiDriver {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({tmode: 1, t_heat: temperature, hold: 0 })
+        body:    JSON.stringify({ tmode: 1, t_heat: temperature })
       }, function (error, response, body) {
         if (error) {
           reject(error);
@@ -128,57 +128,6 @@ class ThermostatWiFiDriver {
       console.log (TAG, 'Selected Fan Mode doesnt exist')
       return;
     }
-  }
-
-  setHoldCool (temperature) {
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({tmode: 2, t_cool: temperature, hold: 1 })
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve(response, body);
-      });
-    });
-  }
-
-  setHoldHeat (temperature) {
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({tmode: 1, t_heat: temperature, hold: 1 })
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve(response, body);
-      });
-    });
-  }
-
-  removeHold () {
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({hold: 0 })
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve(response, body);
-      });
-    });
   }
 
   fanOn () {
