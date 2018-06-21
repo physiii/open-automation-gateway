@@ -25,15 +25,19 @@ class ThermostatService extends Service {
     this.hold_mode = data.hold_mode;
   }
 
-  setTemp(temp){
-    if (this.mode == 'heat') {
-      this.target_temp = temp;
-      this.driver.setHeatTemp (temp);
+  setThermostatMode (mode) {
+    if (mode == 'off' || mode == 'heat' || mode == 'cool' || mode == 'auto'){
+      this.mode = mode;
+      this.driver.setThermostatMode(mode);
       return;
     }
-    if (this.mode == 'cool') {
+    console.log(TAG, 'Mode not defined. Choices: off, heat, cool, auto');
+  }
+
+  setTemp(temp){
+    if (this.mode == 'heat' || this.mode == 'cool') {
       this.target_temp = temp;
-      this.driver.setCoolTemp (temp);
+      this.driver.setTemp (this.mode, temp);
       return;
     }
     console.log (TAG, 'Thermostat is off. Cannot set Temp');
@@ -45,16 +49,11 @@ class ThermostatService extends Service {
   }
 
   setFanMode (mode) {
-    if (mode === "on") {
+    if (mode === "on" || mode === "auto") {
       this.fan_mode = mode;
-      this.driver.fanOn();
+      this.driver.setFanMode(mode);
       return;
-    }
-    if (mode === "auto") {
-      this.fan_mode = mode;
-      this.driver.fanAuto();
-      return;
-    }
+    };
     console.log(TAG, 'Invalid fan mode. Please choose on or auto');
   }
 
@@ -82,4 +81,5 @@ class ThermostatService extends Service {
   }
 
 }
+
 module.exports = ThermostatService;
