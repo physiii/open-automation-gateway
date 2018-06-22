@@ -27,14 +27,17 @@ class ThermostatService extends Service {
 
   setThermostatMode (mode) {
     this.driver.setThermostatMode(mode);
+    this.mode = mode;
   }
 
   setTemp (temp){
-    this.driver.setTemp(this.mode, temp);
+    this.driver.setTemp(temp);
+    this.target_temp = temp;
   }
 
   setHoldMode (mode) {
     this.driver.setHoldMode (mode);
+    this.hold_mode = mode;
   }
 
   setFanMode (mode) {

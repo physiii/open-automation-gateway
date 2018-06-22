@@ -39,7 +39,6 @@ class ThermostatWiFiDriver {
 
       this.settings = this.configureData(state);
       this.events.emit('ready', this.settings);
-      console.log(TAG,'Settings:', this.settings);
       this.ready = true;
     });
 
@@ -82,39 +81,47 @@ class ThermostatWiFiDriver {
   };
 
   setThermostatMode (mode) {
+    const self = this;
+    let setMode = {
+      tmode: THERMOSTAT_MODES[mode]
+    };
+
+    if (mode == 'heat') {
+      setMode.t_heat = this.settings.target_temp;
+    } else if (mode == 'cool') {
+      setMode.t_cool= this.settings.target_temp;
+    };
+
+    console.log(TAG, 'SetMode', setMode);
+
     return new Promise((resolve, reject) => {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({ tmode: THERMOSTAT_MODES[mode] })
+        body:    JSON.stringify(setMode)
       }, function (error, response, body) {
         if (error) {
           reject(error);
           return;
         }
-        console.log(TAG, 'setThermostatMode',response, body);
-
-        Promise.all([
-          this.setHoldMode(this.settings.hold_mode),
-          this.setTemp(this.settings.target_temp)
-        ], resolve);
+        console.log(TAG, 'setThermostatMode', body);
+        self.setHoldMode(self.settings.hold_mode);
+        resolve();
       });
     });
   }
 
-  setTemp (mode, temperature) {
-    if (mode == 'heat') {
-      let setMode = {
-        tmode: THERMOSTAT_MODES[mode],
-        t_heat: temperature
+  setTemp (temperature) {
+    let setMode = {
+        tmode: THERMOSTAT_MODES[this.settings.mode],
+        hold: HOLD_MODES[this.settings.hold_mode]
       };
-    };
-    if (mode == 'cool') {
-      let setMode = {
-        tmode: THERMOSTAT_MODES[mode],
-        t_cool: temperature
-      };
-    };
+
+    if (this.settings.mode == 'heat') {
+      setMode.t_heat = temperature;
+    } else if (this.settings.mode == 'cool') {
+      setMode.t_cool = temperature;
+    }
 
     return new Promise((resolve, reject) => {
       request.post({
@@ -128,12 +135,11 @@ class ThermostatWiFiDriver {
         }
         console.log(TAG, 'setTemp', body )
         resolve();
-        return;
       });
     });
   }
 
-  setHoldMode (mode) {
+  setHoldMode (mode) {    
     return new Promise((resolve, reject) => {
       request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
@@ -144,7 +150,7 @@ class ThermostatWiFiDriver {
           reject(error);
           return;
         }
-        this.settings.hold_mode = mode;
+        console.log(TAG, 'holdMode', body )
         resolve();
       });
     });
