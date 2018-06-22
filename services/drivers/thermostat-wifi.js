@@ -92,23 +92,8 @@ class ThermostatWiFiDriver {
       setMode.t_cool= this.settings.target_temp;
     };
 
-    console.log(TAG, 'SetMode', setMode);
-
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify(setMode)
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-        console.log(TAG, 'setThermostatMode', body);
-        self.setHoldMode(self.settings.hold_mode);
-        resolve();
-      });
-    });
+    this.postRequest(setMode);
+    this.setHoldMode(self.settings.hold_mode);
   }
 
   setTemp (temperature) {
@@ -123,54 +108,17 @@ class ThermostatWiFiDriver {
       setMode.t_cool = temperature;
     }
 
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify(setMode)
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-        console.log(TAG, 'setTemp', body )
-        resolve();
-      });
-    });
+    this.postRequest(setMode);
   }
 
-  setHoldMode (mode) {    
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({hold: HOLD_MODES[mode] })
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-        console.log(TAG, 'holdMode', body )
-        resolve();
-      });
-    });
+  setHoldMode (mode) {
+    let setMode = {hold: HOLD_MODES[mode] };
+    this.postRequest(setMode);
   }
 
   setFanMode (mode) {
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify({fmode: FAN_MODES[mode] })
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-        this.settings.fan_mode = mode;
-        resolve();
-      });
-    });
+    let setMode = {fmode: FAN_MODES[mode] };
+    this.postRequest(setMode);
   }
 
   getSchedule (mode) {
@@ -218,6 +166,23 @@ class ThermostatWiFiDriver {
       current_temp: data.temp,
       target_temp: data.t_cool || data.t_heat,
     };
+  }
+
+  postRequest(data) {
+    return new Promise((resolve, reject) => {
+      request.post({
+        headers: {'content-type' : 'application/x-www-form-urlencoded'},
+        url:     'http://'+this.ip+'/tstat',
+        body:    JSON.stringify(data)
+      }, function (error, response, body) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
   }
 }
 
