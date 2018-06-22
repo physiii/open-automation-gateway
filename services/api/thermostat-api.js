@@ -28,6 +28,7 @@ class ThermostatApi extends ServiceApi {
     this.on('holdMode/set', (data, callback) => {
       this.thermostat.setHoldMode(data.mode);
       callback(null, {});
+    });
   }
 }
 
