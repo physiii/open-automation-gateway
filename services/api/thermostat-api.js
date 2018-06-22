@@ -16,7 +16,7 @@ class ThermostatApi extends ServiceApi {
     })
 
     this.on('temp/set', (data, callback) => {
-      this.thermostat.setTemp(data.temp, data.mode, data.hold);
+      this.thermostat.setTemp(data.temp);
       callback(null, {});
     });
 
