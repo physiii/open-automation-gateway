@@ -1,7 +1,6 @@
 const spawn = require('child_process').spawn,
 	config = require('./config.json'),
 	defaultStreamPort = 5054,
-	defaultAudioDevice = config.device_hw || 'hw:0',
 	defaultWidth = 640,
 	defaultHeight = 480,
 	defaultRotation = 0,
@@ -23,14 +22,12 @@ class VideoStreamer {
 	}
 
 	streamLive (streamId, streamToken, videoDevice, {
-		audioDevice = defaultAudioDevice,
+		audioDevice,
 		width = defaultWidth,
 		height = defaultHeight,
 		rotation = defaultRotation
 	} = {}) {
-		this.stream([
-			'-f', 'alsa',
-			'-i', audioDevice,
+		const options = [
 			'-s', width + 'x' + height,
 			'-f', 'v4l2',
 			'-i', videoDevice,
@@ -42,10 +39,19 @@ class VideoStreamer {
 			'-b:a', '128k',
 			'-codec:v', 'mpeg1video',
 			'-b:v', '600k',
-			'-r', '24',
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
-		], streamId);
+		];
+
+		// Enable audio on the stream if the audio device is provided or set in config.
+		if (audioDevice || config.device_hw) {
+			options.unshift(
+				'-f', 'alsa',
+				'-i', audioDevice || config.device_hw
+			);
+		}
+
+		this.stream(options, streamId);
 	}
 
 	streamFile (streamId, streamToken, file) {
@@ -86,19 +92,22 @@ class VideoStreamer {
 		// If ffmpeg exits, clean up.
 		ffmpegProcess.on('close', (code) => {
 			console.log(TAG, `ffmpeg exited with code ${code}.`);
+
+			// Attach a flag to the child process object so we know it's closed.
+			ffmpegProcess.isClosed = true;
+
 			this.stop(streamId);
 		});
 	}
 
 	stop (streamId) {
-		return new Promise((resolve, reject) => {
+		const promise = new Promise((resolve, reject) => {
 			const ffmpegProcess = this.ffmpegProcesses[streamId];
 
-			if (ffmpegProcess && ffmpegProcess.kill) {
+			if (ffmpegProcess && ffmpegProcess.kill && !ffmpegProcess.isClosed) {
 				console.log(TAG, 'Stopping ffmpeg stream.');
 
 				ffmpegProcess.on('close', () => {
-					delete this.ffmpegProcesses[streamId];
 					resolve();
 				});
 
@@ -107,6 +116,10 @@ class VideoStreamer {
 				resolve();
 			}
 		});
+
+		promise.then(() => delete this.ffmpegProcesses[streamId]);
+
+		return promise;
 	}
 
 	getRotationFromDegrees (degree) {

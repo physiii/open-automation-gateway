@@ -1,5 +1,6 @@
 const spawn = require('child_process').spawn,
 	exec = require('child_process').exec,
+	crypto = require('crypto'),
 	path = require('path'),
 	fs = require('fs'),
 	Service = require('./service.js'),
@@ -49,10 +50,16 @@ class CameraService extends Service {
 		});
 	}
 
+	generateStreamToken () {
+		return crypto.randomBytes(128).toString('hex');
+	}
+
 	streamLive () {
+		const stream_token = this.generateStreamToken();
+
 		VideoStreamer.streamLive(
 			this.id,
-			this.device.token,
+			stream_token,
 			this.getLoopbackDevicePath(),
 			{
 				width: this.settings.resolution_w,
@@ -60,6 +67,8 @@ class CameraService extends Service {
 				rotation: this.settings.rotation
 			}
 		);
+
+		return stream_token;
 	}
 
 	stopStream () {

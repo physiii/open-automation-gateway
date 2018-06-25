@@ -16,8 +16,19 @@ if (useDev && useSsl) {
 
 relayUrl = relayProtocol + '://' + config.relay_server + ':' + relayPort;
 
-function createDeviceSocket (deviceId) {
-	const socket = io(relayUrl);
+function createDeviceSocket (deviceId, deviceToken) {
+	const socket = io(relayUrl, {
+		transportOptions: {
+			polling: {
+				extraHeaders: {
+					'x-device-id': deviceId,
+					'x-device-token': deviceToken
+				}
+			}
+		},
+		// Accept self-signed SSL certificates from relay for development.
+		rejectUnauthorized: !useDev
+	});
 
 	socket.on('disconnect', () => console.log(TAG, deviceId, 'Device was disconnected from relay.'));
 	socket.on('reconnect_failed', () => console.log(TAG, deviceId, 'Device failed to reconnect to relay.'));
