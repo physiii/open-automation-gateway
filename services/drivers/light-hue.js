@@ -1,10 +1,13 @@
 const EventEmitter = require('events'),
+  DevicesManager = require('../../devices/devices-manager.js'),
   TAG = '[HueLightDriver]';
 
   class HueLightDriver {
-    constructor (light_id, bridge) {
+    constructor (light_id, bridge_id) {
       this.light_id = light_id;
-      this.bridge = bridge;
+
+      console.log('Devices Manager:', DevicesManager);
+      this.bridge = DevicesManager.getServiceById(bridge_id) || false;
 
 
       this.events = new EventEmitter();

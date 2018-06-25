@@ -11,7 +11,8 @@ const Service = require('./service.js'),
 	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
 	LightService = require('./light-service.js'),
 	LightApi = require('./api/light-api.js'),
-	LightHueDriver = require('./drivers/light-hue.js')
+	LightHueDriver = require('./drivers/light-hue.js'),
+	HueBridgeService = require('./hue-bridge-service.js');
 
 class ServicesManager {
 	constructor (services = [], device) {
@@ -31,6 +32,9 @@ class ServicesManager {
 		switch (data.type) {
 			case 'gateway':
 				service = new GatewayService(data);
+				break;
+			case 'hue_bridge':
+				service = new HueBridgeService(data);
 				break;
 			case 'camera':
 				service = new CameraService(data);
