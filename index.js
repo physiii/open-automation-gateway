@@ -54,10 +54,7 @@ database.get_settings().then((settings) => {
           ]
       });
 
-console.log('CREATED MAIN DEVICE', main_device.id);
-
       settings.main_device_id = main_device.id;
-console.log('STORE SETTINGS', settings);
       database.store_settings(settings);
     }
   });

@@ -80,6 +80,7 @@ function get_settings () {
 
         if (result[0]) {
           settings = result[0];
+          delete settings._id;
         }
 
         module.exports.settings = settings;
@@ -98,11 +99,8 @@ function store_settings (data) {
       return;
     }
 
-    settings[Object.keys(data)[0]] = data[Object.keys(data)[0]];
-
     db.collection('settings').update({}, {$set: data}, {upsert: true}, function (error, item) {
-        //console.log("item",item)
-db.close();
+      db.close();
     });
   });
 }
