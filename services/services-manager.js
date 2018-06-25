@@ -8,7 +8,10 @@ const Service = require('./service.js'),
 	ThermostatWifiDriver = require ('./drivers/thermostat-wifi.js'),
 	LockService = require('./lock-service.js'),
 	LockApi = require('./api/lock-api.js'),
-	ZwaveLockDriver = require('./drivers/lock-zwave.js');
+	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
+	LightService = require('./light-service.js'),
+	LightApi = require('./api/light-api.js'),
+	LightHueDriver = require('./drivers/light-hue.js')
 
 class ServicesManager {
 	constructor (services = [], device) {
@@ -37,6 +40,9 @@ class ServicesManager {
 				break;
 			case 'thermostat':
 				service = new ThermostatService(data, ThermostatWifiDriver);
+				break;
+			case 'light':
+				service = new LightService(data, LightHueDriver);
 				break;
 			default:
 				service = new Service(data);
@@ -69,6 +75,9 @@ class ServicesManager {
 					break;
 				case 'thermostat':
 					new ThermostatApi(socket, service);
+					break;
+				case 'light':
+					new LightApi(socket, service);
 					break;
 			}
 		});
