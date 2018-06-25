@@ -1,7 +1,6 @@
-const database = require('../database.js'),
-	Device = require('./device.js');
+const database = require('../database.js');
 
-class Devices {
+class DevicesManager {
 	constructor () {
 		this.devices = [];
 	}
@@ -54,4 +53,11 @@ class Devices {
 	}
 }
 
-module.exports = new Devices();
+module.exports = new DevicesManager();
+
+// The Device class needs to be required after exporting the DevicesManager
+// singleton so that devices and services can require DevicesManager.
+// Otherwise, the circular dependency will cause an empty object to be returned
+// when they require DevicesManager.
+
+const Device = require('./device.js');
