@@ -9,7 +9,7 @@ const Service = require('./service.js'),
 	LockService = require('./lock-service.js'),
 	LockApi = require('./api/lock-api.js'),
 	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
-	LightService = require('./light-service.js'),	L
+	LightService = require('./light-service.js'),
 	LightApi = require('./api/light-api.js'),
 	LightHueDriver = require('./drivers/light-hue.js')
 

@@ -95,6 +95,14 @@ class HueBridgeService extends Service {
     })
   }
 
+  dbSerialize () {
+		return {
+			...Service.prototype.dbSerialize.apply(this, arguments),
+			ip: this.ip,
+      user: this.user
+		};
+	}
+
 }
 
 module.exports = HueBridgeService;
