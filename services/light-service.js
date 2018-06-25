@@ -16,6 +16,26 @@ class LightService extends Service {
   subscribeToDriver() {
     return;
   }
+
+  lightOn () {
+    this.driver.setLightOn();
+  };
+
+  lightOff () {
+    this.driver.setLightOff();
+  };
+
+  setBrightness (brightness) {
+    this.driver.setBrightness(brightness);
+  };
+
+  setColor (color) {
+    this.driver.setColor(color);
+  };
+
+  setLightName (name) {
+    this.driver.setLightName(name);
+  }
 }
 
 module.exports = LightService;
