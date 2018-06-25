@@ -1,4 +1,5 @@
 const uuid = require('uuid/v4'),
+	crypto = require('crypto'),
 	createDeviceSocket = require('./device-socket.js').createDeviceSocket,
 	ServicesManager = require('../services/services-manager.js'),
 	TAG = '[Device]';
@@ -6,6 +7,7 @@ const uuid = require('uuid/v4'),
 class Device {
 	constructor (data) {
 		this.id = data.id || uuid();
+		this.token = data.token || crypto.randomBytes(256).toString('hex');
 		this.setStatus(data.status || {});
 		this.setSettings(data.settings || {});
 		this.setInfo(data.info || {});
@@ -14,7 +16,7 @@ class Device {
 		this.relayEmit = this.relayEmit.bind(this);
 
 		// Socket connection to relay. This must come before creating services.
-		this.relaySocket = createDeviceSocket(this.id);
+		this.relaySocket = createDeviceSocket(this.id, this.token);
 		this.listenToRelay();
 
 		// The socket must be created before creating services.
@@ -95,7 +97,10 @@ class Device {
 	}
 
 	dbSerialize () {
-		return this.serialize();
+		return {
+			...this.serialize(),
+			token: this.token
+		};
 	}
 
 	relaySerialize () {

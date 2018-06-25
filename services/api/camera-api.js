@@ -11,9 +11,10 @@ class CameraApi extends ServiceApi {
 
 	listen () {
 		this.on('stream/live', (data, callback) => {
-			this.camera.streamLive();
+			const stream_token = this.camera.streamLive();
+
 			// TODO: Error handling
-			callback(null, {stream_token: this.camera.device.token});
+			callback(null, {stream_token});
 		});
 
 		this.on('stream/stop', (data, callback) => {
@@ -39,8 +40,10 @@ class CameraApi extends ServiceApi {
 		});
 
 		this.on('recording/stream', (data, callback) => {
-			CameraRecordings.streamRecording(data.recording_id, this.camera.device.token).then(() => {
-				callback(null, {stream_token: this.camera.device.token});
+			const stream_token = this.camera.generateStreamToken();
+
+			CameraRecordings.streamRecording(data.recording_id, stream_token).then(() => {
+				callback(null, {stream_token});
 			}).catch((error) => {
 				callback(error);
 			});
