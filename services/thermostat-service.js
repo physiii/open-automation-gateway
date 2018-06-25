@@ -25,32 +25,23 @@ class ThermostatService extends Service {
     this.hold_mode = data.hold_mode;
   }
 
-  setTemp(temp, mode, hold){
-    if (mode == 'heat') {
-      if (hold) {
-        this.driver.setHoldHeat(temp);
-        return;
-      }
-    this.driver.setHeatTemp (temp);
-    } else if (mode == 'cool') {
-      if (hold) {
-        this.driver.setHoldCool (temp);
-        return;
-      }
-      this.driver.setCoolTemp (temp);
-    }
-
-    return;
+  setThermostatMode (mode) {
+    this.driver.setThermostatMode(mode);
+    this.mode = mode;
   }
 
-  fanMode (mode) {
-    if (mode === "on") {
-      this.driver.fanOn();
-    } else if (mode === "auto") {
-      this.driver.fanAuto();
-    }
+  setTemp (temp){
+    this.driver.setTemp(temp);
+    this.target_temp = temp;
+  }
 
-    return;
+  setHoldMode (mode) {
+    this.driver.setHoldMode (mode);
+    this.hold_mode = mode;
+  }
+
+  setFanMode (mode) {
+    this.driver.setFanMode(mode);
   }
 
   getSchedule (mode) {
@@ -58,15 +49,8 @@ class ThermostatService extends Service {
     this.driver.getSchedule(mode);
   }
 
-  setSchedule(day, daynumber, schedule, mode){
-    let data = {
-      day: day,
-      daynumber: daynumber,
-      schedule: schedule,
-      mode: mode
-    };
-
-    this.driver.setSchedule(data);
+  setSchedule (day, daynumber, schedule, mode) {
+    this.driver.setSchedule(day, daynumber, schedule, mode);
   }
 
   dbSerialize () {
@@ -75,6 +59,6 @@ class ThermostatService extends Service {
       ip: this.ip
     };
   }
-
 }
+
 module.exports = ThermostatService;

@@ -25,7 +25,7 @@ const EventEmitter = require('events'),
 
     setBrightness (brightness) {
       this.bridge.setBrightness(this.light_id, brightness);
-    };    
+    };
 
     setColor (color) {
       this.bridge.setColor(this.light_id, color);

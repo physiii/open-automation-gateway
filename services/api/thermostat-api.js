@@ -9,13 +9,24 @@ class ThermostatApi extends ServiceApi {
   }
 
   listen () {
-    this.on('thermostat/temp/set', (data, callback) => {
-      this.thermostat.setTemp(data.temp, data.mode, data.hold);
+
+    this.on('mode/set', (data, callback) => {
+      this.thermostat.setThermostatMode(data.mode);
+      callback(null, {});
+    })
+
+    this.on('temp/set', (data, callback) => {
+      this.thermostat.setTemp(data.temp);
       callback(null, {});
     });
 
-    this.on('thermostat/fanMode', (data, callback) => {
-      this.thermostat.fanMode(data.mode);
+    this.on('fanMode/set', (data, callback) => {
+      this.thermostat.setFanMode(data.mode);
+      callback(null, {});
+    });
+
+    this.on('holdMode/set', (data, callback) => {
+      this.thermostat.setHoldMode(data.mode);
       callback(null, {});
     });
   }
