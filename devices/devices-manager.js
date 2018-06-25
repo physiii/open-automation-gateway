@@ -24,6 +24,20 @@ class Devices {
 		return this.devices.find((device) => device.id === deviceId);
 	}
 
+	getDeviceByServiceId (serviceId) {
+		return this.devices.find((device) => device.services.getServiceById(serviceId));
+	}
+
+	getServiceById (serviceId) {
+		const device = this.getDeviceByServiceId(serviceId);
+
+		if (!device) {
+			return;
+		}
+
+		return device.services.getServiceById(serviceId);
+	}
+
 	loadDevicesFromDb () {
 		return new Promise((resolve, reject) => {
 			database.get_devices().then((devices) => {
