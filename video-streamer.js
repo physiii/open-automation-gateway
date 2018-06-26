@@ -1,5 +1,7 @@
 const spawn = require('child_process').spawn,
+	exec = require('child_process').exec,
 	config = require('./config.json'),
+	utils = require('./utils.js'),
 	defaultStreamPort = 5054,
 	defaultWidth = 640,
 	defaultHeight = 480,
@@ -7,10 +9,6 @@ const spawn = require('child_process').spawn,
 	TAG = '[VideoStreamer]';
 
 class VideoStreamer {
-	constructor () {
-		this.ffmpegProcesses = {};
-	}
-
 	getStreamUrl (streamId, streamToken) {
 		const url = config.relay_server + ':' + (config.video_stream_port || defaultStreamPort) + '/' + streamId + '/' + streamToken + '/';
 
@@ -71,55 +69,39 @@ class VideoStreamer {
 	}
 
 	stream (command, streamId) {
-		const existingProcess = this.ffmpegProcesses[streamId];
+		this.stop(streamId).then(() => {
+			console.log(TAG, 'Starting FFmpeg stream. Stream ID:', streamId);
+			const ffmpegProcess = spawn('ffmpeg', command);
 
-		if (existingProcess) {
-			this.stop(streamId).then(() => {
-				this.start(command, streamId);
+			ffmpegProcess.on('close', (code) => {
+				console.log(TAG, `FFmpeg exited with code ${code}. Stream ID:`, streamId);
 			});
-		} else {
-			this.start(command, streamId);
-		}
-	}
-
-	start (command, streamId) {
-		console.log(TAG, 'Starting ffmpeg stream.');
-		const ffmpegProcess = spawn('ffmpeg', command);
-
-		// Store a reference to this stream's ffmpeg process.
-		this.ffmpegProcesses[streamId] = ffmpegProcess;
-
-		// If ffmpeg exits, clean up.
-		ffmpegProcess.on('close', (code) => {
-			console.log(TAG, `ffmpeg exited with code ${code}.`);
-
-			// Attach a flag to the child process object so we know it's closed.
-			ffmpegProcess.isClosed = true;
-
-			this.stop(streamId);
 		});
 	}
 
 	stop (streamId) {
-		const promise = new Promise((resolve, reject) => {
-			const ffmpegProcess = this.ffmpegProcesses[streamId];
+		return new Promise((resolve, reject) => {
+			utils.checkIfProcessIsRunning('ffmpeg', streamId).then((proccess_id) => {
+				if (!proccess_id) {
+					resolve();
 
-			if (ffmpegProcess && ffmpegProcess.kill && !ffmpegProcess.isClosed) {
-				console.log(TAG, 'Stopping ffmpeg stream.');
+					return;
+				}
 
-				ffmpegProcess.on('close', () => {
+				console.log(TAG, 'Stopping FFmpeg stream. Stream ID:', streamId);
+
+				exec('kill ' + proccess_id, (error, stdout, stderr) => {
+					if (error || stderr) {
+						console.error(TAG, 'Tried to kill existing FFmpeg process, but an error occurred.', error, stderr);
+						reject();
+
+						return;
+					}
+
 					resolve();
 				});
-
-				ffmpegProcess.kill();
-			} else {
-				resolve();
-			}
+			});
 		});
-
-		promise.then(() => delete this.ffmpegProcesses[streamId]);
-
-		return promise;
 	}
 
 	getRotationFromDegrees (degree) {

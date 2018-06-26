@@ -26,7 +26,10 @@ function checkIfProcessIsRunning () {
 
 		exec(command, (error, stdout, stderr) => {
 			// If there's an error, the command found no processes.
-			resolve(!Boolean(error));
+			// \S* matches process owner, \s* matches whitespace before pid, [0-9]* matches pid
+			const process_id = error ? false : /^\S*\s*([0-9]*)/g.exec(stdout)[1];
+
+			resolve(process_id);
 		});
 	});
 }
