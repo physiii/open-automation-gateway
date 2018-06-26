@@ -22,7 +22,7 @@ sudo easy_install pip
 sudo python -m pip install pymongo==3.0.3 numpy imutils opencv-python
 
 ## make and install openzwave
-cd /usr/src
+cd /usr/local/src
 wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
 tar zxvf openzwave-1.4.1.tar.gz
 cd openzwave-1.4.1
