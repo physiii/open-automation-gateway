@@ -94,6 +94,10 @@ class ServicesManager {
 	getDbSerializedServices () {
 		return this.services.map((service) => service.dbSerialize());
 	}
+
+	getRelaySerializedServices () {
+		return this.services.map((service) => service.relaySerialize());
+	}
 }
 
 module.exports = ServicesManager;

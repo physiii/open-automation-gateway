@@ -10,6 +10,7 @@ const exec = require('child_process').exec,
 module.exports = {
 	checkIfProcessIsRunning,
 	removeOldCameraRecordings,
+	onChange,
 	update
 };
 
@@ -79,6 +80,43 @@ function removeOldCameraRecordings() {
 			};
 		});
 	});
+}
+
+function onChange (object, onChange) {
+	const handler = {
+		get (target, property, receiver) {
+			let value = target[property];
+
+			const tag = Object.prototype.toString.call(value),
+				shouldBindProperty = (property !== 'constructor') && (
+					tag === '[object Function]' ||
+					tag === '[object AsyncFunction]' ||
+					tag === '[object GeneratorFunction]'
+				);
+
+			if (shouldBindProperty) {
+				value = value.bind(target);
+			}
+
+			try {
+				return new Proxy(value, handler);
+			} catch (err) {
+				return Reflect.get(target, property, receiver);
+			}
+		},
+		defineProperty (target, property, descriptor) {
+			const result = Reflect.defineProperty(target, property, descriptor);
+			onChange();
+			return result;
+		},
+		deleteProperty (target, property) {
+			const result = Reflect.deleteProperty(target, property);
+			onChange();
+			return result;
+		}
+	};
+
+	return new Proxy(object, handler);
 }
 
 function update () {

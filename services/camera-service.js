@@ -6,8 +6,10 @@ const spawn = require('child_process').spawn,
 	utils = require('../utils.js'),
 	Service = require('./service.js'),
 	VideoStreamer = require('../video-streamer.js'),
+	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
-	CHECK_SCRIPTS_DELAY = 500,
+	ONE_SECOND = 1000,
+	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
@@ -15,14 +17,18 @@ class CameraService extends Service {
 		super(data);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
+		this.TAG = TAG + ' ' + this.getCameraNumber();
 
 		// Settings
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
 		this.settings.rotation = data.settings && data.settings.rotation || 0;
 
-		this.TAG = TAG + ' ' + this.getCameraNumber();
+		CameraRecordings.getLastRecordingDate(this.id).then((date) => {
+			this.state.last_recording_date = date;
+		});
 
+		this.getPreviewImage();
 		this.setUpLoopback();
 		this.startMotionDetection();
 	}
@@ -44,7 +50,11 @@ class CameraService extends Service {
 						return;
 					}
 
-					resolve(file.toString('base64'));
+					const image = file.toString('base64');
+
+					this.state.preview_image = image;
+
+					resolve(image);
 				});
 			} catch (error) {
 				reject(error);
@@ -95,6 +105,8 @@ class CameraService extends Service {
 					console.log(MOTION_TAG, data.toString());
 
 					if (data && data.includes('[MOTION]')) {
+						this.getPreviewImage();
+						this.state.last_recording_date = new Date();
 						// TODO: Tell Relay motion detected.
 						// socket.relay.emit('motion detected', data);
 					}

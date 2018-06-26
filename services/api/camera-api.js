@@ -3,7 +3,7 @@ const ServiceApi = require('./service-api.js'),
 
 class CameraApi extends ServiceApi {
 	constructor (socket, camera) {
-		super(socket, camera.id, 'camera');
+		super(socket, camera, 'camera');
 
 		this.camera = camera;
 		this.listen();

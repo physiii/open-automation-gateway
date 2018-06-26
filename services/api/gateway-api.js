@@ -2,7 +2,7 @@ const ServiceApi = require('./service-api.js');
 
 class GatewayApi extends ServiceApi {
 	constructor (socket, gateway) {
-		super(socket, gateway.id, 'gateway');
+		super(socket, gateway, 'gateway');
 
 		this.gateway = gateway;
 		this.listen();

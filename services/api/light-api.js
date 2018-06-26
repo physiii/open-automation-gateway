@@ -2,7 +2,7 @@ const ServiceApi = require('./service-api.js');
 
 class LightApi extends ServiceApi {
   constructor (socket, light) {
-    super(socket, light.id, 'light');
+    super(socket, light, 'light');
 
     this.light = light;
     this.listen();

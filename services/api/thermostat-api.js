@@ -2,7 +2,7 @@ const ServiceApi = require('./service-api.js');
 
 class ThermostatApi extends ServiceApi {
   constructor (socket, thermostat) {
-    super(socket, thermostat.id, 'thermostat');
+    super(socket, thermostat, 'thermostat');
 
     this.thermostat = thermostat;
     this.listen();

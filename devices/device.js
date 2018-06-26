@@ -8,9 +8,9 @@ class Device {
 	constructor (data) {
 		this.id = data.id || uuid();
 		this.token = data.token || crypto.randomBytes(256).toString('hex');
-		this.setStatus(data.status || {});
-		this.setSettings(data.settings || {});
-		this.setInfo(data.info || {});
+		this.setState(data.state);
+		this.setSettings(data.settings);
+		this.setInfo(data.info);
 
 		this.relayOn = this.relayOn.bind(this);
 		this.relayEmit = this.relayEmit.bind(this);
@@ -24,19 +24,19 @@ class Device {
 		this.services.setRelaySocket(this.getRelaySocketProxy());
 	}
 
-	setStatus (status) {
-		this.status = {
-			connected: status.connected || false
+	setState (state = {}) {
+		this.state = {
+			connected: state.connected || false
 		};
 	}
 
-	setSettings (settings) {
+	setSettings (settings = {}) {
 		this.settings = {
 			name:  settings.name
 		};
 	}
 
-	setInfo (info) {
+	setInfo (info = {}) {
 		this.info = {
 			manufacturer: info.manufacturer
 		};
@@ -45,26 +45,19 @@ class Device {
 	listenToRelay () {
 		this.relaySocket.on('connect', () => { this.onRelayConnect(); });
 		this.relaySocket.on('disconnect', () => { this.onRelayDisconnect(); });
+	}
 
-		// Receive the token needed for this device to communicate with relay.
-		this.relaySocket.on('token', (data) => {
-			this.token = data.token;
-
-			// Send current state of device to relay.
-			this.relayEmit('load', this.relaySerialize());
-		});
+	sendCurrentStateToRelay () {
+		this.relayEmit('load', {device: this.relaySerialize()});
 	}
 
 	onRelayConnect () {
-		this.status.connected = true;
-
-		// Handshake with relay. Relay should respond with a 'token' event.
-		// This first emit is the only time we should not use this.relayEmit.
-		this.relaySocket.emit('gateway/device/connect', {device_id: this.id});
+		this.state.connected = true;
+		this.sendCurrentStateToRelay();
 	}
 
 	onRelayDisconnect () {
-		this.status.connected = false;
+		this.state.connected = false;
 	}
 
 	relayOn () {
@@ -72,8 +65,8 @@ class Device {
 	}
 
 	relayEmit (event, data, callback) {
-		if (!this.status.connected || !this.token) {
-			console.log(TAG, this.id, 'Attempted to emit "' + event + '" event to relay, but the connection is down or the device has no token.');
+		if (!this.state.connected) {
+			console.log(TAG, this.id, 'Attempted to emit "' + event + '" event to relay, but the relay socket is not connected.');
 			return;
 		}
 
@@ -91,20 +84,24 @@ class Device {
 		return {
 			id: this.id,
 			settings: this.settings,
-			info: this.info,
-			services: this.services.getDbSerializedServices(),
+			info: this.info
 		};
 	}
 
 	dbSerialize () {
 		return {
 			...this.serialize(),
-			token: this.token
+			token: this.token,
+			services: this.services.getDbSerializedServices()
 		};
 	}
 
 	relaySerialize () {
-		return this.serialize();
+		return {
+			...this.serialize(),
+			state: this.state,
+			services: this.services.getRelaySerializedServices()
+		};
 	}
 }
 

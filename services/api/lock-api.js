@@ -2,7 +2,7 @@ const ServiceApi = require('./service-api.js');
 
 class LockApi extends ServiceApi {
   constructor (socket, lock) {
-    super(socket, lock.id, 'lock');
+    super(socket, lock, 'lock');
 
     this.lock = lock;
     this.listen();
