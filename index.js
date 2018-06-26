@@ -41,7 +41,7 @@ const utils = require('./utils'),
 if (config.zwave) {
   zwave = require('./zwave.js');
 }
-require('./admin.js');
+//require('./admin.js');
 
 // Get settings and load devices from database.
 database.get_settings().then((settings) => {
