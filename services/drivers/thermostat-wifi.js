@@ -58,7 +58,7 @@ class ThermostatWiFiDriver {
 
         self.settings = self.configureData(update);
         self.events.emit('state update', self.settings)
-        console.log(TAG,'Settings:', self.settings)
+        //console.log(TAG,'Settings:', self.settings)
       }).catch((error) => {
         console.log(TAG, 'Polling error:', error);
       })
