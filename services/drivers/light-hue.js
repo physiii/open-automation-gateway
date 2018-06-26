@@ -5,8 +5,9 @@ const EventEmitter = require('events'),
 class HueLightDriver {
   constructor (light_id, bridge_id) {
     this.light_id = light_id;
-
-    this.bridge = DevicesManager.getServiceById(bridge_id) || false;
+    this.bridge_id = bridge_id;
+        
+    this.bridge = DevicesManager.getServiceById(this.bridge_id) || false;
     this.events = new EventEmitter();
   };
 
