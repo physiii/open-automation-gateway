@@ -50,7 +50,7 @@ class HueBridgeService extends Service {
     })
   }
 
-  setLightOn (device_id) {
+  lightOn (device_id) {
     console.log(TAG, 'Set light: on');
     this.api.setLightState(device_id, this.state.on(), function(err, result) {
       if (err) {
@@ -61,7 +61,7 @@ class HueBridgeService extends Service {
     })
   }
 
-  setLightOff (device_id) {
+  lightOff (device_id) {
     console.log(TAG, 'Set light: off');
     this.api.setLightState(device_id, this.state.off(), function(err, result) {
       if (err) {

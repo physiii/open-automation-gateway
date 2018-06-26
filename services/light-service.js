@@ -17,11 +17,11 @@ class LightService extends Service {
   }
 
   lightOn () {
-    this.driver.setLightOn();
+    this.driver.lightOn();
   };
 
   lightOff () {
-    this.driver.setLightOff();
+    this.driver.lightOff();
   };
 
   setBrightness (brightness) {
