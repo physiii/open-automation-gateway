@@ -12,6 +12,6 @@
 # By default this script does nothing.
 export DISPLAY=':0.0'
 sudo modprobe bcm2835-v4l2
-sudo modprobe v4l2loopback video_nr=10,11
+sudo modprobe v4l2loopback video_nr=10,11,12,13,14
 su pi -c 'pm2 start ~/gateway/ --name gateway'
 exit 0;
