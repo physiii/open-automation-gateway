@@ -1,9 +1,8 @@
-//Placeholder for Thermostat service
 const Service = require('./service.js'),
   TAG = '[ThermostatService]';
 
 class ThermostatService extends Service {
-  constructor(data, driverClass) { // TODO: Add driverClass arguement when ready
+  constructor(data, driverClass) {
     super(data);
 
     this.ip = data.ip;

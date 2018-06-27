@@ -2,7 +2,7 @@ const database = require('../database.js');
 
 class DevicesManager {
 	constructor () {
-		this.devices = [];
+		this.devices = new Map();
 	}
 
 	addDevice (data) {
@@ -13,18 +13,27 @@ class DevicesManager {
 		}
 
 		device = new Device(data);
-		this.devices.push(device);
-		database.store_device(device);
+		this.devices.set(device.id, device);
 
 		return device;
 	}
 
+	createDevice (data) {
+		return new Promise((resolve, reject) => {
+			const device = this.addDevice(data);
+
+			database.store_device(device).then(() => {
+				resolve(device);
+			}).catch(reject);
+		});
+	}
+
 	getDeviceById (deviceId) {
-		return this.devices.find((device) => device.id === deviceId);
+		return this.devices.get(deviceId);
 	}
 
 	getDeviceByServiceId (serviceId) {
-		return this.devices.find((device) => device.services.getServiceById(serviceId));
+		return Array.from(this.devices.values()).find((device) => device.services.getServiceById(serviceId));
 	}
 
 	getServiceById (serviceId) {
@@ -40,7 +49,26 @@ class DevicesManager {
 	loadDevicesFromDb () {
 		return new Promise((resolve, reject) => {
 			database.get_devices().then((devices) => {
-				this.devices = devices.map((device) => new Device(device));
+				let device;
+
+				this.devices.clear();
+
+				while (devices.length > 0) {
+					// Get next device in the list.
+					device = devices.shift();
+
+					// If the device's dependencies are not met, add the device
+					// back to the end of the devices array and move on to the
+					// next device in the array.
+					if (!this.areDeviceDependenciesMet(device)) {
+						devices.push(device);
+
+						continue;
+					}
+
+					this.addDevice(device);
+				}
+
 				resolve(this.devices);
 			}).catch((error) => {
 				reject(error);
@@ -48,8 +76,22 @@ class DevicesManager {
 		});
 	}
 
+	areDeviceDependenciesMet (device) {
+		let met = true;
+
+		if (device.dependencies && device.dependencies.forEach) {
+			device.dependencies.forEach((dependency) => {
+				if (dependency.service_id && !this.getServiceById(dependency.service_id)) {
+					met = false;
+				}
+			});
+		}
+
+		return met;
+	}
+
 	getDbSerializedDevices () {
-		return this.devices.map((device) => device.dbSerialize());
+		return Array.from(this.devices.values()).map((device) => device.dbSerialize());
 	}
 }
 
