@@ -1,4 +1,5 @@
-const database = require('../database.js');
+const database = require('../database.js'),
+	TAG = '[DevicesManager]';
 
 class DevicesManager {
 	constructor () {
@@ -10,6 +11,10 @@ class DevicesManager {
 
 		if (device) {
 			return device;
+		}
+
+		if (!this.areDeviceDependenciesMet(data)) {
+			return false;
 		}
 
 		device = new Device(data);
@@ -48,25 +53,37 @@ class DevicesManager {
 
 	loadDevicesFromDb () {
 		return new Promise((resolve, reject) => {
-			database.get_devices().then((devices) => {
-				let device;
+			database.get_devices().then((dbDevices) => {
+				const dependenciesFailCounters = new Map(),
+					// If a device's dependencies haven't been met after this
+					// many attempts, it fails. This is also effectively the
+					// dependency tree depth limit.
+					DEPENDENCY_CHECK_MAX = 15;
 
 				this.devices.clear();
 
-				while (devices.length > 0) {
+				while (dbDevices.length > 0) {
 					// Get next device in the list.
-					device = devices.shift();
+					let dbDevice = dbDevices.shift(),
+						device = this.addDevice(dbDevice);
 
-					// If the device's dependencies are not met, add the device
-					// back to the end of the devices array and move on to the
-					// next device in the array.
-					if (!this.areDeviceDependenciesMet(device)) {
-						devices.push(device);
+					// Device's dependencies are not met.
+					if (!device) {
+						let failCount = (dependenciesFailCounters.get(dbDevice.id) || 0) + 1;
 
+						// Increment this device's dependencies check fail count.
+						dependenciesFailCounters.set(dbDevice.id, failCount);
+
+						// Add the device back to the end of the devices array.
+						if (failCount < DEPENDENCY_CHECK_MAX) {
+							dbDevices.push(dbDevice);
+						} else {
+							console.error(TAG, 'Device\'s dependencies were not satisfied after ' + failCount + ' attempts. Device was not loaded (' + dbDevice.id + ').');
+						}
+
+						// Move on to the next device in the array.
 						continue;
 					}
-
-					this.addDevice(device);
 				}
 
 				resolve(this.devices);
