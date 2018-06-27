@@ -20,11 +20,11 @@ class HueLightDriver {
 	}
 
   lightOn () {
-    this.bridge.setLightOn(this.light_id);
+    this.bridge.lightOn(this.light_id);
   }
 
   lightOff () {
-    this.bridge.setLightOff(this.light_id);
+    this.bridge.lightOff(this.light_id);
   }
 
   setBrightness (brightness) {
