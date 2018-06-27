@@ -8,6 +8,7 @@ class Device {
 	constructor (data) {
 		this.id = data.id || uuid();
 		this.token = data.token || crypto.randomBytes(256).toString('hex');
+		this.dependencies = data.dependencies || {};
 		this.setState(data.state);
 		this.setSettings(data.settings);
 		this.setInfo(data.info);
@@ -92,6 +93,7 @@ class Device {
 		return {
 			...this.serialize(),
 			token: this.token,
+			dependencies: this.dependencies,
 			services: this.services.getDbSerializedServices()
 		};
 	}
