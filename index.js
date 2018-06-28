@@ -50,7 +50,7 @@ database.get_settings().then((settings) => {
 
     // If the default device has not been created yet, create it.
     if (!main_device) {
-      main_device = devices.addDevice({
+      main_device = devices.createDevice({
           services:[
             {type: 'gateway'}
           ]
