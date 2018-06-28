@@ -46,6 +46,14 @@ make -j4
 sudo make install
 sudo ldconfig
 
+##opencv from prebuilt binaries
+cp -rf build/opencv/include/opencv /usr/include/opencv
+cp -rf build/opencv/include/opencv2 /usr/include/opencv2
+cp -rf build/opencv/lib/pkgconfig /usr/lib/pkgconfig
+cp -rf build/opencv/local/lib/* /usr/local/lib/
+cp -rf build/opencv/share/* /usr/share/
+cp -rf build/opencv/arm-linux-gnueabihf/* /usr/lib/arm-linux-gnueabihf/
+
 ## make and install openzwave
 cd /usr/src
 wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
