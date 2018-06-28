@@ -8,7 +8,6 @@ class HueBridgeService extends Service {
   constructor (data) {
     super(data);
 
-    this.id = data.id || '';
     this.ip = data.ip || '10.10.10.102'
     this.user = data.user || 'CbJnDROdyKEfqjlfTJvsm8VXaqxUguGrD-9O5Plk';
 
@@ -51,7 +50,7 @@ class HueBridgeService extends Service {
     })
   }
 
-  setLightOn (device_id) {
+  lightOn (device_id) {
     console.log(TAG, 'Set light: on');
     this.api.setLightState(device_id, this.state.on(), function(err, result) {
       if (err) {
@@ -62,7 +61,7 @@ class HueBridgeService extends Service {
     })
   }
 
-  setLightOff (device_id) {
+  lightOff (device_id) {
     console.log(TAG, 'Set light: off');
     this.api.setLightState(device_id, this.state.off(), function(err, result) {
       if (err) {
@@ -94,6 +93,14 @@ class HueBridgeService extends Service {
 
     })
   }
+
+  dbSerialize () {
+		return {
+			...Service.prototype.dbSerialize.apply(this, arguments),
+			ip: this.ip,
+      user: this.user
+		};
+	}
 
 }
 

@@ -1,17 +1,14 @@
 const spawn = require('child_process').spawn,
+	exec = require('child_process').exec,
 	config = require('./config.json'),
+	utils = require('./utils.js'),
 	defaultStreamPort = 5054,
-	defaultAudioDevice = config.device_hw || 'hw:0',
 	defaultWidth = 640,
 	defaultHeight = 480,
 	defaultRotation = 0,
 	TAG = '[VideoStreamer]';
 
 class VideoStreamer {
-	constructor () {
-		this.ffmpegProcesses = {};
-	}
-
 	getStreamUrl (streamId, streamToken) {
 		const url = config.relay_server + ':' + (config.video_stream_port || defaultStreamPort) + '/' + streamId + '/' + streamToken + '/';
 
@@ -23,14 +20,12 @@ class VideoStreamer {
 	}
 
 	streamLive (streamId, streamToken, videoDevice, {
-		audioDevice = defaultAudioDevice,
+		audioDevice,
 		width = defaultWidth,
 		height = defaultHeight,
 		rotation = defaultRotation
 	} = {}) {
-		this.stream([
-			'-f', 'alsa',
-			'-i', audioDevice,
+		const options = [
 			'-s', width + 'x' + height,
 			'-f', 'v4l2',
 			'-i', videoDevice,
@@ -42,10 +37,19 @@ class VideoStreamer {
 			'-b:a', '128k',
 			'-codec:v', 'mpeg1video',
 			'-b:v', '600k',
-			'-r', '24',
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
-		], streamId);
+		];
+
+		// Enable audio on the stream if the audio device is provided or set in config.
+		if (audioDevice || config.device_hw) {
+			options.unshift(
+				'-f', 'alsa',
+				'-i', audioDevice || config.device_hw
+			);
+		}
+
+		this.stream(options, streamId);
 	}
 
 	streamFile (streamId, streamToken, file) {
@@ -65,47 +69,38 @@ class VideoStreamer {
 	}
 
 	stream (command, streamId) {
-		const existingProcess = this.ffmpegProcesses[streamId];
+		this.stop(streamId).then(() => {
+			console.log(TAG, 'Starting FFmpeg stream. Stream ID:', streamId);
+			const ffmpegProcess = spawn('ffmpeg', command);
 
-		if (existingProcess) {
-			this.stop(streamId).then(() => {
-				this.start(command, streamId);
+			ffmpegProcess.on('close', (code) => {
+				console.log(TAG, `FFmpeg exited with code ${code}. Stream ID:`, streamId);
 			});
-		} else {
-			this.start(command, streamId);
-		}
-	}
-
-	start (command, streamId) {
-		console.log(TAG, 'Starting ffmpeg stream.');
-		const ffmpegProcess = spawn('ffmpeg', command);
-
-		// Store a reference to this stream's ffmpeg process.
-		this.ffmpegProcesses[streamId] = ffmpegProcess;
-
-		// If ffmpeg exits, clean up.
-		ffmpegProcess.on('close', (code) => {
-			console.log(TAG, `ffmpeg exited with code ${code}.`);
-			this.stop(streamId);
 		});
 	}
 
 	stop (streamId) {
 		return new Promise((resolve, reject) => {
-			const ffmpegProcess = this.ffmpegProcesses[streamId];
+			utils.checkIfProcessIsRunning('ffmpeg', streamId).then((proccess_id) => {
+				if (!proccess_id) {
+					resolve();
 
-			if (ffmpegProcess && ffmpegProcess.kill) {
-				console.log(TAG, 'Stopping ffmpeg stream.');
+					return;
+				}
 
-				ffmpegProcess.on('close', () => {
-					delete this.ffmpegProcesses[streamId];
+				console.log(TAG, 'Stopping FFmpeg stream. Stream ID:', streamId);
+
+				exec('kill ' + proccess_id, (error, stdout, stderr) => {
+					if (error || stderr) {
+						console.error(TAG, 'Tried to kill existing FFmpeg process, but an error occurred.', error, stderr);
+						reject();
+
+						return;
+					}
+
 					resolve();
 				});
-
-				ffmpegProcess.kill();
-			} else {
-				resolve();
-			}
+			});
 		});
 	}
 

@@ -1,9 +1,14 @@
 const noOp = () => {};
 
 class ServiceApi {
-	constructor (socket, serviceId, eventNamespace) {
+	constructor (socket, service, eventNamespace) {
 		this.socket = socket;
-		this.eventPrefix = eventNamespace + '/' + serviceId;
+		this.eventPrefix = eventNamespace + '/' + service.id;
+
+		this.sendState = this.sendState.bind(this);
+
+		// When the service's state changes, send the new state to relay.
+		service.onStateChange(this.sendState);
 	}
 
 	on (event, localCallback) {
@@ -13,6 +18,10 @@ class ServiceApi {
 
 			localCallback.call(this, data, callback);
 		});
+	}
+
+	sendState (state) {
+		this.socket.emit(this.eventPrefix + '/state', {state});
 	}
 }
 

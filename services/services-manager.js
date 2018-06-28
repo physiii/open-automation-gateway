@@ -3,12 +3,16 @@ const Service = require('./service.js'),
 	GatewayApi = require('./api/gateway-api.js'),
 	CameraService = require('./camera-service.js'),
 	CameraApi = require('./api/camera-api.js'),
-	LockService = require('./lock-service.js'),
-	LockApi = require('./api/lock-api.js'),
 	ThermostatService = require ('./thermostat-service.js'),
 	ThermostatApi = require('./api/thermostat-api.js'),
 	ThermostatWifiDriver = require ('./drivers/thermostat-wifi.js'),
-	ZwaveLockDriver = require('./drivers/lock-zwave.js');
+	LockService = require('./lock-service.js'),
+	LockApi = require('./api/lock-api.js'),
+	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
+	LightService = require('./light-service.js'),
+	LightApi = require('./api/light-api.js'),
+	LightHueDriver = require('./drivers/light-hue.js'),
+	HueBridgeService = require('./hue-bridge-service.js');
 
 class ServicesManager {
 	constructor (services = [], device) {
@@ -29,6 +33,9 @@ class ServicesManager {
 			case 'gateway':
 				service = new GatewayService(data);
 				break;
+			case 'hue_bridge':
+				service = new HueBridgeService(data);
+				break;
 			case 'camera':
 				service = new CameraService(data);
 				break;
@@ -37,6 +44,9 @@ class ServicesManager {
 				break;
 			case 'thermostat':
 				service = new ThermostatService(data, ThermostatWifiDriver);
+				break;
+			case 'light':
+				service = new LightService(data, LightHueDriver);
 				break;
 			default:
 				service = new Service(data);
@@ -70,6 +80,9 @@ class ServicesManager {
 				case 'thermostat':
 					new ThermostatApi(socket, service);
 					break;
+				case 'light':
+					new LightApi(socket, service);
+					break;
 			}
 		});
 	}
@@ -80,6 +93,10 @@ class ServicesManager {
 
 	getDbSerializedServices () {
 		return this.services.map((service) => service.dbSerialize());
+	}
+
+	getRelaySerializedServices () {
+		return this.services.map((service) => service.relaySerialize());
 	}
 }
 

@@ -1,9 +1,9 @@
 const database = require('../database.js'),
-	Device = require('./device.js');
+	TAG = '[DevicesManager]';
 
-class Devices {
+class DevicesManager {
 	constructor () {
-		this.devices = [];
+		this.devices = new Map();
 	}
 
 	addDevice (data) {
@@ -13,21 +13,79 @@ class Devices {
 			return device;
 		}
 
+		if (!this.areDeviceDependenciesMet(data)) {
+			return false;
+		}
+
 		device = new Device(data);
-		this.devices.push(device);
-		database.store_device(device);
+		this.devices.set(device.id, device);
 
 		return device;
 	}
 
+	createDevice (data) {
+		return new Promise((resolve, reject) => {
+			const device = this.addDevice(data);
+
+			database.store_device(device).then(() => {
+				resolve(device);
+			}).catch(reject);
+		});
+	}
+
 	getDeviceById (deviceId) {
-		return this.devices.find((device) => device.id === deviceId);
+		return this.devices.get(deviceId);
+	}
+
+	getDeviceByServiceId (serviceId) {
+		return Array.from(this.devices.values()).find((device) => device.services.getServiceById(serviceId));
+	}
+
+	getServiceById (serviceId) {
+		const device = this.getDeviceByServiceId(serviceId);
+
+		if (!device) {
+			return;
+		}
+
+		return device.services.getServiceById(serviceId);
 	}
 
 	loadDevicesFromDb () {
 		return new Promise((resolve, reject) => {
-			database.get_devices().then((devices) => {
-				this.devices = devices.map((device) => new Device(device));
+			database.get_devices().then((dbDevices) => {
+				const dependenciesFailCounters = new Map(),
+					// If a device's dependencies haven't been met after this
+					// many attempts, it fails. This is also effectively the
+					// dependency tree depth limit.
+					DEPENDENCY_CHECK_MAX = 15;
+
+				this.devices.clear();
+
+				while (dbDevices.length > 0) {
+					// Get next device in the list.
+					let dbDevice = dbDevices.shift(),
+						device = this.addDevice(dbDevice);
+
+					// Device's dependencies are not met.
+					if (!device) {
+						let failCount = (dependenciesFailCounters.get(dbDevice.id) || 0) + 1;
+
+						// Increment this device's dependencies check fail count.
+						dependenciesFailCounters.set(dbDevice.id, failCount);
+
+						// Add the device back to the end of the devices array.
+						if (failCount < DEPENDENCY_CHECK_MAX) {
+							dbDevices.push(dbDevice);
+						} else {
+							console.error(TAG, 'Device\'s dependencies were not satisfied after ' + failCount + ' attempts. Device was not loaded (' + dbDevice.id + ').');
+						}
+
+						// Move on to the next device in the array.
+						continue;
+					}
+				}
+
 				resolve(this.devices);
 			}).catch((error) => {
 				reject(error);
@@ -35,9 +93,30 @@ class Devices {
 		});
 	}
 
+	areDeviceDependenciesMet (device) {
+		let met = true;
+
+		if (device.dependencies && device.dependencies.forEach) {
+			device.dependencies.forEach((dependency) => {
+				if (dependency.service_id && !this.getServiceById(dependency.service_id)) {
+					met = false;
+				}
+			});
+		}
+
+		return met;
+	}
+
 	getDbSerializedDevices () {
-		return this.devices.map((device) => device.dbSerialize());
+		return Array.from(this.devices.values()).map((device) => device.dbSerialize());
 	}
 }
 
-module.exports = new Devices();
+module.exports = new DevicesManager();
+
+// The Device class needs to be required after exporting the DevicesManager
+// singleton so that devices and services can require DevicesManager.
+// Otherwise, the circular dependency will cause an empty object to be returned
+// when they require DevicesManager.
+
+const Device = require('./device.js');
