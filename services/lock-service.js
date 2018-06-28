@@ -51,6 +51,10 @@ class LockService extends Service {
 		this.driver.unlock();
 	}
 
+	setRelockDelay (delay) {
+		return this.settings.relock_delay = delay;
+	}
+
 	setLockedState (isLocked) {
 		if (!this.locked && isLocked) { // If changed from unlocked to locked.
 			this.onLock();

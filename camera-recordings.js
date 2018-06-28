@@ -23,6 +23,17 @@ class CameraRecordings {
 		});
 	}
 
+	getLastRecordingDate (cameraId) {
+		return new Promise((resolve, reject) => {
+			database.get_camera_recordings(cameraId).then((recordings) => {
+				resolve(recordings.pop().date);
+			}).catch((error) => {
+				console.error(TAG, error);
+				reject(error);
+			});
+		});
+	}
+
 	getRecordingById (recordingId) {
 		return new Promise((resolve, reject) => {
 			database.get_camera_recording(recordingId).then(resolve).catch((error) => {
