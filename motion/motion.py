@@ -25,6 +25,17 @@ from pprint import pprint
 from bson.objectid import ObjectId
 
 ##################################################################################################################
+# Parse arguments
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
+ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
+args = vars(ap.parse_args())
+
+camera_path = args['camera']
+camera_id = args['camera-id']
+
+##################################################################################################################
 # Definitions and Classes
 
 def percentage(percent, wholeNum):
@@ -40,31 +51,32 @@ def percentage(percent, wholeNum):
 def getCameraNumber(camera):
   return camera.replace('/dev/video', '')
 
-def getCameraFolderName(camera):
-  return camera[-1:]
-
 def createFolderIfNotExists(path):
   if not os.path.exists(path):
     os.mkdir(path)
   return path
 
-def getBasePath():
-  return createFolderIfNotExists('/usr/local/lib/gateway')
+def getCameraFolderName():
+  return camera_id
 
 def getEventsPath():
-  return createFolderIfNotExists(getBasePath() + '/events')
+  basePath = createFolderIfNotExists('/usr/local/lib/gateway')
+
+  return createFolderIfNotExists(basePath + '/events')
 
 def getTempPath():
-  return createFolderIfNotExists(getBasePath() + '/temp')
+  tempBasePath = createFolderIfNotExists('/tmp/open-automation-gateway')
 
-def getCameraPath(camera):
-  return createFolderIfNotExists(getEventsPath() + '/' + getCameraFolderName(camera))
+  return createFolderIfNotExists(tempBasePath + '/events')
 
-def getCameraTempPath(camera):
-  return createFolderIfNotExists(getTempPath() + '/' + getCameraFolderName(camera))
+def getCameraPath():
+  return createFolderIfNotExists(getEventsPath() + '/' + getCameraFolderName())
 
-def getDatePath(camera, date):
-  cameraPath = getCameraPath(camera)
+def getCameraTempPath():
+  return createFolderIfNotExists(getTempPath() + '/' + getCameraFolderName())
+
+def getDatePath(date):
+  cameraPath = getCameraPath()
   yearPath = createFolderIfNotExists(cameraPath + '/' + date.strftime('%Y'))
   monthPath = createFolderIfNotExists(yearPath + '/' + date.strftime('%m'))
   datePath = createFolderIfNotExists(monthPath + '/' +  date.strftime('%d'))
@@ -109,17 +121,6 @@ def saveRecording(data):
 
   print('[NEW RECORDING] Recording saved.')
   sys.stdout.flush()
-
-##################################################################################################################
-# Parse arguments
-
-ap = argparse.ArgumentParser()
-ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
-ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
-args = vars(ap.parse_args())
-
-camera_path = args['camera']
-camera_id = args['camera-id']
 
 ##################################################################################################################
 # Start MongoDB
@@ -224,13 +225,13 @@ for needCatchUpFrame in framerateInterval(framerate):
         print('[MOTION] Detected motion.')
 
         # save a preview image
-        cv2.imwrite(getCameraPath(camera_path) + '/preview.jpg', frame)
+        cv2.imwrite(getCameraPath() + '/preview.jpg', frame)
 
         fileFramesLength = 0
         fileTimestamp = frameTimestamp
         fileName = getFileName(fileTimestamp)
-        tempRecordingPath = getCameraTempPath(camera_path) + '/' + fileName
-        finishedRecordingPath = getDatePath(camera_path, fileTimestamp) + '/' + fileName
+        tempRecordingPath = getCameraTempPath() + '/' + fileName
+        finishedRecordingPath = getDatePath(fileTimestamp) + '/' + fileName
 
         kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'PIM1'), framerate)
 

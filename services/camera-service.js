@@ -43,10 +43,17 @@ class CameraService extends Service {
 
 	getPreviewImage () {
 		return new Promise((resolve, reject) => {
+			const handleError = () => {
+				// Preview image wasn't found.
+				this.state.preview_image = false;
+
+				resolve(false);
+			}
+
 			try {
-				fs.readFile('/usr/local/lib/gateway/events/' + this.getCameraNumber() + '/preview.jpg', (error, file) => {
+				fs.readFile('/usr/local/lib/gateway/events/' + this.id + '/preview.jpg', (error, file) => {
 					if (error) {
-						reject(error);
+						handleError(error);
 						return;
 					}
 
@@ -57,7 +64,7 @@ class CameraService extends Service {
 					resolve(image);
 				});
 			} catch (error) {
-				reject(error);
+				handleError(error);
 			}
 		});
 	}

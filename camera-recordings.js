@@ -26,7 +26,9 @@ class CameraRecordings {
 	getLastRecordingDate (cameraId) {
 		return new Promise((resolve, reject) => {
 			database.get_camera_recordings(cameraId).then((recordings) => {
-				resolve(recordings.pop().date);
+				const latest_recording = recordings.pop();
+
+				resolve(latest_recording ? latest_recording.date : false);
 			}).catch((error) => {
 				console.error(TAG, error);
 				reject(error);
