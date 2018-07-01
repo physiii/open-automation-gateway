@@ -76,7 +76,15 @@ make && sudo make install
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,11,12,13,14
 
+
+
 ## ffmpeg
+# binaries
+cd /usr/local/src/gateway/build/ffmpeg
+sudo cp ffmpeg /usr/local/bin/ffmpeg
+sudo cp libcrypto.so.1.1 libssl.so.1.1 /usr/lib/
+
+# from source
 cd /usr/local/src
 git clone git://git.videolan.org/x264
 cd x264
