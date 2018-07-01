@@ -55,7 +55,8 @@ cp -rf build/opencv/share/* /usr/share/
 cp -rf build/opencv/arm-linux-gnueabihf/* /usr/lib/arm-linux-gnueabihf/
 
 ## make and install openzwave
-cd /usr/src
+sudo chown -R $USER /usr/local/src
+cd /usr/local/src
 wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
 tar zxvf openzwave-1.4.1.tar.gz
 cd openzwave-1.4.1
@@ -75,7 +76,8 @@ sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,11,12,13,14
 
 ## ffmpeg
-cd /usr/src
+sudo chown -R $USER /usr/local/src
+cd /usr/local/src
 git clone git://git.videolan.org/x264
 cd x264
 ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
