@@ -91,7 +91,9 @@ make -j4
 sudo make install
 
 ## install open-automation
-cd ~
+cd /usr/local/src/
 git clone https://github.com/physiii/open-automation-gateway gateway
+ln -s /usr/local/src/gateway ~/gateway
 cd gateway
 npm install
+
