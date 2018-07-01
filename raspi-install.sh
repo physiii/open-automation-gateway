@@ -14,8 +14,9 @@ sudo apt upgrade -y
 sudo apt-get install -y --force-yes \
   cmake sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   v4l2loopback-dkms v4l2loopback-utils cmake libasound2-dev python-pexpect python-dbus \
-  python-setuptools python-dev build-essential libopencv-dev python-opencv raspberrypi-kernel-headers \
-  
+  python-setuptools python-dev build-essential libopencv-dev raspberrypi-kernel-headers \
+  # python-opencv \
+
 # sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
