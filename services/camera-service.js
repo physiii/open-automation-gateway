@@ -8,8 +8,8 @@ const spawn = require('child_process').spawn,
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
-	ONE_SECOND = 1000,
-	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND,
+	ONE_SECOND_IN_MILLISECONDS = 1000,
+	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
@@ -23,6 +23,7 @@ class CameraService extends Service {
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
 		this.settings.rotation = data.settings && data.settings.rotation || 0;
+		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
 
 		CameraRecordings.getLastRecordingDate(this.id).then((date) => {
 			this.state.last_recording_date = date;
@@ -30,7 +31,10 @@ class CameraService extends Service {
 
 		this.getPreviewImage();
 		this.setUpLoopback();
-		this.startMotionDetection();
+
+		if (this.settings.should_detect_motion) {
+			this.startMotionDetection();
+		}
 	}
 
 	getCameraNumber () {
@@ -45,7 +49,7 @@ class CameraService extends Service {
 		return new Promise((resolve, reject) => {
 			const handleError = () => {
 				// Preview image wasn't found.
-				this.state.preview_image = false;
+				this.state.preview_image = null;
 
 				resolve(false);
 			}

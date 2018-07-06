@@ -28,7 +28,7 @@ class CameraRecordings {
 			database.get_camera_recordings(cameraId).then((recordings) => {
 				const latest_recording = recordings.pop();
 
-				resolve(latest_recording ? latest_recording.date : false);
+				resolve(latest_recording ? latest_recording.date : null);
 			}).catch((error) => {
 				console.error(TAG, error);
 				reject(error);

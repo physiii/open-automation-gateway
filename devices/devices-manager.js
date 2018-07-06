@@ -1,4 +1,9 @@
 const database = require('../database.js'),
+	utils = require('../utils.js'),
+	// If a device's dependencies haven't been met after this many attempts to
+	// create the device, it fails. This is also effectively the dependency
+	// tree depth limit.
+	DEPENDENCY_CHECK_MAX = 15,
 	TAG = '[DevicesManager]';
 
 class DevicesManager {
@@ -27,10 +32,18 @@ class DevicesManager {
 		return new Promise((resolve, reject) => {
 			const device = this.addDevice(data);
 
-			database.store_device(device).then(() => {
+			if (!device) {
+				reject();
+			}
+
+			device.save().then(() => {
 				resolve(device);
 			}).catch(reject);
 		});
+	}
+
+	getDevices () {
+		return Array.from(this.devices.values());
 	}
 
 	getDeviceById (deviceId) {
@@ -51,14 +64,20 @@ class DevicesManager {
 		return device.services.getServiceById(serviceId);
 	}
 
+	getDevicesByServiceType (serviceType) {
+		return Array.from(this.devices.values()).filter((device) => device.services.hasServiceWithType(serviceType));
+	}
+
+	getServicesByType (serviceType) {
+		return utils.flattenArray(this.getDevicesByServiceType(serviceType).map((device) => {
+			return device.services.getServicesByType(serviceType);
+		}));
+	}
+
 	loadDevicesFromDb () {
 		return new Promise((resolve, reject) => {
 			database.get_devices().then((dbDevices) => {
-				const dependenciesFailCounters = new Map(),
-					// If a device's dependencies haven't been met after this
-					// many attempts, it fails. This is also effectively the
-					// dependency tree depth limit.
-					DEPENDENCY_CHECK_MAX = 15;
+				const dependenciesFailCounters = new Map();
 
 				this.devices.clear();
 
@@ -109,6 +128,10 @@ class DevicesManager {
 
 	getDbSerializedDevices () {
 		return Array.from(this.devices.values()).map((device) => device.dbSerialize());
+	}
+
+	getRelaySerializedDevices () {
+		return Array.from(this.devices.values()).map((device) => device.relaySerialize());
 	}
 }
 
