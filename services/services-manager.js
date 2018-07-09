@@ -91,6 +91,18 @@ class ServicesManager {
 		return this.services.find((service) => service.id === serviceId);
 	}
 
+	hasServiceWithType (serviceType) {
+		return Boolean(this.services.find((service) => service.type === serviceType));
+	}
+
+	getServicesByType (serviceType) {
+		return this.services.filter((service) => service.type === serviceType);
+	}
+
+	getSerializedServices () {
+		return this.services.map((service) => service.serialize());
+	}
+
 	getDbSerializedServices () {
 		return this.services.map((service) => service.dbSerialize());
 	}

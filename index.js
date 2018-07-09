@@ -12,18 +12,14 @@ const TAG = '[index.js]',
 const fs = require('fs');
 
 let config = {
-  relay_server: '127.0.0.1',
+  relay_server: 'localhost',
   relay_port: 5000
 };
 
 try {
   config = require('./config.json');
 } catch (e) {
-  let config_str = JSON.stringify(config).replace(',', '\,\n  ');
-
-  config_str = config_str.replace('{', '{\n  ').replace('}', '\n}');
-
-  fs.writeFile(__dirname + '/config.json', config_str, (error) => {
+  fs.writeFile(__dirname + '/config.json', JSON.stringify(config, null, '  '), (error) => {
     if (error) {
       throw error;
     }
@@ -50,14 +46,20 @@ database.get_settings().then((settings) => {
 
     // If the default device has not been created yet, create it.
     if (!main_device) {
-      main_device = devices.createDevice({
-          services:[
-            {type: 'gateway'}
-          ]
-      });
+      devices.createDevice({
+        services: [
+          {type: 'gateway'}
+        ]
+      }).then((new_main_device) => {
+        database.store_settings({
+          ...settings,
+          main_device_id: new_main_device.id
+        });
 
-      settings.main_device_id = main_device.id;
-      database.store_settings(settings);
+        console.log('Gateway ID:', new_main_device.id);
+      });
+    } else {
+      console.log('Gateway ID:', main_device.id);
     }
   });
 });
@@ -99,7 +101,9 @@ function main_loop () {
   //   if (ap_time > 10 * 60 * 1000) {
   //     console.log('Trying wifi again...');
 
-  //     set_wifi_from_db();
+  //     database.get_settings().then((db_settings) => {
+  //       connection.set_wifi(db_settings);
+  //     });
   //     exec('sudo reboot');
   //   }
   // }

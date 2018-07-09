@@ -10,9 +10,8 @@ class GatewayApi extends ServiceApi {
 	}
 
 	listen () {
-		this.on('device/add', (data, callback) => {
-			const device = this.gateway.addDevice(data);
-			callback(null, device.relaySerialize());
+		this.on('devices/get', (data, callback) => {
+			callback(null, {devices: this.gateway.getDevices().map((device) => device.relaySerialize())});
 		});
 
 		this.on('command', (data, callback) => {

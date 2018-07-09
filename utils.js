@@ -11,6 +11,7 @@ module.exports = {
 	checkIfProcessIsRunning,
 	removeOldCameraRecordings,
 	onChange,
+	flattenArray,
 	update
 };
 
@@ -120,6 +121,10 @@ function onChange (object, onChange) {
 	};
 
 	return new Proxy(object, handler);
+}
+
+function flattenArray (array_to_flatten) {
+	return [].concat(...array_to_flatten);
 }
 
 function update () {
