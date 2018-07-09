@@ -29,6 +29,11 @@ sudo npm install -g pm2
 #CONF_SWAPSIZE=1024
 #sudo /etc/init.d/dphys-swapfile stop
 #sudo /etc/init.d/dphys-swapfile start
+
+sudo apt-get install -y --force-yes \
+  libudev-dev cmake python-dbus python-setuptools python-dev build-essential \
+  libopencv-dev raspberrypi-kernel-headers python-opencv \
+  
 cd ~
 wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
 unzip opencv.zip
@@ -75,8 +80,6 @@ make && sudo make install
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,11,12,13,14
 
-
-
 ## ffmpeg
 # binaries
 cd /usr/local/src/gateway/build/ffmpeg
@@ -98,6 +101,8 @@ make -j4
 sudo make install
 
 ## install open-automation
+sudo chmod 777 -R /usr/local/lib
+sudo chmod 777 -R /usr/local/src
 cd /usr/local/src/
 git clone https://github.com/physiii/open-automation-gateway gateway
 ln -s /usr/local/src/gateway ~/gateway
