@@ -1,9 +1,8 @@
 #!/bin/sh -e
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
-
-## set up environment
-
 #sudo rpi-update
+
+sudo apt update
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
@@ -108,4 +107,3 @@ git clone https://github.com/physiii/open-automation-gateway gateway
 ln -s /usr/local/src/gateway ~/gateway
 cd gateway
 npm install
-
