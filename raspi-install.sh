@@ -71,13 +71,14 @@ sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
 sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 
 ## v4l2loopback
+sudo ln -s /lib/modules/4.14.52-v7+ /lib/modules/4.14.50-v7+
 sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
 make && sudo make install
 sudo depmod -a
-sudo modprobe v4l2loopback video_nr=10,11,12,13,14
+sudo modprobe v4l2loopback video_nr=10,20
 
 ## ffmpeg
 # binaries
