@@ -108,7 +108,8 @@ class CameraService extends Service {
 				const motionProcess = spawn('python', [
 					motionScriptPath,
 					'--camera', this.getLoopbackDevicePath(),
-					'--camera-id', this.id
+					'--camera-id', this.id,
+					'--rotation', this.settings.rotation || 0
 				]);
 
 				// Listen for motion events.

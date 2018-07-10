@@ -42,10 +42,12 @@ MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before 
 ap = argparse.ArgumentParser()
 ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
 ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
+ap.add_argument('-r', '--rotation', dest='rotation', type=int, required=False, default=0, help='degrees of rotation for the picture - supported values: 0, 180')
 args = vars(ap.parse_args())
 
 cameraPath = args['camera']
 cameraId = args['camera-id']
+cameraRotation = args['rotation']
 
 ##################################################################################################################
 # Definitions and Classes
@@ -197,7 +199,11 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   if frame is None:
     continue
 
-  #resize the frame, convert it to grayscale, and blur it
+  # rotate the frame
+  if cameraRotation is 180:
+    frame = imutils.rotate(frame, cameraRotation);
+
+  # resize the frame, convert it to grayscale, and blur it
   gray = cv2.cvtColor(imutils.resize(frame, width=600), cv2.COLOR_BGR2GRAY)
   gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
