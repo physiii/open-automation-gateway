@@ -92,10 +92,14 @@ function check_connection() {
 }
 
 function scan_wifi() {
-  //console.log("scanning wifi...");
-  exec("iwlist wlan0 scan | grep 'ESSID'", (error, stdout, stderr) => {
+  console.log("scanning wifi...");
+  //let command = "ls";
+  //let command = "sudo iwlist wlx7c8bca050268 scan | grep 'ESSID'";
+  let command = "iwlist wlan0 scan | grep 'ESSID'";
+  exec(command, (error, stdout, stderr) => {
+
     if (error) {
-      //console.error(`exec error: ${error}`);
+      console.error(`exec error: ${error}`);
       return;
     }
     router_array = stdout.split('\n');
@@ -108,7 +112,7 @@ function scan_wifi() {
       router_list.push({ssid:router_ssid});
     }
     return router_list;
-    //console.log("router_array | " + settings_obj.router_list);
+    console.log("router_array | " + settings_obj.router_list);
   });
 }
 
@@ -154,4 +158,3 @@ function set_wifi(data) {
     });
   console.log("set_wifi");
 }
-

@@ -6,6 +6,7 @@
     '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
   ];
 
+
   // Initialize variables
   var $window = $(window);
   var $routerName = $('#ap_name');
