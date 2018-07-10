@@ -5,6 +5,7 @@ const spawn = require('child_process').spawn,
 	fs = require('fs'),
 	utils = require('../utils.js'),
 	Service = require('./service.js'),
+	config = require('../config.json'),
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
@@ -22,7 +23,7 @@ class CameraService extends Service {
 		// Settings
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
-		this.settings.rotation = data.settings && data.settings.rotation || 0;
+		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
 
 		CameraRecordings.getLastRecordingDate(this.id).then((date) => {

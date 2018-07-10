@@ -5,7 +5,7 @@ const spawn = require('child_process').spawn,
 	defaultStreamPort = 5054,
 	defaultWidth = 640,
 	defaultHeight = 480,
-	defaultRotation = 0,
+	defaultRotation = config.rotation || 0,
 	TAG = '[VideoStreamer]';
 
 class VideoStreamer {
