@@ -20,6 +20,8 @@ module.exports = {
   get_local_ip: get_local_ip,
   get_public_ip: get_public_ip,
   check_connection: check_connection,
+  check_connection_loop: check_connection_loop,
+  check_ap_mode: check_ap_mode,
   scan_wifi: scan_wifi,
   set_wifi: set_wifi
 }
@@ -61,6 +63,23 @@ function get_public_ip() {
   });
 }
 
+check_ap_mode();
+function  check_ap_mode() {
+  exec("grep /etc/dhcpcd.conf -e '192.168.4.1'", (error, stdout, stderr) => {
+    if (stdout.length > 1) {
+      console.log("device is in access point mode");
+      ap_mode = true; 
+    } else ap_mode = false;
+  });
+}
+
+check_connection_loop();
+function check_connection_loop() {
+  setTimeout(function () {
+    check_connection();
+    check_connection_loop();
+  }, 20*1000);
+}
 
 function check_connection() {
   host = "8.8.8.8";
@@ -70,7 +89,8 @@ function check_connection() {
       bad_connection++;
       console.log('bad_connection',bad_connection);
       if (!ap_mode && bad_connection > 1) {
-	//start_ap()
+        console.log("no connection, starting access point");
+	start_ap()
         /*var interfaces_file = "allow-hotplug wlan0\n"
                    + "iface wlan0 inet static\n"
     		   + "address 172.24.1.1\n"
@@ -82,9 +102,10 @@ function check_connection() {
           console.log("Interface file saved, starting AP");
           exec("sudo ifdown wlan0 && sudo ifup wlan0 && sudo service dnsmasq restart && sudo hostapd /etc/hostapd/hostapd.conf");
           ap_mode = true;
+
           ap_time_start = Date.now();
         });*/
-        bad_connection = 0;
+        //bad_connection = 0;
       }
     }
     if (msg == 'alive') {
