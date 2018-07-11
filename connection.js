@@ -10,17 +10,18 @@ var ping = require ("ping");
 var router_array = [];
 var router_list = [];
 var ap_mode = false;
-scan_wifi();
 var bad_connection = 0;
 //var local_ip = "init";
 //var public_ip = "init";
 var TAG = "[connection.js]";
 
 module.exports = {
+  start_ap: start_ap,
   get_local_ip: get_local_ip,
   get_public_ip: get_public_ip,
   check_connection: check_connection,
-  scan_wifi: scan_wifi
+  scan_wifi: scan_wifi,
+  set_wifi: set_wifi
 }
 
 get_local_ip();
@@ -95,11 +96,13 @@ function scan_wifi() {
   console.log("scanning wifi...");
   //let command = "ls";
   //let command = "sudo iwlist wlx7c8bca050268 scan | grep 'ESSID'";
-  let command = "iwlist wlan0 scan | grep 'ESSID'";
+  let command = "sudo iwlist wlan0 scan | grep 'ESSID'";
+  return new Promise(function(resolve, reject) {
   exec(command, (error, stdout, stderr) => {
 
     if (error) {
-      console.error(`exec error: ${error}`);
+      reject(error);
+      //console.error(`exec error: ${error}`);
       return;
     }
     router_array = stdout.split('\n');
@@ -111,21 +114,45 @@ function scan_wifi() {
     			             .replace("\"","");
       router_list.push({ssid:router_ssid});
     }
-    return router_list;
-    console.log("router_array | " + settings_obj.router_list);
+    //console.log("router_array | " + JSON.stringify(router_list));
+    resolve(router_list);
+
   });
+  })
+}
+
+function start_ap() {
+  console.log("starting access point...");
+  let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
+  let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
+  let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
+  let rc_local_ap_path = __dirname + "/files/rc.local.ap";
+  let interfaces_ap_path = __dirname + "/files/interfaces.ap";
+
+  //let command = "cat "+rc_local_cl_path;
+  //exec(command, (error, stdout, stderr) => {console.log(stdout)});
+  console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
+  //exec("sudo cp "+hostapd_ap_path+" /etc/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
+
 }
 
 function set_wifi(data) {
+    console.log("set_wifi",data);
 
     var wpa_supplicant = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n"
                        + "update_config=1\n"
 		       + "country=GB\n"
                        + "network={\n"
-		       + "ssid=\""+data.router_name+"\"\n"
-		       + "psk=\""+data.router_password+"\"\n"
+		       + "ssid=\""+data.ap_name+"\"\n"
+		       + "psk=\""+data.ap_password+"\"\n"
 		       + "key_mgmt=WPA-PSK\n"
 		       + "}\n";
+
     var interfaces_file = "source-directory /etc/network/interfaces.d\n"
 			+ "auto lo\n"
 			+ "iface lo inet loopback\n"
@@ -142,7 +169,24 @@ function set_wifi(data) {
         if(err) {
           return console.log(err);
         }
-        exec("sudo /bin/sh -c 'if ! [ \"$(ping -c 1 8.8.8.8)\" ]; then echo \"resetting wlan0\" && sudo ifdown wlan0 && sudo ifup wlan0; else echo \"connection is good\"; fi'", (error, stdout, stderr) => {
+
+	let dhcpcd_cl_path = __dirname + "/files/dhcpcd.conf.cl";
+	let hostapd_cl_path = __dirname + "/files/hostapd.conf.cl";
+	let hostapd_default_cl_path = __dirname + "/files/hostapd.cl";
+	let rc_local_cl_path = __dirname + "/files/rc.local.cl";
+	let interfaces_cl_path = __dirname + "/files/rc.local.cl";
+
+	//let command = "cat "+rc_local_cl_path;
+        //exec(command, (error, stdout, stderr) => {console.log(stdout)});
+
+	console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
+        exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+        exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+        exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+        exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
+        exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
+
+        /*exec("sudo /bin/sh -c 'if ! [ \"$(ping -c 1 8.8.8.8)\" ]; then echo \"resetting wlan0\" && sudo ifdown wlan0 && sudo ifup wlan0; else echo \"connection is good\"; fi'", (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
             return;
@@ -153,7 +197,7 @@ function set_wifi(data) {
           setTimeout(function () {
             //check_connection();
           }, 30*1000);
-        });
+        });*/
       });
     });
   console.log("set_wifi");

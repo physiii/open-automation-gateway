@@ -33,6 +33,7 @@ const utils = require('./utils'),
   database = require('./database'),
   devices = require('./devices/devices-manager.js'),
   diskUsage = require('diskusage');
+  admin = require('./admin/basic/index.js');
 
 if (config.zwave) {
   zwave = require('./zwave.js');
