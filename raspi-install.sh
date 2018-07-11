@@ -103,6 +103,8 @@ sudo make install
 ## install open-automation
 sudo chmod 777 -R /usr/local/lib
 sudo chmod 777 -R /usr/local/src
+sudo chmod 777 /etc/wpa_supplicant/wpa_supplicant.conf
+
 cd /usr/local/src/
 git clone https://github.com/physiii/open-automation-gateway gateway
 ln -s /usr/local/src/gateway ~/gateway
