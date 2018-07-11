@@ -7,7 +7,8 @@
 # file and hostapd will be started during system boot. An example configuration
 # file can be found at /usr/share/doc/hostapd/examples/hostapd.conf.gz
 #
-#DAEMON_CONF=""
+
+#DAEMON_CONF="/etc/hostapd/hostapd.conf"
 
 # Additional daemon options to be appended to hostapd command:-
 # 	-d   show more debug messages (-dd for even more)
@@ -16,6 +17,5 @@
 #
 # Note that -B (daemon mode) and -P (pidfile) options are automatically
 # configured by the init.d script and must not be added to DAEMON_OPTS.
+#
 #DAEMON_OPTS=""
-
-#DAEMON_CONF="/etc/hostapd/hostapd.conf"

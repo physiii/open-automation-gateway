@@ -123,19 +123,22 @@ function scan_wifi() {
 
 function start_ap() {
   console.log("starting access point...");
+
   let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
   let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
   let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
   let rc_local_ap_path = __dirname + "/files/rc.local.ap";
   let interfaces_ap_path = __dirname + "/files/interfaces.ap";
+  let sysctl_ap_path = __dirname + "/files/interfaces.ap";
 
   //let command = "cat "+rc_local_cl_path;
   //exec(command, (error, stdout, stderr) => {console.log(stdout)});
   //console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
   //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+hostapd_ap_path+" /etc/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
   exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
 
