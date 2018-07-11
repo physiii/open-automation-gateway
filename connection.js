@@ -70,7 +70,8 @@ function check_connection() {
       bad_connection++;
       console.log('bad_connection',bad_connection);
       if (!ap_mode && bad_connection > 1) {
-        var interfaces_file = "allow-hotplug wlan0\n"
+	//start_ap()
+        /*var interfaces_file = "allow-hotplug wlan0\n"
                    + "iface wlan0 inet static\n"
     		   + "address 172.24.1.1\n"
     		   + "netmask 255.255.255.0\n"
@@ -82,11 +83,12 @@ function check_connection() {
           exec("sudo ifdown wlan0 && sudo ifup wlan0 && sudo service dnsmasq restart && sudo hostapd /etc/hostapd/hostapd.conf");
           ap_mode = true;
           ap_time_start = Date.now();
-        });
+        });*/
         bad_connection = 0;
       }
     }
     if (msg == 'alive') {
+      console.log("connection is good!");
       bad_connection = 0;
     }
   });
