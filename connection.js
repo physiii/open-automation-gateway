@@ -131,9 +131,9 @@ function start_ap() {
 
   //let command = "cat "+rc_local_cl_path;
   //exec(command, (error, stdout, stderr) => {console.log(stdout)});
-  console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
-  //exec("sudo cp "+hostapd_ap_path+" /etc/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+  //console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
+  //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+hostapd_ap_path+" /etc/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
@@ -165,10 +165,6 @@ function set_wifi(data) {
       if(err) {
         return console.log(err);
       }
-      fs.writeFile("/etc/network/interfaces", interfaces_file, function(err) {
-        if(err) {
-          return console.log(err);
-        }
 
 	let dhcpcd_cl_path = __dirname + "/files/dhcpcd.conf.cl";
 	let hostapd_cl_path = __dirname + "/files/hostapd.conf.cl";
@@ -180,13 +176,19 @@ function set_wifi(data) {
         //exec(command, (error, stdout, stderr) => {console.log(stdout)});
 
 	console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
-        exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+        //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
         exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
         exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
         exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
         exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
 
-        /*exec("sudo /bin/sh -c 'if ! [ \"$(ping -c 1 8.8.8.8)\" ]; then echo \"resetting wlan0\" && sudo ifdown wlan0 && sudo ifup wlan0; else echo \"connection is good\"; fi'", (error, stdout, stderr) => {
+
+      /*fs.writeFile("/etc/network/interfaces", interfaces_file, function(err) {
+        if(err) {
+          return console.log(err);
+        }
+
+        exec("sudo /bin/sh -c 'if ! [ \"$(ping -c 1 8.8.8.8)\" ]; then echo \"resetting wlan0\" && sudo ifdown wlan0 && sudo ifup wlan0; else echo \"connection is good\"; fi'", (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
             return;
@@ -197,8 +199,8 @@ function set_wifi(data) {
           setTimeout(function () {
             //check_connection();
           }, 30*1000);
-        });*/
-      });
+        });
+      });*/
     });
   console.log("set_wifi");
 }

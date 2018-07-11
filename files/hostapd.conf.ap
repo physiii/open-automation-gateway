@@ -1,6 +1,5 @@
 interface=wlan0
-bridge=br0
-#driver=nl80211
+driver=nl80211
 ssid=pyfi_camera
 hw_mode=g
 channel=7
