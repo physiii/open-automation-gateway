@@ -120,7 +120,7 @@ def localDateToUtc(date):
   return date + utcOffset;
 
 def saveRecording(data):
-  db.camera_recordings.insert_one({
+  recording = {
     'id': str(uuid.uuid4()),
     'camera_id': cameraId,
     'file': data['finishedPath'],
@@ -128,12 +128,14 @@ def saveRecording(data):
     'duration': data['duration'],
     'width': data['width'],
     'height': data['height']
-  })
+  }
+  db.camera_recordings.insert_one(recording)
 
   # move the file from the temporary location
   os.rename(data['tempPath'], data['finishedPath'])
 
   print('[NEW RECORDING] Recording saved.')
+  print('[DATA] : ', recording['id'], recording['file'])
   sys.stdout.flush()
 
 ##################################################################################################################
@@ -292,7 +294,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 
     kcw.finish(saveRecording, recordingData)
 
-    # create a new KeyClipWriter. the existing one continues saving the 
+    # create a new KeyClipWriter. the existing one continues saving the
     # recording in a separate thread
     kcw = KeyClipWriter(BUFFER_SIZE)
 

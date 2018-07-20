@@ -99,6 +99,16 @@ class CameraService extends Service {
 		VideoStreamer.stop(this.id);
 	}
 
+	sendRecordingAlert (data) {
+		let results = {
+			preview_img: 'data:image/png;base64,' + this.state.preview_image,
+			timestamp: this.state.last_recording_date,
+			path: config.relay_server + ":" + config.relay_port.toString() + "/dashboard/recordings/"
+		};
+		let pathBuild = '<img src=' + results.preview_img + '/><br>'
+					+ '<a href=\"' + results.path +'\" target="_blank" style="font-size:20px;">Click here to Play Video</a>'
+	}
+
 	startMotionDetection () {
 		const METHOD_TAG = this.TAG + ' [motion]',
 			MOTION_TAG = METHOD_TAG + ' [motion.py]',
@@ -115,20 +125,24 @@ class CameraService extends Service {
 
 				// Listen for motion events.
 				motionProcess.stdout.on('data', (data) => {
-					console.log(MOTION_TAG, data.toString());
-
 					if (data && data.includes('[MOTION]')) {
+						console.log(MOTION_TAG, data.toString());
 						this.getPreviewImage();
 						this.state.last_recording_date = new Date();
 						// TODO: Tell Relay motion detected.
 						// socket.relay.emit('motion detected', data);
 					}
 					if (data && data.includes('[NO MOTION]')) {
+						console.log(MOTION_TAG, data.toString());
 						// TODO: Tell Relay motion stopped.
 						// socket.relay.emit('motion stopped', data);
 					}
 					if (data && data.includes('[NEW RECORDING]')) {
-						// TODO: Tell Relay there's a new recording.
+						console.log(MOTION_TAG, data.toString());
+					}
+					if (data && data.includes('[DATA]')) {
+						console.log(MOTION_TAG, data.toString());
+						this.sendRecordingAlert(data);
 					}
 				});
 
