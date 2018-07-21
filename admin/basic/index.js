@@ -14,12 +14,8 @@ server.listen(port, () => {
 // Routing
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Chatroom
-
-var numUsers = 0;
-
 io.on('connection', (socket) => {
-  var addedUser = false;
+
 
   var initializePromise = connection.scan_wifi();
   initializePromise.then(function(result) {
@@ -34,16 +30,4 @@ io.on('connection', (socket) => {
     connection.set_wifi(data);
   });
 
-  // when the user disconnects.. perform this
-  socket.on('disconnect', () => {
-    if (addedUser) {
-      --numUsers;
-
-      // echo globally that this client has left
-      socket.broadcast.emit('user left', {
-        username: socket.username,
-        numUsers: numUsers
-      });
-    }
-  });
 });
