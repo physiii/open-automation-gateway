@@ -9,6 +9,7 @@ const spawn = require('child_process').spawn,
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
+	moment = require('moment'),
 	ONE_SECOND_IN_MILLISECONDS = 1000,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
@@ -99,14 +100,12 @@ class CameraService extends Service {
 		VideoStreamer.stop(this.id);
 	}
 
-	sendRecordingAlert (data) {
-		let results = {
-			preview_img: 'data:image/png;base64,' + this.state.preview_image,
+	alertBuild (file_path) {
+		return results = {
+			preview_img: this.state.preview_image,
 			timestamp: this.state.last_recording_date,
-			path: config.relay_server + ":" + config.relay_port.toString() + "/dashboard/recordings/"
+			html: '<a href=\"' + file_path +'\" target="_blank" style="font-size:20px;">Click here to Play Video</a>'
 		};
-		let pathBuild = '<img src=' + results.preview_img + '/><br>'
-					+ '<a href=\"' + results.path +'\" target="_blank" style="font-size:20px;">Click here to Play Video</a>'
 	}
 
 	startMotionDetection () {
@@ -140,9 +139,11 @@ class CameraService extends Service {
 					if (data && data.includes('[NEW RECORDING]')) {
 						console.log(MOTION_TAG, data.toString());
 					}
-					if (data && data.includes('[DATA]')) {
+					if (data && data.includes('[Recording ID]')) {
 						console.log(MOTION_TAG, data.toString());
-						this.sendRecordingAlert(data);
+						let recording_id = data.toString().replace('[Recording ID]', '');
+						let file_path = config.relay_server + ":" + config.relay_port.toString() + "/dashboard/recordings/" + this.id + "/" + moment.format('YYYY/MM/DD/') + recording_id;
+						let results = this.alertBuild(file_path);
 					}
 				});
 
