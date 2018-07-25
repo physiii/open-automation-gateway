@@ -142,7 +142,12 @@ class CameraService extends Service {
 					if (data && data.includes('[Recording ID]')) {
 						console.log(MOTION_TAG, data.toString());
 						let recording_id = data.toString().replace('[Recording ID]', '');
-						let file_path = config.relay_server + ":" + config.relay_port.toString() + "/dashboard/recordings/" + this.id + moment().format('/YYYY/MM/DD/') + recording_id;
+						let file_path = config.relay_server 
+														+ ":" 
+														+ config.relay_port.toString() 
+														+ "/dashboard/recordings/" 
+														+ this.id + moment().format('/YYYY/MM/DD/') 
+														+ recording_id;
 						let results = this.alertBuild(file_path);
 					}
 				});

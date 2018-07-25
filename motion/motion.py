@@ -135,7 +135,7 @@ def saveRecording(data):
   os.rename(data['tempPath'], data['finishedPath'])
 
   print('[NEW RECORDING] Recording saved.')
-  print('[DATA] Recording ID:', recording['id'])
+  print('[Recording ID]', recording['id'])
   sys.stdout.flush()
 
 ##################################################################################################################
