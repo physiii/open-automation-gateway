@@ -6,6 +6,7 @@ const spawn = require('child_process').spawn,
 	utils = require('../utils.js'),
 	Service = require('./service.js'),
 	config = require('../config.json'),
+	CameraApi = require('./api/camera-api.js'),
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
@@ -15,8 +16,8 @@ const spawn = require('child_process').spawn,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
-	constructor (data) {
-		super(data);
+	constructor (data, relaySocket) {
+		super(data, relaySocket, CameraApi);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
@@ -27,8 +28,8 @@ class CameraService extends Service {
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
 
-		CameraRecordings.getLastRecordingDate(this.id).then((date) => {
-			this.state.last_recording_date = date;
+		CameraRecordings.getLastRecording(this.id).then((recording) => {
+			this.state.last_recording_date = recording ? recording.date : null;
 		});
 
 		this.getPreviewImage();
@@ -100,13 +101,14 @@ class CameraService extends Service {
 		VideoStreamer.stop(this.id);
 	}
 
-	alertBuild (file_path) {
-		return results = {
-			preview_img: this.state.preview_image,
-			timestamp: this.state.last_recording_date,
-			html: '<a href=\"' + file_path +'\" target="_blank" style="font-size:20px;">Click here to Play Video</a>'
-		};
-	}
+	// TODO: Build the link and notification content in the automator/notifications on relay.
+	// alertBuild (file_path) {
+	// 	return results = {
+	// 		preview_img: this.state.preview_image,
+	// 		timestamp: this.state.last_recording_date,
+	// 		html: '<a href=\"' + file_path +'\" target="_blank" style="font-size:20px;">Click here to Play Video</a>'
+	// 	};
+	// }
 
 	startMotionDetection () {
 		const METHOD_TAG = this.TAG + ' [motion]',
@@ -124,31 +126,34 @@ class CameraService extends Service {
 
 				// Listen for motion events.
 				motionProcess.stdout.on('data', (data) => {
-					if (data && data.includes('[MOTION]')) {
-						console.log(MOTION_TAG, data.toString());
+					if (!data) {
+						return;
+					}
+
+					const now = new Date();
+
+					console.log(MOTION_TAG, data.toString());
+
+					if (data.includes('[MOTION]')) {
 						this.getPreviewImage();
-						this.state.last_recording_date = new Date();
-						// TODO: Tell Relay motion detected.
-						// socket.relay.emit('motion detected', data);
-					}
-					if (data && data.includes('[NO MOTION]')) {
-						console.log(MOTION_TAG, data.toString());
-						// TODO: Tell Relay motion stopped.
-						// socket.relay.emit('motion stopped', data);
-					}
-					if (data && data.includes('[NEW RECORDING]')) {
-						console.log(MOTION_TAG, data.toString());
-					}
-					if (data && data.includes('[Recording ID]')) {
-						console.log(MOTION_TAG, data.toString());
-						let recording_id = data.toString().replace('[Recording ID]', '');
-						let file_path = config.relay_server 
-														+ ":" 
-														+ config.relay_port.toString() 
-														+ "/dashboard/recordings/" 
-														+ this.id + moment().format('/YYYY/MM/DD/') 
-														+ recording_id;
-						let results = this.alertBuild(file_path);
+						this.state.last_recording_date = now;
+
+						this.relayEmit('motion-started', {date: now.toISOString()});
+					} else if (data.includes('[NO MOTION]')) {
+						this.relayEmit('motion-stopped', {date: now.toISOString()});
+					} else if (data.includes('[NEW RECORDING]')) {
+						CameraRecordings.getLastRecording(this.id).then((recording) => {
+							this.relayEmit('motion-recorded', {recording});
+						});
+
+						// TODO: Build the link and notification content in the automator/notifications on relay.
+						// let file_path = config.relay_server
+						// 	+ ':'
+						// 	+ config.relay_port.toString()
+						// 	+ '/dashboard/recordings/'
+						// 	+ this.id + moment().format('/YYYY/MM/DD/')
+						// 	+ recording_id;
+						// let results = this.alertBuild(file_path);
 					}
 				});
 

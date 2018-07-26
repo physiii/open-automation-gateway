@@ -5,6 +5,7 @@ class ServiceApi {
 		this.socket = socket;
 		this.eventPrefix = eventNamespace + '/' + service.id;
 
+		this.emit = this.emit.bind(this);
 		this.sendState = this.sendState.bind(this);
 
 		// When the service's state changes, send the new state to relay.
@@ -20,8 +21,12 @@ class ServiceApi {
 		});
 	}
 
+	emit (event, data, callback) {
+		this.socket.emit(this.eventPrefix + '/' + event, data, callback);
+	}
+
 	sendState (state) {
-		this.socket.emit(this.eventPrefix + '/state', {state});
+		this.emit('state', {state});
 	}
 }
 

@@ -1,12 +1,13 @@
 const exec = require('child_process').exec,
 	Service = require('./service.js'),
 	config = require('../config.json'),
+	GatewayApi = require('./api/gateway-api.js'),
 	DevicesManager = require('../devices/devices-manager.js'),
 	TAG = '[GatewayService]';
 
 class GatewayService extends Service {
-	constructor (data) {
-		super(data);
+	constructor (data, relay_socket) {
+		super(data, relay_socket, GatewayApi);
 
 		this.searchForAndCreateDevices();
 	}

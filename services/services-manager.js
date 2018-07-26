@@ -1,21 +1,14 @@
 const Service = require('./service.js'),
 	GatewayService = require('./gateway-service.js'),
-	GatewayApi = require('./api/gateway-api.js'),
 	CameraService = require('./camera-service.js'),
-	CameraApi = require('./api/camera-api.js'),
-	ThermostatService = require ('./thermostat-service.js'),
-	ThermostatApi = require('./api/thermostat-api.js'),
-	ThermostatWifiDriver = require ('./drivers/thermostat-wifi.js'),
+	ThermostatService = require('./thermostat-service.js'),
 	LockService = require('./lock-service.js'),
-	LockApi = require('./api/lock-api.js'),
-	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
 	LightService = require('./light-service.js'),
-	LightApi = require('./api/light-api.js'),
-	LightHueDriver = require('./drivers/light-hue.js'),
 	HueBridgeService = require('./hue-bridge-service.js');
 
 class ServicesManager {
-	constructor (services = [], device) {
+	constructor (services = [], relay_socket, device) {
+		this.relay_socket = relay_socket;
 		this.device = device;
 		this.services = [];
 
@@ -23,7 +16,8 @@ class ServicesManager {
 	}
 
 	addService (data) {
-		let service = this.getServiceById(data.id);
+		let service = this.getServiceById(data.id),
+			service_class;
 
 		if (service) {
 			return service;
@@ -31,27 +25,29 @@ class ServicesManager {
 
 		switch (data.type) {
 			case 'gateway':
-				service = new GatewayService(data);
+				service_class = GatewayService;
 				break;
 			case 'hue_bridge':
-				service = new HueBridgeService(data);
+				service_class = HueBridgeService;
 				break;
 			case 'camera':
-				service = new CameraService(data);
+				service_class = CameraService;
 				break;
 			case 'lock':
-				service = new LockService(data, ZwaveLockDriver);
+				service_class = LockService;
 				break;
 			case 'thermostat':
-				service = new ThermostatService(data, ThermostatWifiDriver);
+				service_class = ThermostatService;
 				break;
 			case 'light':
-				service = new LightService(data, LightHueDriver);
+				service_class = LightService;
 				break;
 			default:
-				service = new Service(data);
+				service_class = Service;
 				break;
 		}
+
+		service = new service_class(data, this.relay_socket);
 
 		service.device = this.device;
 		this.services.push(service);
@@ -62,28 +58,6 @@ class ServicesManager {
 	addServices (services) {
 		services.forEach((service) => {
 			this.addService(service);
-		});
-	}
-
-	setRelaySocket (socket) {
-		this.services.forEach((service) => {
-			switch (service.type) {
-				case 'gateway':
-					new GatewayApi(socket, service);
-					break;
-				case 'camera':
-					new CameraApi(socket, service);
-					break;
-				case 'lock':
-					new LockApi(socket, service);
-					break;
-				case 'thermostat':
-					new ThermostatApi(socket, service);
-					break;
-				case 'light':
-					new LightApi(socket, service);
-					break;
-			}
 		});
 	}
 
