@@ -10,7 +10,6 @@ const spawn = require('child_process').spawn,
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
-	moment = require('moment'),
 	ONE_SECOND_IN_MILLISECONDS = 1000,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
