@@ -1,189 +1,177 @@
 //Placeholder for WiFi driver
 const request = require('request'),
-  EventEmitter = require('events'),
-  poll_delay = 5 * 1000,
-  THERMOSTAT_MODES = {
-    '0': 'off',
-    'off': 0,
-    '1': 'heat',
-    'heat': 1,
-    '2': 'cool',
-    'cool': 2,
-    '3': 'auto',
-    'auto': 3
-  },
-  FAN_MODES = {
-    '1': 'auto',
-    'auto': 1,
-    '2': 'on',
-    'on': 2
-  },
-  HOLD_MODES = {
-    '0': 'off',
-    'off': 0,
-    '1': 'on',
-    'on': 1
-  },
-  TAG = '[ThermostatWiFiDriver]';
+	EventEmitter = require('events'),
+	poll_delay = 5 * 1000,
+	THERMOSTAT_MODES = {
+		'0': 'off',
+		'1': 'heat',
+		'2': 'cool',
+		'3': 'auto',
+		'off': 0,
+		'heat': 1,
+		'cool': 2,
+		'auto': 3
+	},
+	FAN_MODES = {
+		'1': 'auto',
+		'2': 'on',
+		'auto': 1,
+		'on': 2
+	},
+	HOLD_MODES = {
+		'0': 'off',
+		'1': 'on',
+		'off': 0,
+		'on': 1
+	},
+	TAG = '[WiFiThermostatDriver]';
 
+class WiFiThermostatDriver {
+	constructor (ip) {
+		this.ip = ip;
+		this.events = new EventEmitter();
+		this.ready = false;
 
+		this.getThermostatState().then((data) => {
+			const state = JSON.parse(data);
 
-class ThermostatWiFiDriver {
-  constructor(ip){
-    this.ip = ip;
-    this.events = new EventEmitter();
-    this.ready = false;
+			this.settings = this.configureData(state);
+			this.events.emit('ready', this.settings);
+			this.ready = true;
+		});
 
-    this.getThermostatState().then((data) => {
-      const state = JSON.parse(data);
+		this.startPolling();
+	}
 
-      this.settings = this.configureData(state);
-      this.events.emit('ready', this.settings);
-      this.ready = true;
-    });
-
-    this.startPolling();
-  }
-
-  on () {
+	on () {
 		return this.events.on.apply(this.events, arguments);
 	}
 
-  startPolling () {
-    console.log(TAG, 'Begin Update polling for Thermostat...');
+	startPolling () {
+		console.log(TAG, 'Begin Update polling for Thermostat...');
 
-    setInterval((self) => {
-      self.getThermostatState().then((data) => {
-        const update = JSON.parse(data);
+		setInterval((self) => {
+			self.getThermostatState().then((data) => {
+				self.settings = self.configureData(JSON.parse(data));
+				self.events.emit('state update', self.settings)
+			}).catch((error) => {
+				console.log(TAG, 'Polling error:', error);
+			})
+		}, poll_delay, this);
+	}
 
-        self.settings = self.configureData(update);
-        self.events.emit('state update', self.settings)
-        //console.log(TAG,'Settings:', self.settings)
-      }).catch((error) => {
-        console.log(TAG, 'Polling error:', error);
-      })
-    }, poll_delay, this);
-  }
+	getThermostatState () {
+		return new Promise((resolve, reject) => {
+			request.get('http://' + this.ip + '/tstat', (error, response, data) => {
+				if (error) {
+					reject(error);
+					return;
+				}
 
-  getThermostatState () {
-    return new Promise ((resolve, reject) => {
-      request.get(
-        'http://'+this.ip+'/tstat',
-        function(error, response, data){
-          if (error){
-            reject(error);
-            return;
-          }
+				resolve(data);
+			});
+		});
+	};
 
-        resolve(data)
-      });
-    });
-  };
+	setThermostatMode (mode) {
+		let setMode = {
+			tmode: THERMOSTAT_MODES[mode]
+		};
 
-  setThermostatMode (mode) {
-    const self = this;
-    let setMode = {
-      tmode: THERMOSTAT_MODES[mode]
-    };
+		if (mode === 'heat') {
+			setMode.t_heat = this.settings.target_temp;
+		} else if (mode === 'cool') {
+			setMode.t_cool= this.settings.target_temp;
+		}
 
-    if (mode == 'heat') {
-      setMode.t_heat = this.settings.target_temp;
-    } else if (mode == 'cool') {
-      setMode.t_cool= this.settings.target_temp;
-    };
+		this.postRequest(setMode);
+		this.setHoldMode(this.settings.hold_mode);
+	}
 
-    this.postRequest(setMode);
-    this.setHoldMode(self.settings.hold_mode);
-  }
+	setTemp (temperature) {
+		let setMode = {
+				tmode: THERMOSTAT_MODES[this.settings.mode],
+				hold: HOLD_MODES[this.settings.hold_mode]
+			};
 
-  setTemp (temperature) {
-    let setMode = {
-        tmode: THERMOSTAT_MODES[this.settings.mode],
-        hold: HOLD_MODES[this.settings.hold_mode]
-      };
+		if (this.settings.mode == 'heat') {
+			setMode.t_heat = temperature;
+		} else if (this.settings.mode == 'cool') {
+			setMode.t_cool = temperature;
+		}
 
-    if (this.settings.mode == 'heat') {
-      setMode.t_heat = temperature;
-    } else if (this.settings.mode == 'cool') {
-      setMode.t_cool = temperature;
-    }
+		this.postRequest(setMode);
+	}
 
-    this.postRequest(setMode);
-  }
+	setHoldMode (mode) {
+		this.postRequest({hold: HOLD_MODES[mode]});
+	}
 
-  setHoldMode (mode) {
-    let setMode = {hold: HOLD_MODES[mode] };
-    this.postRequest(setMode);
-  }
+	setFanMode (mode) {
+		this.postRequest({fmode: FAN_MODES[mode]});
+	}
 
-  setFanMode (mode) {
-    let setMode = {fmode: FAN_MODES[mode] };
-    this.postRequest(setMode);
-  }
+	getSchedule (mode) {
+		return new Promise((resolve, reject) => {
+			request.get('http://' + this.ip + '/tstat/program/'+mode, (error, response, data) => {
+				if (error) {
+					reject(error);
+					return;
+				}
 
-  getSchedule (mode) {
-    return new Promise ((resolve, reject) => {
-      request.get(
-        'http://'+this.ip+'/tstat/program/'+mode,
-        function(error, response, data){
-          if (error){
-            reject(error);
-            return;
-          }
+				resolve(data);
+			});
+		});
+	}
 
-        resolve(data)
-      });
-    });
-  }
+	setSchedule (day, daynumber, schedule, mode) {
+		let daySet = {dayNumber: schedule};
 
-  setSchedule (day, daynumber, schedule, mode) {
-    let daySet = { dayNumber: schedule };
+		return new Promise((resolve, reject) => {
+			let dayNumber = data.dayNumber,
+				schedule = data.schedule;
 
-    return new Promise((resolve, reject) => {
-      let dayNumber = data.dayNumber,
-        schedule = data.schedule;
+			request.post({
+				headers: {'content-type' : 'application/x-www-form-urlencoded'},
+				url:     'http://' + this.ip + '/tstat/program/' + mode + '/' + day,
+				body:    JSON.stringify(daySet)
+			}, (error, response, body) => {
+				if (error) {
+					reject(error);
+					return;
+				}
 
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat/program/'+mode+'/'+ day,
-        body:    JSON.stringify(daySet)
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
+				resolve(response, body);
+			});
+		});
+	}
 
-        resolve(response, body);
-      });
-    });
-  }
+	configureData (data) {
+		return {
+			mode: THERMOSTAT_MODES[data.tmode],
+			fan_mode: FAN_MODES[data.fmode],
+			hold_mode: HOLD_MODES[data.hold],
+			current_temp: data.temp,
+			target_temp: data.t_cool || data.t_heat
+		};
+	}
 
-  configureData (data) {
-    return {
-      mode: THERMOSTAT_MODES[data.tmode],
-      fan_mode: FAN_MODES[data.fmode],
-      hold_mode: HOLD_MODES[data.hold],
-      current_temp: data.temp,
-      target_temp: data.t_cool || data.t_heat,
-    };
-  }
+	postRequest (data) {
+		return new Promise((resolve, reject) => {
+			request.post({
+				headers: {'content-type' : 'application/x-www-form-urlencoded'},
+				url:     'http://' + this.ip + '/tstat',
+				body:    JSON.stringify(data)
+			}, (error, response, body) => {
+				if (error) {
+					reject(error);
+					return;
+				}
 
-  postRequest(data) {
-    return new Promise((resolve, reject) => {
-      request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://'+this.ip+'/tstat',
-        body:    JSON.stringify(data)
-      }, function (error, response, body) {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve();
-      });
-    });
-  }
+				resolve();
+			});
+		});
+	}
 }
 
-module.exports = ThermostatWiFiDriver;
+module.exports = WiFiThermostatDriver;
