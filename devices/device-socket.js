@@ -19,6 +19,7 @@ function createDeviceSocket (deviceId, deviceToken) {
 		rejectUnauthorized: !useDev
 	});
 
+	socket.on('connect', () => console.log(TAG, deviceId, 'Device connected to relay.'));
 	socket.on('disconnect', () => console.log(TAG, deviceId, 'Device was disconnected from relay.'));
 	socket.on('reconnect_failed', () => console.log(TAG, deviceId, 'Device failed to reconnect to relay.'));
 	socket.on('connect_error', (error) => console.error(TAG, deviceId, 'Error connecting device to relay:', error.type, error.description));
