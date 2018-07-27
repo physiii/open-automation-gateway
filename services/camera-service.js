@@ -20,7 +20,7 @@ class CameraService extends Service {
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
-u
+
 		// Settings
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
@@ -140,9 +140,9 @@ u
 						this.relayEmit('motion-started', {date: now.toISOString()});
 					} else if (data.includes('[NO MOTION]')) {
 						this.relayEmit('motion-stopped', {date: now.toISOString()});
-					} else if (data.includes('[NEW RECORDING]')) {
-						CameraRecordings.getLastRecording(this.id).then((recording) => {
-							this.relayEmit('motion-recorded', {recording:recording, image:this.state.preview_image, time:this.state.last_recording_date});
+					} else if (data.includes('[NEW RECORDING]')) {						
+							CameraRecordings.getLastRecording(this.id).then((recording) => {
+								this.relayEmit('motion-recorded', {recording:recording, image:this.state.preview_image, time:this.state.last_recording_date});
 						});
 
 						// TODO: Build the link and notification content in the automator/notifications on relay.
