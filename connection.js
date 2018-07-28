@@ -88,7 +88,7 @@ function check_connection() {
     if (msg == 'dead') {
       bad_connection++;
       console.log(TAG, 'bad_connection',bad_connection);
-      if (!ap_mode && bad_connection > 1) {
+      if (!ap_mode && bad_connection > 2) {
         console.log(TAG, "no connection, starting access point");
 	start_ap()
         /*var interfaces_file = "allow-hotplug wlan0\n"
