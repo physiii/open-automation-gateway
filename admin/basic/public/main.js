@@ -2,7 +2,7 @@
 var $window = $(window);
 var $routerPassword = $('#ap_password');
 var $router_list = $("select[name='ap_list']")
-
+var $device_id = $('#device_id');
 var socket = io();
 
 // stores router and password
@@ -25,18 +25,11 @@ socket.on('router list', (data) => {
   $router_list.append( optionsAsString );
 });
 
-
-socket.on('disconnect', () => {
-  log('you have been disconnected');
+socket.on('device_id', (device_id) => {
+  console.log("device_id: ",device_id);
+  $device_id.append( device_id );
 });
 
-socket.on('reconnect', () => {
-  log('you have been reconnected');
-  if (username) {
-    socket.emit('add user', username);
-  }
-});
-
-socket.on('reconnect_error', () => {
-  log('attempt to reconnect has failed');
-});
+socket.on('disconnect', () => {});
+socket.on('reconnect', () => {});
+socket.on('reconnect_error', () => {});
