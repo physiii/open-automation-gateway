@@ -27,7 +27,7 @@ socket.on('router list', (data) => {
 
 socket.on('device_id', (device_id) => {
   console.log("device_id: ",device_id);
-  $device_id.append( device_id );
+  $device_id.html( device_id );
 });
 
 socket.on('disconnect', () => {});

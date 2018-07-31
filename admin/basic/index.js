@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
   var getDeviceIDPromise = database.getDeviceID();
   getDeviceIDPromise.then(function(device_id) {
       socket.emit('device_id',device_id);
-      console.log(device_id);
+      //console.log(device_id);
   }, function(err) {
       console.log(err);
   })

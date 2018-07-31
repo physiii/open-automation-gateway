@@ -42,7 +42,7 @@ function getDeviceID () {
 				return;
 			}
 			//module.exports.settings = settings;
-			console.log("getDeviceID ",device_id);
+			//console.log("getDeviceID ",device_id);
 			resolve(device_id);
 		});
 	});
