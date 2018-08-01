@@ -133,7 +133,7 @@ class CameraService extends Service {
 						this.relayEmit('motion-stopped', {date: now.toISOString()});
 					} else if (data.includes('[NEW RECORDING]')) {
 						CameraRecordings.getLastRecording(this.id).then((recording) => {
-							this.relayEmit('motion-recorded', {recording});
+							this.relayEmit('motion-recorded', {recording, preview_image: this.state.preview_image});
 						});
 					}
 				});
