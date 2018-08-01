@@ -11,6 +11,7 @@ module.exports = {
 	delete_camera_recording,
 	store_zwave_node,
 	get_zwave_nodes,
+	getDeviceID,
 	settings
 };
 
@@ -26,6 +27,23 @@ function connect (callback) {
 			}
 
 			callback(db, resolve, reject);
+		});
+	});
+}
+
+function getDeviceID () {
+	return connect((db, resolve, reject) => {
+		db.collection('settings').find().toArray((error, result) => {
+			db.close();
+			device_id = result[0].main_device_id;
+			if (error) {
+				console.error(TAG, 'getDeviceID', error);
+				reject('Database error');
+				return;
+			}
+			//module.exports.settings = settings;
+			//console.log("getDeviceID ",device_id);
+			resolve(device_id);
 		});
 	});
 }

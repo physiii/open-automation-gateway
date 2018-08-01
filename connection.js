@@ -67,7 +67,7 @@ check_ap_mode();
 function  check_ap_mode() {
   exec("grep /etc/dhcpcd.conf -e '192.168.4.1'", (error, stdout, stderr) => {
     if (stdout.length > 1) {
-      console.log("device is in access point mode");
+      console.log(TAG, "device is in access point mode");
       ap_mode = true; 
     } else ap_mode = false;
   });
@@ -87,9 +87,9 @@ function check_connection() {
     var msg = isAlive ? 'alive' : 'dead';
     if (msg == 'dead') {
       bad_connection++;
-      console.log('bad_connection',bad_connection);
-      if (!ap_mode && bad_connection > 1) {
-        console.log("no connection, starting access point");
+      console.log(TAG, 'bad_connection',bad_connection);
+      if (!ap_mode && bad_connection > 2) {
+        console.log(TAG, "no connection, starting access point");
 	start_ap()
         /*var interfaces_file = "allow-hotplug wlan0\n"
                    + "iface wlan0 inet static\n"
@@ -109,14 +109,14 @@ function check_connection() {
       }
     }
     if (msg == 'alive') {
-      console.log("connection is good!");
+      console.log(TAG, "connection is good!");
       bad_connection = 0;
     }
   });
 }
 
 function scan_wifi() {
-  console.log("scanning wifi...");
+  console.log(TAG, "scanning wifi...");
   //let command = "ls";
   //let command = "sudo iwlist wlx7c8bca050268 scan | grep 'ESSID'";
   let command = "sudo iwlist wlan0 scan | grep 'ESSID'";
@@ -145,7 +145,7 @@ function scan_wifi() {
 }
 
 function start_ap() {
-  console.log("starting access point...");
+  console.log(TAG, "starting access point...");
 
   let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
   let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
@@ -168,7 +168,7 @@ function start_ap() {
 }
 
 function set_wifi(data) {
-    console.log("set_wifi",data);
+    console.log(TAG, "set_wifi",data);
 
     var wpa_supplicant = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n"
                        + "update_config=1\n"
@@ -189,7 +189,7 @@ function set_wifi(data) {
 
     fs.writeFile("/etc/wpa_supplicant/wpa_supplicant.conf", wpa_supplicant, function(err) {
       if(err) {
-        return console.log(err);
+        return console.error(TAG, err);
       }
 
 	let dhcpcd_cl_path = __dirname + "/files/dhcpcd.conf.cl";
@@ -228,5 +228,5 @@ function set_wifi(data) {
         });
       });*/
     });
-  console.log("set_wifi");
+  console.log(TAG, "set_wifi");
 }

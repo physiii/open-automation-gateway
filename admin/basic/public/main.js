@@ -2,8 +2,7 @@
 var $window = $(window);
 var $routerPassword = $('#ap_password');
 var $router_list = $("select[name='ap_list']")
-var $currentInput = $usernameInput.focus();
-
+var $device_id = $('#device_id');
 var socket = io();
 
 // stores router and password
@@ -13,33 +12,6 @@ const setRouterInfo = () => {
   console.log("router info: ",ap_name,ap_password);
   socket.emit('store ap', {ap_name:ap_name, ap_password:ap_password});
 }
-
-$window.keydown(event => {
-  // Auto-focus the current input when a key is typed
-  if (!(event.ctrlKey || event.metaKey || event.altKey)) {
-    $currentInput.focus();
-  }
-  // When the client hits ENTER on their keyboard
-  if (event.which === 13) {
-    if (username) {
-      sendMessage();
-      socket.emit('stop typing');
-      typing = false;
-    } else {
-      setUsername();
-    }
-  }
-});
-
-// Focus input when clicking anywhere on login page
-$loginPage.click(() => {
-  $currentInput.focus();
-});
-
-// Focus input when clicking on the message input's border
-$inputMessage.click(() => {
-  $inputMessage.focus();
-});
 
 // Socket events
 
@@ -53,18 +25,11 @@ socket.on('router list', (data) => {
   $router_list.append( optionsAsString );
 });
 
-
-socket.on('disconnect', () => {
-  log('you have been disconnected');
+socket.on('device_id', (device_id) => {
+  console.log("device_id: ",device_id);
+  $device_id.html( device_id );
 });
 
-socket.on('reconnect', () => {
-  log('you have been reconnected');
-  if (username) {
-    socket.emit('add user', username);
-  }
-});
-
-socket.on('reconnect_error', () => {
-  log('attempt to reconnect has failed');
-});
+socket.on('disconnect', () => {});
+socket.on('reconnect', () => {});
+socket.on('reconnect_error', () => {});
