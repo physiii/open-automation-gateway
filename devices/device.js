@@ -2,6 +2,7 @@ const uuid = require('uuid/v4'),
 	database = require('../database.js'),
 	createDeviceSocket = require('./device-socket.js').createDeviceSocket,
 	ServicesManager = require('../services/services-manager.js'),
+	noOp = () => {},
 	TAG = '[Device]';
 
 class Device {
@@ -9,17 +10,15 @@ class Device {
 		this.id = data.id || uuid();
 		this.token = data.token || this.id; // The token is the device ID by default until the relay assigns a token.
 		this.dependencies = data.dependencies || {};
+		this.relay_listeners = [];
 
 		this.setState(data.state);
 		this.setSettings(data.settings);
 		this.setInfo(data.info);
 
-		this.services = new ServicesManager(data.services, this);
+		this.services = new ServicesManager(data.services, this.getRelaySocketProxy(), this);
 
-		this.relayOn = this.relayOn.bind(this);
-		this.relayEmit = this.relayEmit.bind(this);
-
-		this.setUpRelaySocket();
+		this.connectToRelay();
 	}
 
 	setState (state = {}) {
@@ -30,7 +29,7 @@ class Device {
 
 	setSettings (settings = {}) {
 		this.settings = {
-			name:  settings.name
+			name: settings.name
 		};
 	}
 
@@ -53,8 +52,8 @@ class Device {
 			this.token = token;
 
 			this.save().then(() => {
+				this.connectToRelay();
 				resolve();
-				this.setUpRelaySocket();
 			}).catch(() => {
 				this.token = current_token;
 
@@ -63,58 +62,53 @@ class Device {
 		});
 	}
 
-	setUpRelaySocket () {
-		if (this.relaySocket) {
-			this.relaySocket.disconnect();
+	connectToRelay () {
+		if (this.relay_socket) {
+			this.relay_socket.disconnect();
 		}
 
-		this.relaySocket = createDeviceSocket(this.id, this.token);
-		this.listenToRelay();
-		this.services.setRelaySocket(this.getRelaySocketProxy());
-	}
+		this.relay_socket = createDeviceSocket(this.id, this.token);
 
-	listenToRelay () {
-		this.relayOn('token', (data, callback = () => {/* no-op */}) => {
+		// Set up relay listeners on new socket.
+		this.relay_listeners.forEach((listener) => {
+			this.relay_socket.on.apply(this.relay_socket, listener);
+		});
+
+		this.relay_socket.on('connect', () => {
+			this.state.connected = true;
+			this.sendCurrentStateToRelay();
+		});
+		this.relay_socket.on('disconnect', () => this.state.connected = false);
+		this.relay_socket.on('token', (data, callback = noOp) => {
 			this.setToken(data.token).then(() => {
 				callback(null, {});
 			}).catch((error) => {
 				callback(error);
 			});
 		});
-		this.relayOn('connect', () => { this.onRelayConnect(); });
-		this.relayOn('disconnect', () => { this.onRelayDisconnect(); });
 	}
 
 	sendCurrentStateToRelay () {
-		this.relayEmit('load', {device: this.relaySerialize()});
-	}
-
-	onRelayConnect () {
-		this.state.connected = true;
-		this.sendCurrentStateToRelay();
-	}
-
-	onRelayDisconnect () {
-		this.state.connected = false;
-	}
-
-	relayOn () {
-		return this.relaySocket.on.apply(this.relaySocket, arguments);
-	}
-
-	relayEmit (event, data, callback) {
-		if (!this.state.connected) {
-			console.log(TAG, this.id, 'Attempted to emit "' + event + '" event to relay, but the relay socket is not connected.');
-			return;
-		}
-
-		return this.relaySocket.emit(event, data, callback);
+		this.relay_socket.emit('load', {device: this.relaySerialize()});
 	}
 
 	getRelaySocketProxy () {
 		return {
-			on: this.relayOn,
-			emit: this.relayEmit
+			on: (function () {
+				this.relay_listeners.push(arguments);
+
+				if (this.relay_socket) {
+					this.relay_socket.on.apply(this.relay_socket, arguments);
+				}
+			}).bind(this),
+			emit: (function (event, data, callback) {
+				if (!this.state.connected) {
+					console.log(TAG, this.id, 'Attempted to emit "' + event + '" event to relay, but the relay socket is not connected.');
+					return;
+				}
+
+				return this.relay_socket.emit(event, data, callback);
+			}).bind(this)
 		};
 	}
 

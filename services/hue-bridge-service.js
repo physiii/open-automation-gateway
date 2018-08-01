@@ -5,8 +5,8 @@ const Service = require('./service.js'),
   TAG = '[hue-bridge-service.js]';
 
 class HueBridgeService extends Service {
-  constructor (data) {
-    super(data);
+  constructor (data, relay_socket) {
+    super(data, relay_socket);
 
     this.ip = data.ip || '10.10.10.102'
     this.user = data.user || 'CbJnDROdyKEfqjlfTJvsm8VXaqxUguGrD-9O5Plk';

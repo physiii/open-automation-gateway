@@ -1,16 +1,18 @@
 const Service = require('./service.js'),
+	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
+	LockApi = require('./api/lock-api.js'),
 	TAG = '[LockService]';
 
 class LockService extends Service {
-	constructor (data, driverClass) {
-		super(data);
+	constructor (data, relaySocket) {
+		super(data, relaySocket, LockApi);
 
 		this.zwave_node_id = data.zwave_node_id;
 		this.locked = data.locked || false;
 		this.available = data.available || false;
 		this.settings.relock_delay = data.settings && data.settings.relock_delay || false;
 
-		this.driver = new driverClass(this.zwave_node_id);
+		this.driver = new ZwaveLockDriver(this.zwave_node_id);
 		this.subscribeToDriver();
 	}
 

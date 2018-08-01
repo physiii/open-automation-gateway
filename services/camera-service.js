@@ -6,6 +6,7 @@ const spawn = require('child_process').spawn,
 	utils = require('../utils.js'),
 	Service = require('./service.js'),
 	config = require('../config.json'),
+	CameraApi = require('./api/camera-api.js'),
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
@@ -14,8 +15,8 @@ const spawn = require('child_process').spawn,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
-	constructor (data) {
-		super(data);
+	constructor (data, relaySocket) {
+		super(data, relaySocket, CameraApi);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
@@ -115,19 +116,22 @@ class CameraService extends Service {
 
 				// Listen for motion events.
 				motionProcess.stdout.on('data', (data) => {
+					if (!data) {
+						return;
+					}
+
+					const now = new Date();
+
 					console.log(MOTION_TAG, data.toString());
 
-					if (data && data.includes('[MOTION]')) {
+					if (data.includes('[MOTION]')) {
 						this.getPreviewImage();
-						this.state.last_recording_date = new Date();
-						// TODO: Tell Relay motion detected.
-						// socket.relay.emit('motion detected', data);
-					}
-					if (data && data.includes('[NO MOTION]')) {
-						// TODO: Tell Relay motion stopped.
-						// socket.relay.emit('motion stopped', data);
-					}
-					if (data && data.includes('[NEW RECORDING]')) {
+						this.state.last_recording_date = now;
+
+						this.relayEmit('motion-started', {date: now.toISOString()});
+					} else if (data.includes('[NO MOTION]')) {
+						this.relayEmit('motion-stopped', {date: now.toISOString()});
+					} else if (data.includes('[NEW RECORDING]')) {
 						// TODO: Tell Relay there's a new recording.
 					}
 				});
