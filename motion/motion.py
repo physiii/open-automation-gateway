@@ -35,6 +35,7 @@ FRAMERATE = 30
 BUFFER_SIZE = 3 * FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 30 # minimum number of consecutive frames with motion required to trigger motion detection
 MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before forcing evaluation of a new frame
+MAX_CATCH_UP_MAX_REACHED = 10 # script will exit if max catch up frames limit is reached this many times consecutively
 
 ##################################################################################################################
 # Parse arguments
@@ -160,6 +161,7 @@ time.sleep(2.5)
 consecFramesWithMotion = 0
 consecFramesWithoutMotion = 0
 consecCatchUpFrames = 0
+consecCatchUpMaxReached = 0
 recordingFramesLength = 0
 frame = None
 avg = None
@@ -168,6 +170,7 @@ kcw = KeyClipWriter(BUFFER_SIZE)
 
 # keep looping
 for needCatchUpFrame in framerateInterval(FRAMERATE):
+  # repeat the last frame if motion detection isn't keeping up with the framerate
   if needCatchUpFrame and consecCatchUpFrames < MAX_CATCH_UP_FRAMES:
     consecCatchUpFrames += 1
 
@@ -183,9 +186,22 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 
     continue
 
+  # if too many catch-up frames have been needed, force getting a fresh frame from the camera
   if consecCatchUpFrames >= MAX_CATCH_UP_FRAMES:
+    consecCatchUpMaxReached += 1
+
+    # if motion detection is failing to keep up with the framerate for too
+    # long, terminate the script so the camera service can try starting
+    # motion detection again.
+    if consecCatchUpMaxReached >= MAX_CATCH_UP_MAX_REACHED and not kcw.recording:
+      print('Cannot process frames fast enough for motion detection. Exiting.')
+      sys.stdout.flush()
+      sys.exit()
+
     print('Reached maximum number of catch-up frames (' + str(MAX_CATCH_UP_FRAMES) + '). Forcing evaluation of new frame from camera.')
     sys.stdout.flush()
+  else:
+    consecCatchUpMaxReached = 0
 
   consecCatchUpFrames = 0
 
