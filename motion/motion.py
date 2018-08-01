@@ -230,7 +230,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   # accumulate the weighted average between the current frame and
   # previous frames, then compute the difference between the current
   # frame and running average
-  cv2.accumulateWeighted(gray, avg, 0.2)
+  cv2.accumulateWeighted(gray, avg, 0.1)
   frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
   thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
 
@@ -308,7 +308,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 
     kcw.finish(saveRecording, recordingData)
 
-    # create a new KeyClipWriter. the existing one continues saving the 
+    # create a new KeyClipWriter. the existing one continues saving the
     # recording in a separate thread
     kcw = KeyClipWriter(BUFFER_SIZE)
 

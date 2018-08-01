@@ -27,8 +27,8 @@ class CameraService extends Service {
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
 
-		CameraRecordings.getLastRecordingDate(this.id).then((date) => {
-			this.state.last_recording_date = date;
+		CameraRecordings.getLastRecording(this.id).then((recording) => {
+			this.state.last_recording_date = recording ? recording.date : null;
 		});
 
 		this.getPreviewImage();
@@ -132,7 +132,9 @@ class CameraService extends Service {
 					} else if (data.includes('[NO MOTION]')) {
 						this.relayEmit('motion-stopped', {date: now.toISOString()});
 					} else if (data.includes('[NEW RECORDING]')) {
-						// TODO: Tell Relay there's a new recording.
+						CameraRecordings.getLastRecording(this.id).then((recording) => {
+							this.relayEmit('motion-recorded', {recording});
+						});
 					}
 				});
 
