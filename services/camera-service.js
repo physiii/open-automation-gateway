@@ -100,15 +100,6 @@ class CameraService extends Service {
 		VideoStreamer.stop(this.id);
 	}
 
-	// TODO: Build the link and notification content in the automator/notifications on relay.
-	// alertBuild (file_path) {
-	// 	return results = {
-	// 		preview_img: this.state.preview_image,
-	// 		timestamp: this.state.last_recording_date,
-	// 		html: '<a href=\"' + file_path +'\" target="_blank" style="font-size:20px;">Click here to Play Video</a>'
-	// 	};
-	// }
-
 	startMotionDetection () {
 		const METHOD_TAG = this.TAG + ' [motion]',
 			MOTION_TAG = METHOD_TAG + ' [motion.py]',
@@ -140,19 +131,10 @@ class CameraService extends Service {
 						this.relayEmit('motion-started', {date: now.toISOString()});
 					} else if (data.includes('[NO MOTION]')) {
 						this.relayEmit('motion-stopped', {date: now.toISOString()});
-					} else if (data.includes('[NEW RECORDING]')) {						
-							CameraRecordings.getLastRecording(this.id).then((recording) => {
-								this.relayEmit('motion-recorded', {recording:recording, image:this.state.preview_image, time:this.state.last_recording_date});
+					} else if (data.includes('[NEW RECORDING]')) {
+						CameraRecordings.getLastRecording(this.id).then((recording) => {
+							this.relayEmit('motion-recorded', {recording});
 						});
-
-						// TODO: Build the link and notification content in the automator/notifications on relay.
-						// let file_path = config.relay_server
-						// 	+ ':'
-						// 	+ config.relay_port.toString()
-						// 	+ '/dashboard/recordings/'
-						// 	+ this.id + moment().format('/YYYY/MM/DD/')
-						// 	+ recording_id;
-						// let results = this.alertBuild(file_path);
 					}
 				});
 

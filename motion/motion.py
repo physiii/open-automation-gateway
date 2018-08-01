@@ -120,7 +120,7 @@ def localDateToUtc(date):
   return date + utcOffset;
 
 def saveRecording(data):
-  recording = {
+  db.camera_recordings.insert_one({
     'id': str(uuid.uuid4()),
     'camera_id': cameraId,
     'file': data['finishedPath'],
@@ -128,8 +128,7 @@ def saveRecording(data):
     'duration': data['duration'],
     'width': data['width'],
     'height': data['height']
-  }
-  db.camera_recordings.insert_one(recording)
+  })
 
   # move the file from the temporary location
   os.rename(data['tempPath'], data['finishedPath'])
