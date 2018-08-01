@@ -15,22 +15,27 @@ class LightService extends Service {
 
 	lightOn () {
 		this.driver.lightOn();
+		this.state.power = 'on';
 	}
 
 	lightOff () {
 		this.driver.lightOff();
+		this.state.power = 'off';
 	}
 
 	setBrightness (brightness) {
 		this.driver.setBrightness(brightness);
+		this.state.brightness = brightness;
 	}
 
 	setColor (color) {
 		this.driver.setColor(color);
+		this.state.color = color
 	}
 
 	setLightName (name) {
 		this.driver.setLightName(name);
+		this.state.name = name;
 	}
 
 	dbSerialize () {
