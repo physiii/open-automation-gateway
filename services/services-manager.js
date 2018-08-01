@@ -1,10 +1,12 @@
 const Service = require('./service.js'),
-	GatewayService = require('./gateway-service.js'),
-	CameraService = require('./camera-service.js'),
-	ThermostatService = require('./thermostat-service.js'),
-	LockService = require('./lock-service.js'),
-	LightService = require('./light-service.js'),
-	HueBridgeService = require('./hue-bridge-service.js');
+	service_classes = {
+		'gateway': require('./gateway-service.js'),
+		'camera': require('./camera-service.js'),
+		'thermostat': require('./thermostat-service.js'),
+		'lock': require('./lock-service.js'),
+		'light': require('./light-service.js'),
+		'hue_bridge': require('./hue-bridge-service.js')
+	};
 
 class ServicesManager {
 	constructor (services = [], relay_socket, device) {
@@ -16,35 +18,11 @@ class ServicesManager {
 	}
 
 	addService (data) {
-		let service = this.getServiceById(data.id),
-			service_class;
+		const service_class = service_classes[data.type] || Service;
+		let service = this.getServiceById(data.id);
 
 		if (service) {
 			return service;
-		}
-
-		switch (data.type) {
-			case 'gateway':
-				service_class = GatewayService;
-				break;
-			case 'hue_bridge':
-				service_class = HueBridgeService;
-				break;
-			case 'camera':
-				service_class = CameraService;
-				break;
-			case 'lock':
-				service_class = LockService;
-				break;
-			case 'thermostat':
-				service_class = ThermostatService;
-				break;
-			case 'light':
-				service_class = LightService;
-				break;
-			default:
-				service_class = Service;
-				break;
 		}
 
 		service = new service_class(data, this.relay_socket);
