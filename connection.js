@@ -152,7 +152,7 @@ function start_ap() {
   let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
   let rc_local_ap_path = __dirname + "/files/rc.local.ap";
   let interfaces_ap_path = __dirname + "/files/interfaces.ap";
-  let sysctl_ap_path = __dirname + "/files/interfaces.ap";
+  let sysctl_ap_path = __dirname + "/files/sysctl.conf.ap";
 
   //let command = "cat "+rc_local_cl_path;
   //exec(command, (error, stdout, stderr) => {console.log(stdout)});
