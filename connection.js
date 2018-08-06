@@ -148,6 +148,7 @@ function start_ap() {
   console.log(TAG, "starting access point...");
 
   let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
+  let dnsmasq_ap_path = __dirname + "/files/dnsmasq.conf.ap";		
   let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
   let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
   let rc_local_ap_path = __dirname + "/files/rc.local.ap";
@@ -159,6 +160,7 @@ function start_ap() {
   //console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
   //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+  exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
   exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
