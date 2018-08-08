@@ -40,6 +40,10 @@ if (config.zwave) {
 }
 //require('./admin.js');
 
+if (config.use_dev) {
+  console.warn('WARNING: Gateway is running in development mode. SSL security is compromised.');
+}
+
 // Get settings and load devices from database.
 database.get_settings().then((settings) => {
   devices.loadDevicesFromDb().then(() => {
