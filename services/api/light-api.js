@@ -35,6 +35,21 @@ class LightApi extends ServiceApi {
       this.light.setLightName(data.name);
       callback(null, {});
     });
+    
+    this.on('fade/up/set', (data, callback) => {
+      this.light.startFadeUp();
+      callback(null, {});
+    });
+    
+    this.on('fade/down/set', (data, callback) => {
+      this.light.startFadeDown();
+      callback(null, {});
+    });
+    
+    this.on('fade/remove', (data, callback) => {
+      this.light.setLightName();
+      callback(null, {});
+    });
 
   }
 }
