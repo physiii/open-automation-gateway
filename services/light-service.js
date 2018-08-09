@@ -39,25 +39,7 @@ class LightService extends Service {
 	setLightName (name) {
 		this.driver.setLightName(name);
 		this.state.name = name;
-	}
-	
-	startFadeUp () {
-		this.lightInterval = setInterval(() => {
-			this.state.brightness += 1
-			this.setBrightness(this.state.brightness)
-		});
-	}
-	
-	startFadeDown () {
-		this.lightInterval = setInterval(() => {
-			this.state.brightness -= 1
-			this.setBrightness(this.state.brightness)
-		});
-	}
-	
-	stopFade () {
-		clearInterval(this.lightInterval);
-	}
+	}	
 
 	dbSerialize () {
 		return {
