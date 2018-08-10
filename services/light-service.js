@@ -15,12 +15,12 @@ class LightService extends Service {
 
 	lightOn () {
 		this.driver.lightOn();
-		this.state.power = 'on';
+		this.state.power = true;
 	}
 
 	lightOff () {
 		this.driver.lightOff();
-		this.state.power = 'off';
+		this.state.power = false;
 	}
 
 	setBrightness (brightness) {
