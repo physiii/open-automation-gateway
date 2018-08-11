@@ -1,4 +1,4 @@
-const database = require('./database.js'),
+const database = require('./services/database.js'),
 	VideoStreamer = require('./video-streamer.js'),
 	TAG = '[CameraRecordings]';
 

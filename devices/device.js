@@ -1,5 +1,5 @@
 const uuid = require('uuid/v4'),
-	database = require('../database.js'),
+	database = require('../services/database.js'),
 	createDeviceSocket = require('./device-socket.js').createDeviceSocket,
 	ServicesManager = require('../services/services-manager.js'),
 	noOp = () => {},

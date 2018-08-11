@@ -1,7 +1,7 @@
 const MongoClient = require('mongodb').MongoClient,
 	TAG = '[database.js]';
 
-module.exports = {
+/*module.exports = {
 	get_devices,
 	get_settings,
 	store_settings,
@@ -12,12 +12,23 @@ module.exports = {
 	store_zwave_node,
 	get_zwave_nodes,
 	getDeviceID,
-	settings
-};
+	settings,
+	store
+};*/
 
 var settings = {};
 
-function connect (callback) {
+class Database {
+
+  constructor () {
+		this.init = this.init.bind(this);
+	}
+
+  init () {
+		return;
+	}
+
+	connect (callback) {
 	return new Promise((resolve, reject) => {
 		MongoClient.connect('mongodb://127.0.0.1:27017/gateway', (error, db) => {
 			if (error) {
@@ -25,17 +36,43 @@ function connect (callback) {
 				reject('Unable to connect to gateway database.');
 				return;
 			}
-
 			callback(db, resolve, reject);
 		});
 	});
-}
+	}
 
-function getDeviceID () {
-	return connect((db, resolve, reject) => {
+	store (collection, data) {
+	return this.connect((db, resolve, reject) => {
+		db.collection(collection).update({}, {$set: data}, {upsert: true}, (error, item) => {
+			db.close();
+			if (error) {
+				reject('Database error');
+				return console.error(TAG, 'store', error);
+			}
+			resolve();
+		});
+	});
+	}
+
+	getByKey (collection, key) {
+		return this.connect((db, resolve, reject) => {
+			let query = {};
+			query[key] = {$exists:true};
+
+			db.collection(collection).find().toArray((error, result) => {
+				db.close();
+				if (error) reject('Database error');
+				if (!result[0]) resolve({});
+				resolve(result[0]);
+			});
+		});
+	}
+
+	getDeviceID () {
+	return this.connect((db, resolve, reject) => {
 		db.collection('settings').find().toArray((error, result) => {
 			db.close();
-			device_id = result[0].main_device_id;
+			let device_id = result[0].main_device_id;
 			if (error) {
 				console.error(TAG, 'getDeviceID', error);
 				reject('Database error');
@@ -46,10 +83,10 @@ function getDeviceID () {
 			resolve(device_id);
 		});
 	});
-}
+	}
 
-function get_settings () {
-	return connect((db, resolve, reject) => {
+	get_settings () {
+	return this.connect((db, resolve, reject) => {
 		db.collection('settings').find().toArray((error, result) => {
 			db.close();
 
@@ -69,10 +106,10 @@ function get_settings () {
 			resolve(settings);
 		});
 	});
-}
+	}
 
-function store_settings (data) {
-	return connect((db, resolve, reject) => {
+	store_settings (data) {
+	return this.connect((db, resolve, reject) => {
 		db.collection('settings').update({}, {$set: data}, {upsert: true}, (error, item) => {
 			db.close();
 
@@ -85,10 +122,10 @@ function store_settings (data) {
 			resolve();
 		});
 	});
-}
+	}
 
-function store_device (device) {
-	return connect((db, resolve, reject) => {
+	store_device (device) {
+	return this.connect((db, resolve, reject) => {
 		db.collection('devices').update({id: device.id}, {$set: device.dbSerialize()}, {upsert: true}, (error, record) => {
 			db.close();
 
@@ -101,10 +138,10 @@ function store_device (device) {
 			resolve(record);
 		});
 	});
-}
+	}
 
-function get_devices () {
-	return connect((db, resolve, reject) => {
+	get_devices () {
+	return this.connect((db, resolve, reject) => {
 		db.collection('devices').find().toArray((error, result) => {
 			db.close();
 
@@ -117,10 +154,10 @@ function get_devices () {
 			resolve(result);
 		});
 	});
-}
+	}
 
-function get_camera_recordings (camera_id) {
-	return connect((db, resolve, reject) => {
+	get_camera_recordings (camera_id) {
+	return this.connect((db, resolve, reject) => {
 		let query = {};
 
 		if (camera_id) {
@@ -139,10 +176,10 @@ function get_camera_recordings (camera_id) {
 			resolve(result);
 		});
 	});
-}
+	}
 
-function get_camera_recording (recording_id) {
-	return connect((db, resolve, reject) => {
+	get_camera_recording (recording_id) {
+	return this.connect((db, resolve, reject) => {
 		db.collection('camera_recordings').find({id: recording_id}).toArray((error, result) => {
 			db.close();
 
@@ -155,10 +192,10 @@ function get_camera_recording (recording_id) {
 			resolve(result[0]);
 		});
 	});
-}
+	}
 
-function delete_camera_recording (recording_id) {
-	return connect((db, resolve, reject) => {
+	delete_camera_recording (recording_id) {
+	return this.connect((db, resolve, reject) => {
 		db.collection('camera_recordings').remove({id: recording_id}, (error, result) => {
 			db.close();
 
@@ -171,14 +208,14 @@ function delete_camera_recording (recording_id) {
 			resolve(result);
 		});
 	});
-}
+	}
 
-function store_zwave_node (node) {
+	store_zwave_node (node) {
 	const node_temp = {...node};
 
 	delete node_temp['_id'];
 
-	return connect((db, resolve, reject) => {
+	return this.connect((db, resolve, reject) => {
 		db.collection('zwave_nodes').update({id: node_temp.id}, {$set: node_temp}, {upsert: true}, (error) => {
 			db.close();
 
@@ -191,10 +228,10 @@ function store_zwave_node (node) {
 			resolve();
 		});
 	});
-}
+	}
 
-function get_zwave_nodes () {
-	return connect((db, resolve, reject) => {
+	get_zwave_nodes () {
+	return this.connect((db, resolve, reject) => {
 		db.collection('zwave_nodes').find().toArray((error, result) => {
 			db.close();
 
@@ -207,4 +244,7 @@ function get_zwave_nodes () {
 			resolve(result);
 		});
 	});
+	}
 }
+
+module.exports = new Database();

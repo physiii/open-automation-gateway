@@ -1,4 +1,4 @@
-const database = require('../database.js'),
+const database = require('../services/database.js'),
 	utils = require('../utils.js'),
 	// If a device's dependencies haven't been met after this many attempts to
 	// create the device, it fails. This is also effectively the dependency

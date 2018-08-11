@@ -29,8 +29,8 @@ try {
 }
 
 const utils = require('./utils'),
-  connection = require('./connection.js'),
-  database = require('./database'),
+  ConnectionManager = require('./services/connection.js'),
+  database = require('./services/database.js'),
   devices = require('./devices/devices-manager.js'),
   diskUsage = require('diskusage');
   admin = require('./admin/basic/index.js');
@@ -87,8 +87,8 @@ function checkDiskSpace () {
 
 function main_loop () {
   var settings = {
-    public_ip: connection.public_ip,
-    local_ip: connection.local_ip,
+    public_ip: ConnectionManager.getPublicIP(),
+    local_ip: ConnectionManager.getLocalIP(),
     disk: utils.disk
   };
 
@@ -103,14 +103,14 @@ function main_loop () {
   //     console.log('Trying wifi again...');
 
   //     database.get_settings().then((db_settings) => {
-  //       connection.set_wifi(db_settings);
+  //       ConnectionManager.setWifi(db_settings);
   //     });
   //     exec('sudo reboot');
   //   }
   // }
 
-  connection.get_public_ip();
-  connection.scan_wifi();
+  ConnectionManager.getPublicIP();
+  ConnectionManager.scanWifi();
   checkDiskSpace();
 }
 

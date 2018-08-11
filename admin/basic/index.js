@@ -1,12 +1,15 @@
 // Setup basic express server
-var express = require('express');
-var app = express();
-var path = require('path');
-var server = require('http').createServer(app);
-var io = require('socket.io')(server);
-var port = process.env.PORT || 3000;
-var connection = require('../../connection.js');
-var database = require('../../database.js');
+const express = require('express'),
+  app = express(),
+  path = require('path'),
+  server = require('http').createServer(app),
+  io = require('socket.io')(server),
+  port = process.env.PORT || 3000,
+  ConnectionManager = require('../../services/connection.js'),
+  System = require('../../services/system.js'),
+  database = require('../../services/database.js');
+
+let TAG = "[index]";
 
 server.listen(port, () => {
   console.log('Server listening at port %d', port);
@@ -17,11 +20,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
 
-
-  var scanWifiPromise = connection.scan_wifi();
+  var scanWifiPromise = ConnectionManager.scanWifi();
   scanWifiPromise.then(function(result) {
       socket.emit('router list',result);
-      //console.log(result);
+      console.log(result);
   }, function(err) {
       console.log(err);
   })
@@ -34,9 +36,10 @@ io.on('connection', (socket) => {
       console.log(err);
   })
 
-  socket.on('store ap', (data) => {
-    console.log("storing ap info: ",data);
-    connection.set_wifi(data);
+  socket.on('store ap', (apInfo) => {
+    console.log(TAG,"apInfo", apInfo);
+    ConnectionManager.setWifi(apInfo);
+    System.reboot();
   });
 
 });

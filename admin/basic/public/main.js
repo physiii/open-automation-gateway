@@ -7,10 +7,10 @@ var socket = io();
 
 // stores router and password
 const setRouterInfo = () => {
-  ap_name = $router_list.val();
-  ap_password = $routerPassword.val();
-  console.log("router info: ",ap_name,ap_password);
-  socket.emit('store ap', {ap_name:ap_name, ap_password:ap_password});
+  ssid = $router_list.val();
+  password = $routerPassword.val();
+  console.log("router info: ",ssid,password);
+  socket.emit('store ap', {ssid:ssid, password:password});
 }
 
 // Socket events

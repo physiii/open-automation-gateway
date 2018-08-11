@@ -6,7 +6,7 @@ var program_io = require('socket.io')(program_server);
 
 program_server.listen(program_port, function () {
   console.log('Admin on port %d', program_port);
-});     
+});
 
 program_app.use(express.static(__dirname + '/public'));
 program_io.on('connection', function (socket) {
@@ -16,7 +16,7 @@ program_io.on('connection', function (socket) {
   socket.on('set wifi', function (data) {
     console.log("set wifi",data);
     store_settings(data);
-    set_wifi(data);
-    exec("sudo reboot");
+    setWifi(data);
+    //exec("sudo reboot");
   });
 });
