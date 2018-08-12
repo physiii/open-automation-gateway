@@ -238,19 +238,19 @@ class ConnectionManager {
       if(err) {
         return console.error(TAG, err);
       }
-
-      let dhcpcd_cl_path = __dirname + "/../files/dhcpcd.conf.cl";
-      let hostapd_cl_path = __dirname + "/../files/hostapd.conf.cl";
-      let hostapd_default_cl_path = __dirname + "/../files/hostapd.cl";
-      let rc_local_cl_path = __dirname + "/../files/rc.local.cl";
-      let interfaces_cl_path = __dirname + "/../files/rc.local.cl";
-
-      //console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
-      //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
-      exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
-      exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
-      exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
     });
+
+    let dhcpcd_cl_path = __dirname + "/../files/dhcpcd.conf.cl";
+    let hostapd_cl_path = __dirname + "/../files/hostapd.conf.cl";
+    let hostapd_default_cl_path = __dirname + "/../files/hostapd.cl";
+    let rc_local_cl_path = __dirname + "/../files/rc.local.cl";
+    let interfaces_cl_path = __dirname + "/../files/rc.local.cl";
+
+    console.log("setWifi: sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
+    //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
 
     Database.getValueByKey("network","apList").then(function(obj) {
       apInfo.lastStatus = "connecting";
