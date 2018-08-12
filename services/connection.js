@@ -60,16 +60,16 @@ class ConnectionManager {
   }
 
   getPublicIP() {
-  request.get(
-  'http://pyfi.org/get_ip',
-  function (error, response, data) {
-    if (!error && response.statusCode == 200) {
-      if (error !== null) console.log(error);
-      module.exports.public_ip = data;
+    request.get(
+      'http://pyfi.org/get_ip',
+      function (error, response, data) {
+        if (!error && response.statusCode == 200) {
+          if (error !== null) console.log(error);
+          module.exports.public_ip = data;
       //console.log("stored public_ip",public_ip);
     }
   });
-}
+  }
 
   getMode() {
     return new Promise(function(resolve, reject) {
@@ -85,8 +85,6 @@ class ConnectionManager {
   setLastGoodConnection(date) {
     LastGoodConnection = date;
     self.getStoredConnections().then(function(apList) {
-
-
       apList.forEach((ap) => {
         if (apList[i].lastAttempGood) {
           self.setWifi(apList[i]);
@@ -148,55 +146,55 @@ class ConnectionManager {
       ping.sys.probe(host, function(isAlive) {
         resolve(isAlive);
       });
-  })
-}
+    })
+  }
 
   scanWifi() {
-  return new Promise(function(resolve, reject) {
-    let iwlist = spawn('sudo', ['iwlist', config.wifi_adapter,'scan']);
-    let router_list = [];
-    iwlist.stdout.on('data', (data) => {
-      let data_array = `${data}`.split('\n')
-      data_array.forEach(function (ap) {
-        if (ap.indexOf('ESSID') < 0) return;
-        let start = ap.indexOf('\"')+1;
-        let stop = ap.lastIndexOf('\"');
-        ap = ap.substring(start,stop);
-        router_list.push({ssid:ap});
+    return new Promise(function(resolve, reject) {
+      let iwlist = spawn('sudo', ['iwlist', config.wifi_adapter,'scan']);
+      let router_list = [];
+      iwlist.stdout.on('data', (data) => {
+        let data_array = `${data}`.split('\n')
+        data_array.forEach(function (ap) {
+          if (ap.indexOf('ESSID') < 0) return;
+          let start = ap.indexOf('\"')+1;
+          let stop = ap.lastIndexOf('\"');
+          ap = ap.substring(start,stop);
+          router_list.push({ssid:ap});
+        });
+        //socket.emit('router list',router_list);
+        resolve(router_list);
       });
-      //socket.emit('router list',router_list);
-      resolve(router_list);
     });
-  });
-}
+  }
 
 
   startAP() {
-  if (!config.manage_network) {
+    if (!config.manage_network) {
       return console.log("startAP: manage network disabled in config.json");
-  }
-  console.log(TAG, "starting access point...");
-  database.store("network",{mode:"AP"});
-  let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
-  let dnsmasq_ap_path = __dirname + "/files/dnsmasq.conf.ap";
-  let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
-  let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
-  let rc_local_ap_path = __dirname + "/files/rc.local.ap";
-  let interfaces_ap_path = __dirname + "/files/interfaces.ap";
-  let sysctl_ap_path = __dirname + "/files/sysctl.conf.ap";
+    }
+    console.log(TAG, "starting access point...");
+    database.store("network",{mode:"AP"});
+    let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
+    let dnsmasq_ap_path = __dirname + "/files/dnsmasq.conf.ap";
+    let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
+    let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
+    let rc_local_ap_path = __dirname + "/files/rc.local.ap";
+    let interfaces_ap_path = __dirname + "/files/interfaces.ap";
+    let sysctl_ap_path = __dirname + "/files/sysctl.conf.ap";
 
-  //let command = "cat "+rc_local_cl_path;
-  //exec(command, (error, stdout, stderr) => {console.log(stdout)});
-  //console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
-  //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-  exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
-}
+    //let command = "cat "+rc_local_cl_path;
+    //exec(command, (error, stdout, stderr) => {console.log(stdout)});
+    //console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
+    //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
+  }
 
   setWifi(apInfo) {
     if (!config.manage_network) {
@@ -204,9 +202,9 @@ class ConnectionManager {
     }
 
     var wpa_supplicant = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n"
-                       + "update_config=1\n"
+           + "update_config=1\n"
 		       + "country=GB\n"
-                       + "network={\n"
+           + "network={\n"
 		       + "ssid=\""+apInfo.name+"\"\n"
 		       + "psk=\""+apInfo.password+"\"\n"
 		       + "key_mgmt=WPA-PSK\n"
@@ -218,26 +216,25 @@ class ConnectionManager {
 			+ "iface eth0 inet manual\n"
 			+ "allow-hotplug wlan0\n"
 			+ "iface wlan0 inet manual\n"
-		    	+ "    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf\n";
+		  + "    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf\n";
 
     fs.writeFile("/etc/wpa_supplicant/wpa_supplicant.conf", wpa_supplicant, function(err) {
       if(err) {
         return console.error(TAG, err);
       }
 
-	  let dhcpcd_cl_path = __dirname + "/files/dhcpcd.conf.cl";
-    let hostapd_cl_path = __dirname + "/files/hostapd.conf.cl";
-    let hostapd_default_cl_path = __dirname + "/files/hostapd.cl";
-    let rc_local_cl_path = __dirname + "/files/rc.local.cl";
-    let interfaces_cl_path = __dirname + "/files/rc.local.cl";
+      let dhcpcd_cl_path = __dirname + "/files/dhcpcd.conf.cl";
+      let hostapd_cl_path = __dirname + "/files/hostapd.conf.cl";
+      let hostapd_default_cl_path = __dirname + "/files/hostapd.cl";
+      let rc_local_cl_path = __dirname + "/files/rc.local.cl";
+      let interfaces_cl_path = __dirname + "/files/rc.local.cl";
 
-    console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
-    //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
-
+      console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
+      //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
     });
 
     database.getValueByKey("network","apList").then(function(obj) {
@@ -255,6 +252,8 @@ class ConnectionManager {
       if (!ssidExists) apList.push(apInfo);
       database.store("network",{apList:apList});
       database.store("network",{mode:"client"});
+      database.store("network",{current_ap:apInfo.ssid});
+
       console.log(TAG, "setWifi", apList);
     }, function(err) {
       console.error(err);

@@ -37,7 +37,6 @@ io.on('connection', (socket) => {
   socket.on('store ap', (apInfo) => {
     console.log(TAG,"apInfo", apInfo);
     ConnectionManager.setWifi(apInfo);
-    //System.reboot();
   });
 
 });
