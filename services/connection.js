@@ -18,6 +18,7 @@ const exec = require('child_process').exec,
 var LastGoodConnection = Date.now();
 
 class ConnectionManager {
+
   constructor () {
 		this.init = this.init.bind(this);
 	}
@@ -69,8 +70,8 @@ class ConnectionManager {
           if (error !== null) console.log(error);
           module.exports.public_ip = data;
       //console.log("stored public_ip",public_ip);
-    }
-  });
+      }
+    });
   }
 
   getMode() {
@@ -84,99 +85,6 @@ class ConnectionManager {
     })
   }
 
-  setLastGoodConnection(date) {
-    LastGoodConnection = date;
-    return;
-  }
-
-  setConnAttempts(attemps) {
-    Database.getValueByKey("network","current_ap").then((obj) => {
-      if (!obj) return console.log(TAG,"current_ap not found");
-      let ssid = obj.current_ap.ssid
-      Database.getValueByKey("network","apList").then((obj) => {
-      let apList = [];
-      if (obj.apList) apList = obj.apList;
-      for (let i=0; i < apList.length; i++) {
-        if (apList[i].ssid === ssid) {
-          apList[i].connAttempts = attemps;
-        }
-      }
-      Database.store("network",{apList:apList});
-
-    }, function(err) {
-      console.error(TAG, "setConnAttempts", err);
-    })
-  })
-  }
-
-  setCurrentAPStatus(status) {
-    Database.getValueByKey("network","current_ap").then((obj) => {
-      if (!obj) return console.log(TAG,"current_ap not found");
-      let ssid = obj.current_ap.ssid
-      Database.getValueByKey("network","apList").then((obj) => {
-      let apList = [];
-      if (obj.apList) apList = obj.apList;
-      for (let i=0; i < apList.length; i++) {
-        if (apList[i].ssid === ssid) {
-          apList[i].lastStatus = status;
-        }
-      }
-      Database.store("network",{apList:apList});
-
-    }, function(err) {
-      console.error(TAG, "setCurrentAPStatus", err);
-    })
-  })
-  }
-
-  getLastGoodConnection() {
-    return LastGoodConnection;
-  }
-
-  connectionLoop() {
-    var self = this;
-
-    self.getStatus().then(function(isAlive) {
-      if (isAlive) {
-        self.setCurrentAPStatus("connected");
-        self.setConnAttempts(0);
-      } else {
-        let difference = Date.now() - LastGoodConnection;
-        console.log(TAG,"bad connection, last good:",difference);
-        if (difference > 20 * 1000) {
-          self.setCurrentAPStatus("disconnected");
-          self.getMode().then((mode) => {
-            if (mode !== "AP") self.startAP();
-          })
-        }
-      }
-    });
-
-    self.scanWifi().then((apScanList) => {
-      self.getMode().then((mode) => {
-        if (mode === "AP") {
-          self.getStoredConnections().then(function(apList) {
-            for (let i=0; i < apList.length; i++) {
-              for (let j=0; j < apScanList.length; j++) {
-                if (apList[i].ssid === apScanList[j].ssid) {
-                  if (apList[i].connAttempts <= 3) {
-                    self.setWifi(apList[i]);
-                  } else console.log("3 failed attempts with ssid on scan",apList[i].ssid);
-                }
-              }
-            }
-          })
-        }
-      })
-    }, function(err) {
-      console.log(err);
-    })
-
-    setTimeout(function () {
-      self.connectionLoop();
-    }, 10*1000);
-  }
-
   getStatus() {
     return new Promise(function(resolve, reject) {
       let host = "8.8.8.8";
@@ -186,51 +94,8 @@ class ConnectionManager {
     })
   }
 
-  scanWifi() {
-    return new Promise(function(resolve, reject) {
-      let iwlist = spawn('sudo', ['iwlist', config.wifi_adapter,'scan']);
-      let router_list = [];
-      iwlist.stdout.on('data', (data) => {
-        let data_array = `${data}`.split('\n')
-        data_array.forEach(function (ap) {
-          if (ap.indexOf('ESSID') < 0) return;
-          let start = ap.indexOf('\"')+1;
-          let stop = ap.lastIndexOf('\"');
-          ap = ap.substring(start,stop);
-          router_list.push({ssid:ap});
-        });
-        //socket.emit('router list',router_list);
-        resolve(router_list);
-      });
-    });
-  }
-
-
-  startAP() {
-    if (!config.manage_network) {
-      return console.log("startAP: manage network disabled in config.json");
-    }
-    console.log(TAG, "starting access point...");
-    Database.store("network",{mode:"AP"});
-    let dhcpcd_ap_path = __dirname + "/../files/dhcpcd.conf.ap";
-    let dnsmasq_ap_path = __dirname + "/../files/dnsmasq.conf.ap";
-    let hostapd_ap_path = __dirname + "/../files/hostapd.conf.ap";
-    let hostapd_default_ap_path = __dirname + "/../files/hostapd.ap";
-    let rc_local_ap_path = __dirname + "/../files/rc.local.ap";
-    let interfaces_ap_path = __dirname + "/../files/interfaces.ap";
-    let sysctl_ap_path = __dirname + "/../files/sysctl.conf.ap";
-
-    //let command = "cat "+rc_local_cl_path;
-    //exec(command, (error, stdout, stderr) => {console.log(stdout)});
-    console.log("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf");
-    //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-    System.reboot(3);
+  getLastGoodConnection() {
+    return LastGoodConnection;
   }
 
   setWifi(apInfo) {
@@ -240,20 +105,20 @@ class ConnectionManager {
 
     var wpa_supplicant = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n"
            + "update_config=1\n"
-		       + "country=GB\n"
+           + "country=GB\n"
            + "network={\n"
-		       + "ssid=\""+apInfo.ssid+"\"\n"
-		       + "psk=\""+apInfo.password+"\"\n"
-		       + "key_mgmt=WPA-PSK\n"
-		       + "}\n";
+           + "ssid=\""+apInfo.ssid+"\"\n"
+           + "psk=\""+apInfo.password+"\"\n"
+           + "key_mgmt=WPA-PSK\n"
+           + "}\n";
 
     var interfaces_file = "source-directory /etc/network/interfaces.d\n"
-			+ "auto lo\n"
-			+ "iface lo inet loopback\n"
-			+ "iface eth0 inet manual\n"
-			+ "allow-hotplug wlan0\n"
-			+ "iface wlan0 inet manual\n"
-		  + "    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf\n";
+      + "auto lo\n"
+      + "iface lo inet loopback\n"
+      + "iface eth0 inet manual\n"
+      + "allow-hotplug wlan0\n"
+      + "iface wlan0 inet manual\n"
+      + "    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf\n";
 
     fs.writeFile("/etc/wpa_supplicant/wpa_supplicant.conf", wpa_supplicant, function(err) {
       if(err) {
@@ -301,7 +166,140 @@ class ConnectionManager {
     System.reboot(3);
   }
 
+  setLastGoodConnection(date) {
+    LastGoodConnection = date;
+    return;
+  }
 
+  setConnAttempts(attemps) {
+    Database.getValueByKey("network","current_ap").then((obj) => {
+      if (!obj) return console.log(TAG,"current_ap not found");
+      let ssid = obj.current_ap.ssid
+      Database.getValueByKey("network","apList").then((obj) => {
+      let apList = [];
+      if (obj.apList) apList = obj.apList;
+      for (let i=0; i < apList.length; i++) {
+        if (apList[i].ssid === ssid) {
+          apList[i].connAttempts = attemps;
+        }
+      }
+      Database.store("network",{apList:apList});
+
+      }, function(err) {
+        console.error(TAG, "setConnAttempts", err);
+      })
+    })
+  }
+
+  setCurrentAPStatus(status) {
+    Database.getValueByKey("network","current_ap").then((obj) => {
+      if (!obj) return console.log(TAG,"current_ap not found");
+      let ssid = obj.current_ap.ssid
+      Database.getValueByKey("network","apList").then((obj) => {
+        let apList = [];
+        if (obj.apList) apList = obj.apList;
+        for (let i=0; i < apList.length; i++) {
+          if (apList[i].ssid === ssid) {
+            apList[i].lastStatus = status;
+          }
+        }
+        Database.store("network",{apList:apList});
+
+      }, function(err) {
+        console.error(TAG, "setCurrentAPStatus", err);
+      })
+    })
+  }
+
+  connectionLoop() {
+    var self = this;
+
+    self.getStatus().then(function(isAlive) {
+      if (isAlive) {
+        self.setCurrentAPStatus("connected");
+        self.setConnAttempts(0);
+      } else {
+        let difference = Date.now() - LastGoodConnection;
+        console.log(TAG,"bad connection, last good:",difference);
+        if (difference > 20 * 1000) {
+          self.setCurrentAPStatus("disconnected");
+          self.getMode().then((mode) => {
+            if (mode !== "AP") self.startAP();
+          })
+        }
+      }
+    });
+
+    self.scanWifi().then((apScanList) => {
+      self.getMode().then((mode) => {
+        if (mode === "AP") {
+          self.getStoredConnections().then(function(apList) {
+            for (let i=0; i < apList.length; i++) {
+              for (let j=0; j < apScanList.length; j++) {
+                if (apList[i].ssid === apScanList[j].ssid) {
+                  if (apList[i].connAttempts <= 3) {
+                    self.setWifi(apList[i]);
+                  } else console.log("3 failed attempts with ssid on scan",apList[i].ssid);
+                }
+              }
+            }
+          })
+        }
+      })
+    }, function(err) {
+      console.log(err);
+    })
+
+    setTimeout(function () {
+      self.connectionLoop();
+    }, 10*1000);
+  }
+
+  scanWifi() {
+    return new Promise(function(resolve, reject) {
+      let iwlist = spawn('sudo', ['iwlist', config.wifi_adapter,'scan']);
+      let router_list = [];
+      iwlist.stdout.on('data', (data) => {
+        let data_array = `${data}`.split('\n')
+        data_array.forEach(function (ap) {
+          if (ap.indexOf('ESSID') < 0) return;
+          let start = ap.indexOf('\"')+1;
+          let stop = ap.lastIndexOf('\"');
+          ap = ap.substring(start,stop);
+          router_list.push({ssid:ap});
+        });
+        //socket.emit('router list',router_list);
+        resolve(router_list);
+      });
+    });
+  }
+
+  startAP() {
+    if (!config.manage_network) {
+      return console.log("startAP: manage network disabled in config.json");
+    }
+    console.log(TAG, "starting access point...");
+    Database.store("network",{mode:"AP"});
+    let dhcpcd_ap_path = __dirname + "/../files/dhcpcd.conf.ap";
+    let dnsmasq_ap_path = __dirname + "/../files/dnsmasq.conf.ap";
+    let hostapd_ap_path = __dirname + "/../files/hostapd.conf.ap";
+    let hostapd_default_ap_path = __dirname + "/../files/hostapd.ap";
+    let rc_local_ap_path = __dirname + "/../files/rc.local.ap";
+    let interfaces_ap_path = __dirname + "/../files/interfaces.ap";
+    let sysctl_ap_path = __dirname + "/../files/sysctl.conf.ap";
+
+    //let command = "cat "+rc_local_cl_path;
+    //exec(command, (error, stdout, stderr) => {console.log(stdout)});
+    console.log("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf");
+    //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
+    exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
+    System.reboot(3);
+  }
 
 }
 
