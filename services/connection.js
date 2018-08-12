@@ -84,6 +84,15 @@ class ConnectionManager {
 
   setLastGoodConnection(date) {
     LastGoodConnection = date;
+    self.getStoredConnections().then(function(apList) {
+
+
+      apList.forEach((ap) => {
+        if (apList[i].lastAttempGood) {
+          self.setWifi(apList[i]);
+        }
+      });
+    })
   }
 
   getLastGoodConnection() {
@@ -91,33 +100,33 @@ class ConnectionManager {
   }
 
   connectionLoop() {
-      var self = this;
+    var self = this;
 
-      self.getStatus().then(function(isAlive) {
-        console.log(TAG,"connectionLoop",isAlive);
-        if (isAlive) {
-          console.log(TAG,"connection is good");
-          self.setLastGoodConnection(Date.now());
-        } else {
-          let difference = Date.now() - LastGoodConnection;
-          console.log(TAG,"bad connection, last good:",difference);
-          if (difference > 20 * 1000) {
-            self.startAP();
-          }
+    self.getStatus().then(function(isAlive) {
+      console.log(TAG,"connectionLoop",isAlive);
+      if (isAlive) {
+        console.log(TAG,"connection is good");
+        self.setLastGoodConnection(Date.now());
+      } else {
+        let difference = Date.now() - LastGoodConnection;
+        console.log(TAG,"bad connection, last good:",difference);
+        if (difference > 20 * 1000) {
+          self.startAP();
         }
-      });
+      }
+    });
 
-      self.scanWifi().then((apScanList) => {
-        console.log(TAG,apScanList);
-        self.getMode().then(function (mode) {
-          if (mode === "AP") {
-            self.getStoredConnections().then(function(apList) {
-              for (let i=0; i < apList.length; i++) {
-                for (let j=0; j < apScanList.length; j++) {
-                  if (apList[i].ssid === apScanList[j].ssid) {
-                    if (apList[i].lastAttempGood) {
-                      self.setWifi(apList[i]);
-                    }
+    self.scanWifi().then((apScanList) => {
+      console.log(TAG,apScanList);
+      self.getMode().then(function (mode) {
+        if (mode === "AP") {
+          self.getStoredConnections().then(function(apList) {
+            for (let i=0; i < apList.length; i++) {
+              for (let j=0; j < apScanList.length; j++) {
+                if (apList[i].ssid === apScanList[j].ssid) {
+                  if (apList[i].lastAttempGood) {
+                    self.setWifi(apList[i]);
+                  }
                 }
               }
             }
@@ -125,7 +134,7 @@ class ConnectionManager {
         }
       })
     }, function(err) {
-        console.log(err);
+      console.log(err);
     })
 
     setTimeout(function () {
@@ -198,7 +207,7 @@ class ConnectionManager {
                        + "update_config=1\n"
 		       + "country=GB\n"
                        + "network={\n"
-		       + "ssid=\""+apInfo.ssid+"\"\n"
+		       + "ssid=\""+apInfo.name+"\"\n"
 		       + "psk=\""+apInfo.password+"\"\n"
 		       + "key_mgmt=WPA-PSK\n"
 		       + "}\n";
