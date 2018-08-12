@@ -89,6 +89,26 @@ class ConnectionManager {
     return;
   }
 
+  setConnAttempts(attemps) {
+    Database.getValueByKey("network","current_ap").then((obj) => {
+      if (!obj) return console.log(TAG,"current_ap not found");
+      let ssid = obj.current_ap.ssid
+      Database.getValueByKey("network","apList").then((obj) => {
+      let apList = [];
+      if (obj.apList) apList = obj.apList;
+      for (let i=0; i < apList.length; i++) {
+        if (apList[i].ssid === ssid) {
+          apList[i].connAttempts = attemps;
+        }
+      }
+      Database.store("network",{apList:apList});
+
+    }, function(err) {
+      console.error(TAG, "setConnAttempts", err);
+    })
+  })
+  }
+
   setCurrentAPStatus(status) {
     Database.getValueByKey("network","current_ap").then((obj) => {
       if (!obj) return console.log(TAG,"current_ap not found");
@@ -119,6 +139,7 @@ class ConnectionManager {
     self.getStatus().then(function(isAlive) {
       if (isAlive) {
         self.setCurrentAPStatus("connected");
+        self.setConnAttempts(0);
       } else {
         let difference = Date.now() - LastGoodConnection;
         console.log(TAG,"bad connection, last good:",difference);
@@ -138,9 +159,9 @@ class ConnectionManager {
             for (let i=0; i < apList.length; i++) {
               for (let j=0; j < apScanList.length; j++) {
                 if (apList[i].ssid === apScanList[j].ssid) {
-                  if (apList[i].lastStatus === "connected") {
+                  if (apList[i].connAttempts <= 3) {
                     self.setWifi(apList[i]);
-                  } else console.log("last connect was bad! ",apList[i].ssid);
+                  } else console.log("3 failed attempts with ssid on scan",apList[i].ssid);
                 }
               }
             }
@@ -261,7 +282,7 @@ class ConnectionManager {
 
       for (let i=0; i < apList.length; i++) {
         if (apList[i].ssid === apInfo.ssid) {
-          apList[i].lastStatus = "connecting";
+          apList[i].connAttempts+=1;
           apList[i].password = apInfo.password;
           ssidExists = true;
         }
