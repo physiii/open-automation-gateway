@@ -28,9 +28,12 @@ class System {
     })
   }
 
-  reboot () {
+  reboot (delay) {
+    if (!delay) delay = 0;
     if (config.disable_reboot) return;
-    exec("sudo reboot");
+    setTimeout(function () {
+      exec("sudo reboot");
+    }, delay * 1000);
   }
 
   version () {

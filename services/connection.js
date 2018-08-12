@@ -209,7 +209,7 @@ class ConnectionManager {
     exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-    System.reboot();
+    System.reboot(3);
   }
 
   setWifi(apInfo) {
@@ -277,7 +277,7 @@ class ConnectionManager {
       console.error(err);
     })
 
-    System.reboot();
+    System.reboot(3);
   }
 
 
