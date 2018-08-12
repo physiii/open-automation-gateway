@@ -1,21 +1,6 @@
 const MongoClient = require('mongodb').MongoClient,
 	TAG = '[database.js]';
 
-/*module.exports = {
-	get_devices,
-	get_settings,
-	store_settings,
-	store_device,
-	get_camera_recordings,
-	get_camera_recording,
-	delete_camera_recording,
-	store_zwave_node,
-	get_zwave_nodes,
-	getDeviceID,
-	settings,
-	store
-};*/
-
 var settings = {};
 
 class Database {
@@ -54,7 +39,7 @@ class Database {
 	});
 	}
 
-	getByKey (collection, key) {
+	getValueByKey (collection, key) {
 		return this.connect((db, resolve, reject) => {
 			let query = {};
 			query[key] = {$exists:true};

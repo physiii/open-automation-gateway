@@ -2,31 +2,19 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // ------------------------------- connection.js -------------------------- //
 
-var exec = require('child_process').exec;
-const { spawn } = require('child_process');
-var request = require('request');
-var os = require('os');
-var fs = require('fs');
-var ping = require ("ping");
-var database = require ("../services/database");
-var config = require ("../config.json");
-var ap_mode = false;
-var bad_connection = 0;
+const exec = require('child_process').exec,
+  { spawn } = require('child_process'),
+  request = require('request'),
+  os = require('os'),
+  fs = require('fs'),
+  ping = require ("ping"),
+  database = require ("../services/database"),
+  config = require ("../config.json"),
+  ap_mode = false,
+  bad_connection = 0,
+  TAG = "[connection-manager]";
 
-var TAG = "[connection-manager]";
-
-/*
-module.exports = {
-  startAP: startAP,
-  getLocalIP: getLocalIP,
-  getPublicIP: getPublicIP,
-  getStatus: getStatus,
-  getStatusLoop: getStatusLoop,
-  check_ap_mode: check_ap_mode,
-  scanWifi: scanWifi,
-  setWifi: setWifi
-}
-*/
+var LastGoodConnection = Date.now();
 
 class ConnectionManager {
   constructor () {
@@ -34,12 +22,20 @@ class ConnectionManager {
 	}
 
   init () {
-    this.getLocalIP();
+    /*this.getLocalIP();
     this.getPublicIP();
-    this.check_ap_mode();
-    this.getStatusLoop();
+    this.getMode();
+    this.connectionLoop();*/
 		return;
 	}
+
+  getStoredConnections() {
+    return new Promise(function(resolve, reject) {
+      database.getValueByKey("network","apList").then(function(obj) {
+        resolve(obj.apList);
+      })
+    })
+  }
 
   getLocalIP() {
     var ifaces = os.networkInterfaces();
@@ -75,33 +71,77 @@ class ConnectionManager {
   });
 }
 
-  check_ap_mode() {
-  exec("grep /etc/dhcpcd.conf -e '192.168.4.1'", (error, stdout, stderr) => {
-    if (stdout.length > 1) {
-      console.log(TAG, "device is in access point mode");
-      ap_mode = true;
-    } else ap_mode = false;
-  });
-}
+  getMode() {
+    return new Promise(function(resolve, reject) {
+      exec("grep /etc/dhcpcd.conf -e '192.168.4.1'", (error, stdout, stderr) => {
+        if (stdout.length > 1) {
+          console.log(TAG, "device is in access point mode");
+          resolve("AP")
+        } else resolve("client");
+      })
+    })
+  }
 
-  getStatusLoop() {
-  setTimeout(function () {
-    getStatus();
-    getStatusLoop();
-  }, 20*1000);
-}
+  setLastGoodConnection(date) {
+    LastGoodConnection = date;
+  }
+
+  getLastGoodConnection() {
+    return LastGoodConnection;
+  }
+
+  connectionLoop() {
+      var self = this;
+      console.log(TAG,"connectionLoop");
+      this.getStatus().then(function(isAlive) {
+        if (isAlive === 'alive') {
+          console.log(TAG,"alive since:",LastGoodConnection);
+          this.setLastGoodConnection(Date.now());
+        }
+        if (isAlive === 'dead') {
+          console.log(TAG,"dead since:",LastGoodConnection);
+        }
+      });
+
+
+      this.scanWifi().then((apScanList) => {
+        console.log(TAG,apScanList);
+        /*this.getMode().then(function (mode) {
+          //mode = "AP";
+          if (mode === "AP") {
+            this.getStoredConnections().then(function(apList) {
+              for (let i=0; i < apList.length; i++) {
+                for (let j=0; j < apScanList.length; j++) {
+                  if (apList[i].ssid === apScanList[j].ssid) {
+                    this.setWifi(apList[i]);
+                }
+              }
+            }
+          })
+        }
+      })*/
+    }, function(err) {
+        console.log(err);
+    })
+    setTimeout(function () {
+      self.connectionLoop();
+    }, 20*1000);
+  }
 
   getStatus() {
-  host = "8.8.8.8";
-  ping.sys.probe(host, function(isAlive) {
-    var msg = isAlive ? 'alive' : 'dead';
+    return new Promise(function(resolve, reject) {
+      let host = "8.8.8.8";
+      ping.sys.probe(host, function(isAlive) {
+        resolve(isAlive);
+      });
+    /*var msg = isAlive ? 'alive' : 'dead';
     if (msg == 'dead') {
       bad_connection++;
       console.log(TAG, 'bad_connection',bad_connection);
       if (!ap_mode && bad_connection > 2) {
-        console.log(TAG, "no connection, starting access point");
-	      startAP()
-        /*var interfaces_file = "allow-hotplug wlan0\n"
+        //console.log(TAG, "no connection, starting access point");
+	      //this.startAP()
+        var interfaces_file = "allow-hotplug wlan0\n"
                    + "iface wlan0 inet static\n"
     		   + "address 172.24.1.1\n"
     		   + "netmask 255.255.255.0\n"
@@ -114,7 +154,7 @@ class ConnectionManager {
           ap_mode = true;
 
           ap_time_start = Date.now();
-        });*/
+        });
         //bad_connection = 0;
       }
     }
@@ -122,7 +162,8 @@ class ConnectionManager {
       console.log(TAG, "connection is good!");
       bad_connection = 0;
     }
-  });
+  });*/
+  })
 }
 
   scanWifi() {
@@ -138,10 +179,12 @@ class ConnectionManager {
         ap = ap.substring(start,stop);
         router_list.push({ssid:ap});
       });
+      //socket.emit('router list',router_list);
       resolve(router_list);
     });
   });
 }
+
 
   startAP() {
   console.log(TAG, "starting access point...");
@@ -205,24 +248,29 @@ class ConnectionManager {
 
     });
 
-  database.getByKey("network","apList").then(function(obj) {
-    let apList = [];
-    let ssidExists = false;
+    database.getValueByKey("network","apList").then(function(obj) {
+      let apList = [];
+      let ssidExists = false;
+      if (obj.apList) apList = obj.apList;
 
-    if (obj.apList) apList = obj.apList;
-
-    for (let i=0; i < apList.length; i++) {
-      if (apList[i].ssid === apInfo.ssid) {
-        apList[i].password = apInfo.password;
-        ssidExists = true;
+      for (let i=0; i < apList.length; i++) {
+        if (apList[i].ssid === apInfo.ssid) {
+          apList[i].password = apInfo.password;
+          ssidExists = true;
+        }
       }
-    }
 
-    if (!ssidExists) apList.push(apInfo);
-    database.store("network",{apList:apList});
-    console.log(TAG, "setWifi", apList);
-  }, function(err) {console.error(err);})
-}
+      if (!ssidExists) apList.push(apInfo);
+      database.store("network",{apList:apList});
+      database.store("network",{mode:"client"});
+      console.log(TAG, "setWifi", apList);
+    }, function(err) {
+      console.error(err);
+    })
+  }
+
+
+
 }
 
 module.exports = new ConnectionManager();

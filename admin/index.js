@@ -5,9 +5,9 @@ const express = require('express'),
   server = require('http').createServer(app),
   io = require('socket.io')(server),
   port = process.env.PORT || 3000,
-  ConnectionManager = require('../../services/connection.js'),
-  System = require('../../services/system.js'),
-  database = require('../../services/database.js');
+  ConnectionManager = require('../services/connection.js'),
+  System = require('../services/system.js'),
+  database = require('../services/database.js');
 
 let TAG = "[index]";
 
@@ -20,16 +20,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
 
-  var scanWifiPromise = ConnectionManager.scanWifi();
-  scanWifiPromise.then(function(result) {
+  ConnectionManager.scanWifi().then(function(result) {
       socket.emit('router list',result);
       console.log(result);
   }, function(err) {
       console.log(err);
   })
 
-  var getDeviceIDPromise = database.getDeviceID();
-  getDeviceIDPromise.then(function(device_id) {
+  database.getDeviceID().then(function(device_id) {
       socket.emit('device_id',device_id);
       //console.log(device_id);
   }, function(err) {
@@ -39,7 +37,7 @@ io.on('connection', (socket) => {
   socket.on('store ap', (apInfo) => {
     console.log(TAG,"apInfo", apInfo);
     ConnectionManager.setWifi(apInfo);
-    System.reboot();
+    //System.reboot();
   });
 
 });

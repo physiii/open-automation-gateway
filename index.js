@@ -2,9 +2,9 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- Gateway ------------------------------ //
 
-software_version = '0.2';
+
 const TAG = '[index.js]',
-  FREE_SPACE_LIMIT = 500 * 1000000;
+MINIMUM_FREE_SPACE = 5; //minimum free space in precent
 
 // ----------------------------------------------------- //
 // import config or create new config.json with defaults //
@@ -30,10 +30,11 @@ try {
 
 const utils = require('./utils'),
   ConnectionManager = require('./services/connection.js'),
-  database = require('./services/database.js'),
+  System = require('./services/system.js'),
+  Database = require('./services/database.js'),
   devices = require('./devices/devices-manager.js'),
-  diskUsage = require('diskusage');
-  admin = require('./admin/basic/index.js');
+  diskUsage = require('diskusage'),
+  admin = require('./admin/index.js');
 
 if (config.zwave) {
   zwave = require('./zwave.js');
@@ -44,8 +45,9 @@ if (config.use_dev) {
   console.warn('WARNING: Gateway is running in development mode. SSL security is compromised.');
 }
 
+ConnectionManager.connectionLoop();
 // Get settings and load devices from database.
-database.get_settings().then((settings) => {
+Database.get_settings().then((settings) => {
   devices.loadDevicesFromDb().then(() => {
     let main_device = devices.getDeviceById(settings.main_device_id);
 
@@ -56,7 +58,7 @@ database.get_settings().then((settings) => {
           {type: 'gateway'}
         ]
       }).then((new_main_device) => {
-        database.store_settings({
+        Database.store_settings({
           ...settings,
           main_device_id: new_main_device.id
         });
@@ -69,36 +71,16 @@ database.get_settings().then((settings) => {
   });
 });
 
-function checkDiskSpace () {
-  diskUsage.check('/', function (error, info) {
-    if (error) {
-      console.log(TAG, error);
-      return;
-    }
-
-    module.exports.disk = {
-      free: info.free,
-      total: info.total
-    };
-
-    if (info.free < FREE_SPACE_LIMIT) {
-      utils.removeOldCameraRecordings().then(checkDiskSpace);
-    }
-
-    console.log(TAG, 'free space:', info.free);
-  });
-}
-
 function main_loop () {
-  var settings = {
+  /*var settings = {
     public_ip: ConnectionManager.getPublicIP(),
     local_ip: ConnectionManager.getLocalIP(),
     disk: utils.disk
   };
 
-  database.store_settings(settings);
+  Database.store_settings(settings);*/
 
-  // if (database.settings.ap_mode) {
+  // if (Database.settings.ap_mode) {
   //   ap_time = Date.now() - ap_time_start;
 
   //   console.log('ap_time', ap_time);
@@ -106,16 +88,19 @@ function main_loop () {
   //   if (ap_time > 10 * 60 * 1000) {
   //     console.log('Trying wifi again...');
 
-  //     database.get_settings().then((db_settings) => {
+  //     Database.get_settings().then((db_settings) => {
   //       ConnectionManager.setWifi(db_settings);
   //     });
   //     exec('sudo reboot');
   //   }
   // }
 
-  ConnectionManager.getPublicIP();
-  ConnectionManager.scanWifi();
-  checkDiskSpace();
+  System.checkDiskSpace().then((info) => {
+    let ratio = info.free/info.total;
+    if (ratio < MINIMUM_FREE_SPACE/100) {
+      utils.removeOldCameraRecordings();
+    }
+  });
 }
 
 main_loop();
