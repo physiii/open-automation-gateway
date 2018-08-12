@@ -92,6 +92,7 @@ class ConnectionManager {
 
   connectionLoop() {
       var self = this;
+
       self.getStatus().then(function(isAlive) {
         console.log(TAG,"connectionLoop",isAlive);
         if (isAlive) {
@@ -106,17 +107,17 @@ class ConnectionManager {
         }
       });
 
-
       self.scanWifi().then((apScanList) => {
         console.log(TAG,apScanList);
         self.getMode().then(function (mode) {
-          //mode = "AP";
           if (mode === "AP") {
             self.getStoredConnections().then(function(apList) {
               for (let i=0; i < apList.length; i++) {
                 for (let j=0; j < apScanList.length; j++) {
                   if (apList[i].ssid === apScanList[j].ssid) {
-                    self.setWifi(apList[i]);
+                    if (apList[i].lastAttempGood) {
+                      self.setWifi(apList[i]);
+                    }
                 }
               }
             }
@@ -126,6 +127,7 @@ class ConnectionManager {
     }, function(err) {
         console.log(err);
     })
+
     setTimeout(function () {
       self.connectionLoop();
     }, 20*1000);
@@ -137,35 +139,6 @@ class ConnectionManager {
       ping.sys.probe(host, function(isAlive) {
         resolve(isAlive);
       });
-    /*var msg = isAlive ? 'alive' : 'dead';
-    if (msg == 'dead') {
-      bad_connection++;
-      console.log(TAG, 'bad_connection',bad_connection);
-      if (!ap_mode && bad_connection > 2) {
-        //console.log(TAG, "no connection, starting access point");
-	      //this.startAP()
-        var interfaces_file = "allow-hotplug wlan0\n"
-                   + "iface wlan0 inet static\n"
-    		   + "address 172.24.1.1\n"
-    		   + "netmask 255.255.255.0\n"
-    		   + "network 172.24.1.0\n"
-    		   + "broadcast 172.24.1.255\n";
-        fs.writeFile("/etc/network/interfaces", interfaces_file, function(err) {
-          if(err) return console.log(err);
-          console.log("Interface file saved, starting AP");
-          exec("sudo ifdown wlan0 && sudo ifup wlan0 && sudo service dnsmasq restart && sudo hostapd /etc/hostapd/hostapd.conf");
-          ap_mode = true;
-
-          ap_time_start = Date.now();
-        });
-        //bad_connection = 0;
-      }
-    }
-    if (msg == 'alive') {
-      console.log(TAG, "connection is good!");
-      bad_connection = 0;
-    }
-  });*/
   })
 }
 
@@ -225,7 +198,7 @@ class ConnectionManager {
                        + "update_config=1\n"
 		       + "country=GB\n"
                        + "network={\n"
-		       + "ssid=\""+apInfo.name+"\"\n"
+		       + "ssid=\""+apInfo.ssid+"\"\n"
 		       + "psk=\""+apInfo.password+"\"\n"
 		       + "key_mgmt=WPA-PSK\n"
 		       + "}\n";
