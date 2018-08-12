@@ -248,7 +248,6 @@ class ConnectionManager {
       exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
       exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
       exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-      System.reboot();
     });
 
     Database.getValueByKey("network","apList").then(function(obj) {
@@ -273,6 +272,8 @@ class ConnectionManager {
     }, function(err) {
       console.error(err);
     })
+
+    System.reboot();
   }
 
 

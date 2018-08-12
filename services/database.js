@@ -1,5 +1,5 @@
 const MongoClient = require('mongodb').MongoClient,
-	TAG = '[database.js]';
+	TAG = '[Database]';
 
 var settings = {};
 
@@ -34,6 +34,7 @@ class Database {
 				reject('Database error');
 				return console.error(TAG, 'store', error);
 			}
+			console.log(TAG,"store",data);
 			resolve();
 		});
 	});
@@ -63,8 +64,6 @@ class Database {
 				reject('Database error');
 				return;
 			}
-			//module.exports.settings = settings;
-			//console.log("getDeviceID ",device_id);
 			resolve(device_id);
 		});
 	});
