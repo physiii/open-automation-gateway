@@ -12,7 +12,7 @@ const exec = require('child_process').exec,
   System = require ("../services/system.js"),
   config = require ("../config.json"),
   CONNECTION_LOOP_TIME = 20, //seconds between running connectionLoop
-  CONNECTION_TIMEOUT = 20, //seconds to consider connection timed out
+  CONNECTION_TIMEOUT = config.connection_timeout || 60, //seconds to consider connection timed out
   TAG = "[connection-manager]";
 
 var LastGoodConnection = Date.now();
