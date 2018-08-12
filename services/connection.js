@@ -11,8 +11,8 @@ const exec = require('child_process').exec,
   Database = require ("../services/database.js"),
   System = require ("../services/system.js"),
   config = require ("../config.json"),
-  ap_mode = false,
-  bad_connection = 0,
+  CONNECTION_LOOP_TIME = 20, //seconds between running connectionLoop
+  CONNECTION_TIMEOUT = 20, //seconds to consider connection timed out
   TAG = "[connection-manager]";
 
 var LastGoodConnection = Date.now();
@@ -30,6 +30,50 @@ class ConnectionManager {
     this.connectionLoop();*/
 		return;
 	}
+
+  connectionLoop() {
+    var self = this;
+
+    self.getStatus().then(function(isAlive) {
+      if (isAlive) {
+        self.setCurrentAPStatus("connected");
+        self.setConnAttempts(0);
+      } else {
+        let difference = Date.now() - LastGoodConnection;
+        console.log(TAG,"bad connection, last good:",difference);
+        if (difference > CONNECTION_TIMEOUT * 1000) {
+          self.setCurrentAPStatus("disconnected");
+          self.getMode().then((mode) => {
+            if (mode !== "AP") self.startAP();
+          })
+        }
+      }
+    });
+
+    self.scanWifi().then((apScanList) => {
+      self.getMode().then((mode) => {
+        if (mode === "AP") {
+          self.getStoredConnections().then(function(apList) {
+            for (let i=0; i < apList.length; i++) {
+              for (let j=0; j < apScanList.length; j++) {
+                if (apList[i].ssid === apScanList[j].ssid) {
+                  if (apList[i].connAttempts <= 3) {
+                    self.setWifi(apList[i]);
+                  } else console.log("3 failed attempts with ssid on scan",apList[i].ssid);
+                }
+              }
+            }
+          })
+        }
+      })
+    }, function(err) {
+      console.log(err);
+    })
+
+    setTimeout(function () {
+      self.connectionLoop();
+    }, CONNECTION_LOOP_TIME*1000);
+  }
 
   getStoredConnections() {
     return new Promise(function(resolve, reject) {
@@ -209,50 +253,6 @@ class ConnectionManager {
         console.error(TAG, "setCurrentAPStatus", err);
       })
     })
-  }
-
-  connectionLoop() {
-    var self = this;
-
-    self.getStatus().then(function(isAlive) {
-      if (isAlive) {
-        self.setCurrentAPStatus("connected");
-        self.setConnAttempts(0);
-      } else {
-        let difference = Date.now() - LastGoodConnection;
-        console.log(TAG,"bad connection, last good:",difference);
-        if (difference > 20 * 1000) {
-          self.setCurrentAPStatus("disconnected");
-          self.getMode().then((mode) => {
-            if (mode !== "AP") self.startAP();
-          })
-        }
-      }
-    });
-
-    self.scanWifi().then((apScanList) => {
-      self.getMode().then((mode) => {
-        if (mode === "AP") {
-          self.getStoredConnections().then(function(apList) {
-            for (let i=0; i < apList.length; i++) {
-              for (let j=0; j < apScanList.length; j++) {
-                if (apList[i].ssid === apScanList[j].ssid) {
-                  if (apList[i].connAttempts <= 3) {
-                    self.setWifi(apList[i]);
-                  } else console.log("3 failed attempts with ssid on scan",apList[i].ssid);
-                }
-              }
-            }
-          })
-        }
-      })
-    }, function(err) {
-      console.log(err);
-    })
-
-    setTimeout(function () {
-      self.connectionLoop();
-    }, 10*1000);
   }
 
   scanWifi() {

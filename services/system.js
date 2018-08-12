@@ -36,8 +36,12 @@ class System {
     }, delay * 1000);
   }
 
-  version () {
+  softwareInfo () {
     return "0.2";
+  }
+
+  hardwareInfo () {
+    return {"device":"raspberrypi"};
   }
 }
 
