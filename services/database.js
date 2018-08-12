@@ -36,7 +36,6 @@ class Database {
 				reject('Database error');
 				return console.error(TAG, 'store', error);
 			}
-			console.log(TAG,"store",data);
 			resolve();
 		});
 	});

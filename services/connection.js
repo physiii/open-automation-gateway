@@ -92,7 +92,6 @@ class ConnectionManager {
   setCurrentAPStatus(status) {
     Database.getValueByKey("network","current_ap").then((obj) => {
       if (!obj) return console.log(TAG,"current_ap not found");
-      console.log(TAG, "setCurrentAPStatus", obj);
       let ssid = obj.current_ap.ssid
       Database.getValueByKey("network","apList").then((obj) => {
       let apList = [];
@@ -190,17 +189,17 @@ class ConnectionManager {
     }
     console.log(TAG, "starting access point...");
     Database.store("network",{mode:"AP"});
-    let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
-    let dnsmasq_ap_path = __dirname + "/files/dnsmasq.conf.ap";
-    let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
-    let hostapd_default_ap_path = __dirname + "/files/hostapd.ap";
-    let rc_local_ap_path = __dirname + "/files/rc.local.ap";
-    let interfaces_ap_path = __dirname + "/files/interfaces.ap";
-    let sysctl_ap_path = __dirname + "/files/sysctl.conf.ap";
+    let dhcpcd_ap_path = __dirname + "/../files/dhcpcd.conf.ap";
+    let dnsmasq_ap_path = __dirname + "/../files/dnsmasq.conf.ap";
+    let hostapd_ap_path = __dirname + "/../files/hostapd.conf.ap";
+    let hostapd_default_ap_path = __dirname + "/../files/hostapd.ap";
+    let rc_local_ap_path = __dirname + "/../files/rc.local.ap";
+    let interfaces_ap_path = __dirname + "/../files/interfaces.ap";
+    let sysctl_ap_path = __dirname + "/../files/sysctl.conf.ap";
 
     //let command = "cat "+rc_local_cl_path;
     //exec(command, (error, stdout, stderr) => {console.log(stdout)});
-    //console.log("sudo cp "+interfaces_ap_path+" /etc/network/interfaces");
+    console.log("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf");
     //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
@@ -238,11 +237,11 @@ class ConnectionManager {
         return console.error(TAG, err);
       }
 
-      let dhcpcd_cl_path = __dirname + "/files/dhcpcd.conf.cl";
-      let hostapd_cl_path = __dirname + "/files/hostapd.conf.cl";
-      let hostapd_default_cl_path = __dirname + "/files/hostapd.cl";
-      let rc_local_cl_path = __dirname + "/files/rc.local.cl";
-      let interfaces_cl_path = __dirname + "/files/rc.local.cl";
+      let dhcpcd_cl_path = __dirname + "/../files/dhcpcd.conf.cl";
+      let hostapd_cl_path = __dirname + "/../files/hostapd.conf.cl";
+      let hostapd_default_cl_path = __dirname + "/../files/hostapd.cl";
+      let rc_local_cl_path = __dirname + "/../files/rc.local.cl";
+      let interfaces_cl_path = __dirname + "/../files/rc.local.cl";
 
       //console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
       //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
