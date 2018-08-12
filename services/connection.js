@@ -8,7 +8,8 @@ const exec = require('child_process').exec,
   os = require('os'),
   fs = require('fs'),
   ping = require ("ping"),
-  database = require ("../services/database"),
+  Database = require ("../services/database.js"),
+  System = require ("../services/system.js"),
   config = require ("../config.json"),
   ap_mode = false,
   bad_connection = 0,
@@ -31,7 +32,7 @@ class ConnectionManager {
 
   getStoredConnections() {
     return new Promise(function(resolve, reject) {
-      database.getValueByKey("network","apList").then(function(obj) {
+      Database.getValueByKey("network","apList").then(function(obj) {
         resolve(obj.apList);
       })
     })
@@ -84,13 +85,28 @@ class ConnectionManager {
 
   setLastGoodConnection(date) {
     LastGoodConnection = date;
-    self.getStoredConnections().then(function(apList) {
-      apList.forEach((ap) => {
-        if (apList[i].lastAttempGood) {
-          self.setWifi(apList[i]);
+    return;
+  }
+
+  setCurrentAPStatus(status) {
+    Database.getValueByKey("network","current_ap").then((obj) => {
+      let ssid = obj.current_ap.ssid;
+      console.log(TAG, "setCurrentAPStatus", ssid);
+      Database.getValueByKey("network","apList").then((obj) => {
+      let apList = [];
+      if (obj.apList) apList = obj.apList;
+      for (let i=0; i < apList.length; i++) {
+        if (apList[i].ssid === ssid) {
+          apList[i].lastStatus = status;
         }
-      });
+      }
+
+      Database.store("network",{apList:apList});
+
+    }, function(err) {
+      console.error(err);
     })
+  })
   }
 
   getLastGoodConnection() {
@@ -101,30 +117,28 @@ class ConnectionManager {
     var self = this;
 
     self.getStatus().then(function(isAlive) {
-      console.log(TAG,"connectionLoop",isAlive);
       if (isAlive) {
-        console.log(TAG,"connection is good");
-        self.setLastGoodConnection(Date.now());
+        self.setCurrentAPStatus("connected");
       } else {
         let difference = Date.now() - LastGoodConnection;
         console.log(TAG,"bad connection, last good:",difference);
         if (difference > 20 * 1000) {
+          self.setCurrentAPStatus("disconnected");
           self.startAP();
         }
       }
     });
 
     self.scanWifi().then((apScanList) => {
-      console.log(TAG,apScanList);
       self.getMode().then(function (mode) {
         if (mode === "AP") {
           self.getStoredConnections().then(function(apList) {
             for (let i=0; i < apList.length; i++) {
               for (let j=0; j < apScanList.length; j++) {
                 if (apList[i].ssid === apScanList[j].ssid) {
-                  if (apList[i].lastAttempGood) {
+                  if (apList[i].lastStatus === "connected") {
                     self.setWifi(apList[i]);
-                  }
+                  } else console.log("last connect was bad! ",apList[i].ssid);
                 }
               }
             }
@@ -174,7 +188,7 @@ class ConnectionManager {
       return console.log("startAP: manage network disabled in config.json");
     }
     console.log(TAG, "starting access point...");
-    database.store("network",{mode:"AP"});
+    Database.store("network",{mode:"AP"});
     let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
     let dnsmasq_ap_path = __dirname + "/files/dnsmasq.conf.ap";
     let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
@@ -193,7 +207,7 @@ class ConnectionManager {
     exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
+    System.reboot();
   }
 
   setWifi(apInfo) {
@@ -234,25 +248,26 @@ class ConnectionManager {
       exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
       exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
       exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-      exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
+      System.reboot();
     });
 
-    database.getValueByKey("network","apList").then(function(obj) {
+    Database.getValueByKey("network","apList").then(function(obj) {
+      apInfo.lastStatus = "connecting";
       let apList = [];
       let ssidExists = false;
       if (obj.apList) apList = obj.apList;
-
       for (let i=0; i < apList.length; i++) {
         if (apList[i].ssid === apInfo.ssid) {
+          apList[i].lastStatus = "connecting";
           apList[i].password = apInfo.password;
           ssidExists = true;
         }
       }
 
       if (!ssidExists) apList.push(apInfo);
-      database.store("network",{apList:apList});
-      database.store("network",{mode:"client"});
-      database.store("network",{current_ap:apInfo.ssid});
+      Database.store("network",{apList:apList});
+      Database.store("network",{mode:"client"});
+      Database.store("network",{current_ap:{ssid:apInfo.ssid}});
 
       console.log(TAG, "setWifi", apList);
     }, function(err) {

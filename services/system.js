@@ -3,7 +3,8 @@
 // ------------------------------- connection.js -------------------------- //
 
 const exec = require('child_process').exec,
-  diskUsage = require('diskusage');
+  diskUsage = require('diskusage'),
+  config = require('../config.json');
 
 let TAG = "[connection-manager]";
 
@@ -28,6 +29,7 @@ class System {
   }
 
   reboot () {
+    if (config.disable_reboot) return;
     exec("sudo reboot");
   }
 
