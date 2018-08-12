@@ -38,6 +38,7 @@ class ConnectionManager {
       if (isAlive) {
         self.setCurrentAPStatus("connected");
         self.setConnAttempts(0);
+        self.setLastGoodConnection();
       } else {
         let difference = Date.now() - LastGoodConnection;
         console.log(TAG,"bad connection, last good:",difference);
@@ -210,8 +211,8 @@ class ConnectionManager {
     System.reboot(3);
   }
 
-  setLastGoodConnection(date) {
-    LastGoodConnection = date;
+  setLastGoodConnection() {
+    LastGoodConnection = Data.now();
     return;
   }
 
