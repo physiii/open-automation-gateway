@@ -212,7 +212,7 @@ class ConnectionManager {
   }
 
   setLastGoodConnection() {
-    LastGoodConnection = Data.now();
+    LastGoodConnection = Date.now();
     return;
   }
 
