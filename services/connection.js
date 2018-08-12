@@ -92,34 +92,37 @@ class ConnectionManager {
 
   connectionLoop() {
       var self = this;
-      console.log(TAG,"connectionLoop");
-      this.getStatus().then(function(isAlive) {
-        if (isAlive === 'alive') {
-          console.log(TAG,"alive since:",LastGoodConnection);
-          this.setLastGoodConnection(Date.now());
-        }
-        if (isAlive === 'dead') {
-          console.log(TAG,"dead since:",LastGoodConnection);
+      self.getStatus().then(function(isAlive) {
+        console.log(TAG,"connectionLoop",isAlive);
+        if (isAlive) {
+          console.log(TAG,"connection is good");
+          self.setLastGoodConnection(Date.now());
+        } else {
+          let difference = Date.now() - LastGoodConnection;
+          console.log(TAG,"bad connection, last good:",difference);
+          if (difference > 20 * 1000) {
+            self.startAP();
+          }
         }
       });
 
 
-      this.scanWifi().then((apScanList) => {
+      self.scanWifi().then((apScanList) => {
         console.log(TAG,apScanList);
-        /*this.getMode().then(function (mode) {
+        self.getMode().then(function (mode) {
           //mode = "AP";
           if (mode === "AP") {
-            this.getStoredConnections().then(function(apList) {
+            self.getStoredConnections().then(function(apList) {
               for (let i=0; i < apList.length; i++) {
                 for (let j=0; j < apScanList.length; j++) {
                   if (apList[i].ssid === apScanList[j].ssid) {
-                    this.setWifi(apList[i]);
+                    self.setWifi(apList[i]);
                 }
               }
             }
           })
         }
-      })*/
+      })
     }, function(err) {
         console.log(err);
     })
@@ -187,8 +190,11 @@ class ConnectionManager {
 
 
   startAP() {
+  if (!config.manage_network) {
+      return console.log("startAP: manage network disabled in config.json");
+  }
   console.log(TAG, "starting access point...");
-
+  database.store("network",{mode:"AP"});
   let dhcpcd_ap_path = __dirname + "/files/dhcpcd.conf.ap";
   let dnsmasq_ap_path = __dirname + "/files/dnsmasq.conf.ap";
   let hostapd_ap_path = __dirname + "/files/hostapd.conf.ap";
@@ -211,6 +217,10 @@ class ConnectionManager {
 }
 
   setWifi(apInfo) {
+    if (!config.manage_network) {
+      return console.log("setWifi: manage network disabled in config.json");
+    }
+
     var wpa_supplicant = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n"
                        + "update_config=1\n"
 		       + "country=GB\n"
@@ -244,7 +254,7 @@ class ConnectionManager {
     exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
     exec("sudo cp "+rc_local_cl_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-    //dexec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
+    exec("sleep 2 && sudo reboot", (error, stdout, stderr) => {});
 
     });
 

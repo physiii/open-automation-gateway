@@ -72,29 +72,6 @@ Database.get_settings().then((settings) => {
 });
 
 function main_loop () {
-  /*var settings = {
-    public_ip: ConnectionManager.getPublicIP(),
-    local_ip: ConnectionManager.getLocalIP(),
-    disk: utils.disk
-  };
-
-  Database.store_settings(settings);*/
-
-  // if (Database.settings.ap_mode) {
-  //   ap_time = Date.now() - ap_time_start;
-
-  //   console.log('ap_time', ap_time);
-
-  //   if (ap_time > 10 * 60 * 1000) {
-  //     console.log('Trying wifi again...');
-
-  //     Database.get_settings().then((db_settings) => {
-  //       ConnectionManager.setWifi(db_settings);
-  //     });
-  //     exec('sudo reboot');
-  //   }
-  // }
-
   System.checkDiskSpace().then((info) => {
     let ratio = info.free/info.total;
     if (ratio < MINIMUM_FREE_SPACE/100) {
