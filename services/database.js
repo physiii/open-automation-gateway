@@ -23,6 +23,8 @@ class Database {
 			}
 			callback(db, resolve, reject);
 		});
+	}).catch((error) => {
+		//console.log(TAG,"query error:",error);
 	});
 	}
 
@@ -48,7 +50,7 @@ class Database {
 			db.collection(collection).find().toArray((error, result) => {
 				db.close();
 				if (error) reject('Database error');
-				if (!result[0]) reject('key not found');
+				if (!result[0]) reject();
 				resolve(result[0]);
 			});
 		});
@@ -118,7 +120,6 @@ class Database {
 				reject('Database error');
 				return;
 			}
-
 			resolve(record);
 		});
 	});

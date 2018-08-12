@@ -22,7 +22,6 @@ io.on('connection', (socket) => {
 
   ConnectionManager.scanWifi().then(function(result) {
       socket.emit('router list',result);
-      console.log(result);
   }, function(err) {
       console.log(err);
   })

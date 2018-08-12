@@ -32,7 +32,8 @@ class ConnectionManager {
 
   getStoredConnections() {
     return new Promise(function(resolve, reject) {
-      Database.getValueByKey("network","apList").then(function(obj) {
+      Database.getValueByKey("network","apList").then((obj) => {
+        if (!obj) reject();
         resolve(obj.apList);
       })
     })
@@ -90,6 +91,7 @@ class ConnectionManager {
 
   setCurrentAPStatus(status) {
     Database.getValueByKey("network","current_ap").then((obj) => {
+      if (!obj) return console.log(TAG,"current_ap not found");
       console.log(TAG, "setCurrentAPStatus", obj);
       let ssid = obj.current_ap.ssid
       Database.getValueByKey("network","apList").then((obj) => {
@@ -100,7 +102,6 @@ class ConnectionManager {
           apList[i].lastStatus = status;
         }
       }
-
       Database.store("network",{apList:apList});
 
     }, function(err) {
@@ -151,7 +152,7 @@ class ConnectionManager {
 
     setTimeout(function () {
       self.connectionLoop();
-    }, 20*1000);
+    }, 10*1000);
   }
 
   getStatus() {
@@ -243,7 +244,7 @@ class ConnectionManager {
       let rc_local_cl_path = __dirname + "/files/rc.local.cl";
       let interfaces_cl_path = __dirname + "/files/rc.local.cl";
 
-      console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
+      //console.log("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf");
       //exec("sudo cp "+interfaces_cl_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
       exec("sudo cp "+hostapd_default_cl_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
       exec("sudo cp "+dhcpcd_cl_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
@@ -254,7 +255,10 @@ class ConnectionManager {
       apInfo.lastStatus = "connecting";
       let apList = [];
       let ssidExists = false;
-      if (obj.apList) apList = obj.apList;
+      console.log(TAG,"GETTING apLIST",obj);
+      if (obj)
+        if (obj.apList) apList = obj.apList;
+
       for (let i=0; i < apList.length; i++) {
         if (apList[i].ssid === apInfo.ssid) {
           apList[i].lastStatus = "connecting";
