@@ -90,8 +90,8 @@ class ConnectionManager {
 
   setCurrentAPStatus(status) {
     Database.getValueByKey("network","current_ap").then((obj) => {
-      let ssid = obj.current_ap.ssid;
-      console.log(TAG, "setCurrentAPStatus", ssid);
+      console.log(TAG, "setCurrentAPStatus", obj);
+      let ssid = obj.current_ap.ssid
       Database.getValueByKey("network","apList").then((obj) => {
       let apList = [];
       if (obj.apList) apList = obj.apList;
@@ -104,7 +104,7 @@ class ConnectionManager {
       Database.store("network",{apList:apList});
 
     }, function(err) {
-      console.error(err);
+      console.error(TAG, "setCurrentAPStatus", err);
     })
   })
   }

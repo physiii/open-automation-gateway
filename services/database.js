@@ -48,7 +48,7 @@ class Database {
 			db.collection(collection).find().toArray((error, result) => {
 				db.close();
 				if (error) reject('Database error');
-				if (!result[0]) resolve({});
+				if (!result[0]) reject('key not found');
 				resolve(result[0]);
 			});
 		});
