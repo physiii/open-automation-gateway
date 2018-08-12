@@ -219,7 +219,7 @@ class ConnectionManager {
            + "update_config=1\n"
 		       + "country=GB\n"
            + "network={\n"
-		       + "ssid=\""+apInfo.name+"\"\n"
+		       + "ssid=\""+apInfo.ssid+"\"\n"
 		       + "psk=\""+apInfo.password+"\"\n"
 		       + "key_mgmt=WPA-PSK\n"
 		       + "}\n";
