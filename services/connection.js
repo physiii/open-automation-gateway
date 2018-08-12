@@ -77,7 +77,7 @@ class ConnectionManager {
     return new Promise(function(resolve, reject) {
       exec("grep /etc/dhcpcd.conf -e '192.168.4.1'", (error, stdout, stderr) => {
         if (stdout.length > 1) {
-          console.log(TAG, "device is in access point mode");
+          //console.log(TAG, "device is in access point mode");
           resolve("AP")
         } else resolve("client");
       })
@@ -124,13 +124,15 @@ class ConnectionManager {
         console.log(TAG,"bad connection, last good:",difference);
         if (difference > 20 * 1000) {
           self.setCurrentAPStatus("disconnected");
-          self.startAP();
+          self.getMode().then((mode) => {
+            if (mode !== "AP") self.startAP();
+          })
         }
       }
     });
 
     self.scanWifi().then((apScanList) => {
-      self.getMode().then(function (mode) {
+      self.getMode().then((mode) => {
         if (mode === "AP") {
           self.getStoredConnections().then(function(apList) {
             for (let i=0; i < apList.length; i++) {
@@ -254,7 +256,6 @@ class ConnectionManager {
       apInfo.lastStatus = "connecting";
       let apList = [];
       let ssidExists = false;
-      console.log(TAG,"GETTING apLIST",obj);
       if (obj)
         if (obj.apList) apList = obj.apList;
 
