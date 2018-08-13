@@ -52,19 +52,19 @@ Uses motion to trigger recording to local disk and local disk can be proxied (wo
 2. git clone https://github.com/physiii/open-automation.git && cd open-automation && sh install.sh
 
 ## example config.json:
-{
- "relay_server":"192.169.244.100",
- "relay_port":5050,
- "zwave":false,
- "zwave_dev":"ACM0",
- "use_ssl":false,
- "use_dev":true,
- "video_stream_port":8083,
- "rotation": 0,
- "lock_timer": "0",
- "device_hw":"",
- "manage_network":true,
- "disable_reboot":true,
- "connection_timeout":60,
- "wifi_adapter":"wlan0"
-}
+    {
+     "relay_server":"127.0.0.1",
+     "relay_port":5050,
+     "zwave":false,
+     "zwave_dev":"ACM0",
+     "use_ssl":false,
+     "use_dev":true,
+     "video_stream_port":8083,
+     "rotation": 0,
+     "lock_timer": "0",
+     "device_hw":"",
+     "manage_network":true,
+     "disable_reboot":true,
+     "connection_timeout":60,
+     "wifi_adapter":"wlan0"
+    }
