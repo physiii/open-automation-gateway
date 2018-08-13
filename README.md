@@ -54,7 +54,7 @@ Uses motion to trigger recording to local disk and local disk can be proxied (wo
 ## example config.json:
     {
      "relay_server":"127.0.0.1",
-     "relay_port":5050,
+     "relay_port":5000,
      "zwave":false,
      "zwave_dev":"ACM0",
      "use_ssl":false,
