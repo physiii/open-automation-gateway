@@ -11,7 +11,8 @@ function createDeviceSocket (deviceId, deviceToken) {
 			polling: {
 				extraHeaders: {
 					'x-device-id': deviceId,
-					'x-device-token': deviceToken
+					'x-device-token': deviceToken,
+					'x-device-type': 'gateway'
 				}
 			}
 		},
