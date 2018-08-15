@@ -35,8 +35,8 @@ class WiFiThermostatDriver {
 		this.getThermostatState().then((data) => {
 			const state = JSON.parse(data);
 
-			this.settings = this.configureData(state);
-			this.events.emit('ready', this.settings);
+			this.state = this.initializeData(state);
+			this.events.emit('ready', this.state);
 			this.ready = true;
 		});
 
@@ -52,8 +52,7 @@ class WiFiThermostatDriver {
 
 		setInterval((self) => {
 			self.getThermostatState().then((data) => {
-				self.settings = self.configureData(JSON.parse(data));
-				self.events.emit('state update', self.settings)
+				self.state = self.configureData(JSON.parse(data));
 			}).catch((error) => {
 				console.log(TAG, 'Polling error:', error);
 			})
@@ -147,21 +146,39 @@ class WiFiThermostatDriver {
 	}
 
 	configureData (data) {
-		return {
+		let results = {
 			mode: THERMOSTAT_MODES[data.tmode],
 			fan_mode: FAN_MODES[data.fmode],
 			hold_mode: HOLD_MODES[data.hold],
 			current_temp: data.temp,
 			target_temp: data.t_cool || data.t_heat
 		};
+
+		if (this.state.mode != results.mode) this.events.emit('mode-changed', results.mode);
+		if (this.state.current_temp != results.current_temp) this.events.emit('current-temp-changed', results.current_temp);
+		if (this.state.target_temp != results.target_temp) this.events.emit('target-temp-changed', results.target_temp);
+		if (this.state.fan_mode != results.fan_mode) this.events.emit('fan-mode-changed', results.fan_mode);
+		if (this.state.hold_mode != results.hold_mode) this.events.emit('hold-mode-changed', results.hold_mode);
+
+		return results;
+	}
+	
+	initializeData (data) {
+		return {
+			mode: THERMOSTAT_MODES[data.tmode],
+			fan_mode: FAN_MODES[data.fmode],
+			hold_mode: HOLD_MODES[data.hold],
+			current_temp: data.temp,
+			target_temp: data.t_cool || data.t_heat
+		}
 	}
 
 	postRequest (data) {
 		return new Promise((resolve, reject) => {
 			request.post({
 				headers: {'content-type' : 'application/x-www-form-urlencoded'},
-				url:     'http://' + this.ip + '/tstat',
-				body:    JSON.stringify(data)
+				url: 'http://' + this.ip + '/tstat',
+				body: JSON.stringify(data)
 			}, (error, response, body) => {
 				if (error) {
 					reject(error);
