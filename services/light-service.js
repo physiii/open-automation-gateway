@@ -11,35 +11,41 @@ class LightService extends Service {
 		this.bridge_id = data.bridge_id;
 
 		this.driver = new HueLightDriver(this.light_id, this.bridge_id);
+		this.subscribeToDriver();
+	}
+
+	subscribeToDriver () {
+		this.driver.on('ready', (data) => this.onReady(data));
+		this.driver.on('power-changed', (power) => this.state.power = power);
+		this.driver.on('brightness-changed', (brightness) => this.state.brightness = brightness);
+		this.driver.on('color-changed', (color) => this.state.color = color);
+	}
+
+	onReady (data) {
+		this.state.power = data.power;
+		this.state.brightness = data.brightness;
+		this.state.color = data.color;
 	}
 
 	lightOn () {
 		this.driver.lightOn();
-		this.state.power = true;
 	}
 
 	lightOff () {
 		this.driver.lightOff();
-		this.state.power = false;
 	}
 
 	setBrightness (brightness) {
 		this.driver.setBrightness(brightness);
-		
-		if (this.state.brightness === brightness) return;
-		
-		this.state.brightness = brightness;
 	}
 
 	setColor (color) {
 		this.driver.setColor(color);
-		this.state.color = color
 	}
 
 	setLightName (name) {
 		this.driver.setLightName(name);
-		this.state.name = name;
-	}	
+	}
 
 	dbSerialize () {
 		return {

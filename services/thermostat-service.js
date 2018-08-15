@@ -15,13 +15,13 @@ class ThermostatService extends Service {
 
 	subscribeToDriver () {
 		this.driver.on('ready', (data) => this.onReady(data));
-		this.driver.on('mode update', (value) => this.state.mode = value);
-		this.driver.on('temp update', (value) => this.state.current_temp = value);
-		this.driver.on('target update', (value) => this.state.target_temp = value);
-		this.driver.on('fanmode update', (value) => this.state.fan_mode = value);
-		this.driver.on('holdmode update', (value) => this.state.hold_mode = value);
+		this.driver.on('mode-changed', (mode) => this.state.mode = mode);
+		this.driver.on('current-temp-changed', (current_temp) => this.state.current_temp = current_temp);
+		this.driver.on('target-temp-changed', (target_temp) => this.state.target_temp = target_temp);
+		this.driver.on('fan-mode-changed', (fan_mode) => this.state.fan_mode = fan_mode);
+		this.driver.on('hold-mode-changed', (hold_mode) => this.state.hold_mode = hold_mode);
 	}
-	
+
 	onReady (data) {
 		this.state.mode = data.mode;
 		this.state.current_temp = data.current_temp;
@@ -32,17 +32,14 @@ class ThermostatService extends Service {
 
 	setThermostatMode (mode) {
 		this.driver.setThermostatMode(mode);
-		
 	}
 
 	setTemp (temp) {
 		this.driver.setTemp(temp);
-		
 	}
 
 	setHoldMode (mode) {
-		this.driver.setHoldMode (mode);
-		
+		this.driver.setHoldMode(mode);
 	}
 
 	setFanMode (mode) {

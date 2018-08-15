@@ -52,7 +52,7 @@ class WiFiThermostatDriver {
 
 		setInterval((self) => {
 			self.getThermostatState().then((data) => {
-				self.state = self.configureData(JSON.parse(data));				
+				self.state = self.configureData(JSON.parse(data));
 			}).catch((error) => {
 				console.log(TAG, 'Polling error:', error);
 			})
@@ -153,13 +153,13 @@ class WiFiThermostatDriver {
 			current_temp: data.temp,
 			target_temp: data.t_cool || data.t_heat
 		};
-		
-		if (this.state.mode != results.mode) this.events.emit('mode update', results.mode);
-		if (this.state.current_temp != results.current_temp) this.events.emit('temp update', results.current_temp);
-		if (this.state.target_temp != results.target_temp) this.events.emit('target update', results.target_temp);
-		if (this.state.fan_mode != results.fan_mode) this.events.emit('fanmode update', results.fan_mode);
-		if (this.state.hold_mode != results.hold_mode) this.events.emit('holdmode update', results.hold_mode);		
-				
+
+		if (this.state.mode != results.mode) this.events.emit('mode-changed', results.mode);
+		if (this.state.current_temp != results.current_temp) this.events.emit('current-temp-changed', results.current_temp);
+		if (this.state.target_temp != results.target_temp) this.events.emit('target-temp-changed', results.target_temp);
+		if (this.state.fan_mode != results.fan_mode) this.events.emit('fan-mode-changed', results.fan_mode);
+		if (this.state.hold_mode != results.hold_mode) this.events.emit('hold-mode-changed', results.hold_mode);
+
 		return results;
 	}
 	
@@ -177,8 +177,8 @@ class WiFiThermostatDriver {
 		return new Promise((resolve, reject) => {
 			request.post({
 				headers: {'content-type' : 'application/x-www-form-urlencoded'},
-				url:     'http://' + this.ip + '/tstat',
-				body:    JSON.stringify(data)
+				url: 'http://' + this.ip + '/tstat',
+				body: JSON.stringify(data)
 			}, (error, response, body) => {
 				if (error) {
 					reject(error);
