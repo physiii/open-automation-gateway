@@ -14,31 +14,32 @@ class ThermostatService extends Service {
 	}
 
 	subscribeToDriver () {
-		this.driver.on('ready', (data) => this.onUpdate(data));
-		this.driver.on('state update', (data) => this.onUpdate(data));
+		this.driver.on('ready', (data) => this.onReady(data));
+		this.driver.on('mode-changed', (mode) => this.state.mode = mode);
+		this.driver.on('current-temp-changed', (current_temp) => this.state.current_temp = current_temp);
+		this.driver.on('target-temp-changed', (target_temp) => this.state.target_temp = target_temp);
+		this.driver.on('fan-mode-changed', (fan_mode) => this.state.fan_mode = fan_mode);
+		this.driver.on('hold-mode-changed', (hold_mode) => this.state.hold_mode = hold_mode);
 	}
 
-	onUpdate (data) {
-		this.mode = data.mode;
-		this.current_temp = data.current_temp;
-		this.target_temp = data.target_temp;
-		this.fan_mode = data.fan_mode;
-		this.hold_mode = data.hold_mode;
+	onReady (data) {
+		this.state.mode = data.mode;
+		this.state.current_temp = data.current_temp;
+		this.state.target_temp = data.target_temp;
+		this.state.fan_mode = data.fan_mode;
+		this.state.hold_mode = data.hold_mode;
 	}
 
 	setThermostatMode (mode) {
 		this.driver.setThermostatMode(mode);
-		this.mode = mode;
 	}
 
 	setTemp (temp) {
 		this.driver.setTemp(temp);
-		this.target_temp = temp;
 	}
 
 	setHoldMode (mode) {
-		this.driver.setHoldMode (mode);
-		this.hold_mode = mode;
+		this.driver.setHoldMode(mode);
 	}
 
 	setFanMode (mode) {
