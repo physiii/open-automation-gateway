@@ -49,12 +49,12 @@ class HueBridgeService extends Service {
 		return new Promise((resolve, reject) => {
 			console.log(TAG, 'Finding state informaiton for ' + device_id);
 
-			api.lightStatusWithRGB(device_id, (error, result) => {
+			this.hue_api.lightStatusWithRGB(device_id, (error, result) => {
 				if (error) {
 					throw error;
 				}
 
-				console.log(JSON.stringify(result));
+				//console.log(JSON.stringify(result));
 
 				resolve(result);
 			});

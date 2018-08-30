@@ -2,7 +2,7 @@ const config = require('../config.json'),
 	io = require('socket.io-client'),
 	useDev = config.use_dev || false,
 	useSsl = config.use_ssl || false,
-	relayUrl = (useSsl ? 'https' : 'http') + '://' + config.relay_server + ':' + config.relay_port,
+	relayUrl = (useSsl ? 'https' : 'http') + '://' + config.relay_server + ':' + config.relay_port + '/device-relay',
 	TAG = '[device-socket.js]';
 
 function createDeviceSocket (deviceId, deviceToken) {
@@ -11,7 +11,8 @@ function createDeviceSocket (deviceId, deviceToken) {
 			polling: {
 				extraHeaders: {
 					'x-device-id': deviceId,
-					'x-device-token': deviceToken
+					'x-device-token': deviceToken,
+					'x-device-type': 'gateway'
 				}
 			}
 		},
