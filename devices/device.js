@@ -18,6 +18,8 @@ class Device {
 
 		this.services = new ServicesManager(data.services, this.getRelaySocketProxy(), this);
 
+		this.connectToRelay = this.connectToRelay.bind(this);
+
 		this.connectToRelay();
 	}
 
@@ -51,10 +53,7 @@ class Device {
 
 			this.token = token;
 
-			this.save().then(() => {
-				this.connectToRelay();
-				resolve();
-			}).catch(() => {
+			this.save().then(() => resolve()).catch(() => {
 				this.token = current_token;
 
 				reject('There was an error storing the new token.');
@@ -65,6 +64,7 @@ class Device {
 	connectToRelay () {
 		if (this.relay_socket) {
 			this.relay_socket.disconnect();
+			this.relay_socket.removeAllListeners();
 		}
 
 		this.relay_socket = createDeviceSocket(this.id, this.token);
@@ -86,6 +86,7 @@ class Device {
 				callback(error);
 			});
 		});
+		this.relay_socket.on('reconnect-to-relay', this.connectToRelay);
 	}
 
 	sendCurrentStateToRelay () {
