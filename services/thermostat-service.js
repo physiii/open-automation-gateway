@@ -4,8 +4,8 @@ const Service = require('./service.js'),
 	TAG = '[ThermostatService]';
 
 class ThermostatService extends Service {
-	constructor (data, relaySocket) {
-		super(data, relaySocket, ThermostatApi);
+	constructor (data, relaySocket, save) {
+		super(data, relaySocket, save, ThermostatApi);
 
 		this.ip = data.ip;
 

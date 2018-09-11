@@ -9,7 +9,14 @@ class ServiceApi {
 		this.sendState = this.sendState.bind(this);
 
 		// When the service's state changes, send the new state to relay.
-		service.onStateChange(this.sendState);
+		service.on('state-changed', this.sendState);
+
+		this.on('setting', (data, callback) => {
+			service.saveSetting(data.property, data.value).then(() => callback()).catch(callback);
+		});
+		this.on('settings', (data, callback) => {
+			service.saveSettings(data.settings).then(() => callback()).catch(callback);
+		});
 	}
 
 	on (event, localCallback) {
@@ -25,8 +32,8 @@ class ServiceApi {
 		this.socket.emit(this.eventPrefix + '/' + event, data, callback);
 	}
 
-	sendState (state) {
-		this.emit('state', {state});
+	sendState (data) {
+		this.emit('state', {state: data.state});
 	}
 }
 

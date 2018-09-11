@@ -4,8 +4,8 @@ const Service = require('./service.js'),
 	TAG = '[LightService]';
 
 class LightService extends Service {
-	constructor (data, relaySocket) {
-		super(data, relaySocket, LightApi);
+	constructor (data, relaySocket, save) {
+		super(data, relaySocket, save, LightApi);
 
 		this.light_id = data.light_id;
 		this.bridge_id = data.bridge_id;

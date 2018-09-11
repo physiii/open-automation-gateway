@@ -6,8 +6,8 @@ const exec = require('child_process').exec,
 	TAG = '[GatewayService]';
 
 class GatewayService extends Service {
-	constructor (data, relay_socket) {
-		super(data, relay_socket, GatewayApi);
+	constructor (data, relay_socket, save) {
+		super(data, relay_socket, save, GatewayApi);
 
 		this.searchForAndCreateDevices();
 	}

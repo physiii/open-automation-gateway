@@ -5,8 +5,8 @@ const Service = require('./service.js'),
 	TAG = '[LockService]';
 
 class LockService extends Service {
-	constructor (data, relaySocket) {
-		super(data, relaySocket, LockApi);
+	constructor (data, relaySocket, save) {
+		super(data, relaySocket, save, LockApi);
 
 		this.zwave_node_id = data.zwave_node_id;
 		this.state.locked = data.state && data.state.locked;
@@ -83,7 +83,7 @@ class LockService extends Service {
 			console.log(
 				TAG,
 				'Door unlocked'
-				+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+				+ (this.settings.name ? (' (' + this.settings.name + ')') : '')
 				+ '. Setting relock timer. '
 				+ new Date()
 			);
@@ -93,7 +93,7 @@ class LockService extends Service {
 			console.log(
 				TAG,
 				'Relocking door'
-				+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+				+ (this.settings.name ? (' (' + this.settings.name + ')') : '')
 				+ '.'
 				+ new Date()
 			);
@@ -115,7 +115,7 @@ class LockService extends Service {
 		console.log(
 			TAG,
 			'Door locked'
-			+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+			+ (this.settings.name ? (' (' + this.settings.name + ')') : '')
 			+ '. Removing relock timer. '
 			+ new Date()
 		);

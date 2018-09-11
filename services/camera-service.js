@@ -15,8 +15,8 @@ const spawn = require('child_process').spawn,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
-	constructor (data, relaySocket) {
-		super(data, relaySocket, CameraApi);
+	constructor (data, relaySocket, save) {
+		super(data, relaySocket, save, CameraApi);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
@@ -210,5 +210,51 @@ class CameraService extends Service {
 		};
 	}
 }
+
+CameraService.settings_definitions = new Map([...Service.settings_definitions])
+	.set('resolution_w', {
+		type: 'integer',
+		unit_label: 'px',
+		label: 'Resolution Width',
+		default_value: 640,
+		validation: {
+			is_required: true,
+			min: 0,
+			max: 1920
+		}
+	})
+	.set('resolution_h', {
+		type: 'integer',
+		unit_label: 'px',
+		label: 'Resolution Height',
+		default_value: 480,
+		validation: {
+			is_required: true,
+			min: 0,
+			max: 1080
+		}
+	})
+	.set('rotation', {
+		type: 'one-of',
+		label: 'Orientation',
+		value_options: [
+			{
+				value: 0,
+				label: 'Normal'
+			},
+			{
+				value: 180,
+				label: 'Upside-Down'
+			}
+		],
+		default_value: 0,
+		validation: {is_required: true}
+	})
+	.set('should_detect_motion', {
+		type: 'boolean',
+		label: 'Record Movement',
+		default_value: true,
+		validation: {is_required: false}
+	});
 
 module.exports = CameraService;
