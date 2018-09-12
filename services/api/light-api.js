@@ -1,42 +1,36 @@
 const ServiceApi = require('./service-api.js'),
-  TAG = '[LightApi]';
+	TAG = '[LightApi]';
 
 class LightApi extends ServiceApi {
-  constructor (socket, light) {
-    super(socket, light, 'light');
+	listen () {
+		ServiceApi.prototype.listen.call(this);
 
-    this.light = light;
-    this.listen();
-  }
+		this.on('lightOn/set', (data, callback) => {
+			this.service.lightOn();
+			callback(null, {});
+		});
 
-  listen () {
-    this.on('lightOn/set', (data, callback) => {
-      this.light.lightOn();
-      callback(null, {});
-    });
+		this.on('lightOff/set', (data, callback) => {
+			console.log(TAG,"Recieved Call...")
+			this.service.lightOff();
+			callback(null, {});
+		});
 
-    this.on('lightOff/set', (data, callback) => {
-      console.log(TAG,"Recieved Call...")
-      this.light.lightOff();
-      callback(null, {});
-    });
+		this.on('brightness/set', (data, callback) => {
+			this.service.setBrightness(data.brightness);
+			callback(null, {});
+		});
 
-    this.on('brightness/set', (data, callback) => {
-      this.light.setBrightness(data.brightness);
-      callback(null, {});
-    });
+		this.on('color/set', (data, callback) => {
+			this.service.setColor(data.color);
+			callback(null, {});
+		});
 
-    this.on('color/set', (data, callback) => {
-      this.light.setColor(data.color);
-      callback(null, {});
-    });
-
-    this.on('name/set', (data, callback) => {
-      this.light.setLightName(data.name);
-      callback(null, {});
-    }); 
-
-  }
+		this.on('name/set', (data, callback) => {
+			this.service.setLightName(data.name);
+			callback(null, {});
+		});
+	}
 }
 
 module.exports = LightApi;
