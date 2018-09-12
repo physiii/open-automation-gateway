@@ -15,8 +15,8 @@ const spawn = require('child_process').spawn,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
-	constructor (data, relaySocket) {
-		super(data, relaySocket, CameraApi);
+	constructor (data, relaySocket, save) {
+		super(data, relaySocket, save, CameraApi);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
@@ -28,10 +28,9 @@ class CameraService extends Service {
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => {
-			this.state.last_recording_date = recording ? recording.date : null;
+			this.state.motion_detected_date = recording ? recording.date : null;
 		});
 
-		this.getPreviewImage();
 		this.setUpLoopback();
 
 		if (this.settings.should_detect_motion) {
@@ -48,29 +47,23 @@ class CameraService extends Service {
 	}
 
 	getPreviewImage () {
+		const error_message = 'There was an error retrieving the preview image.';
+
 		return new Promise((resolve, reject) => {
-			const handleError = () => {
-				// Preview image wasn't found.
-				this.state.preview_image = null;
-
-				resolve(false);
-			}
-
 			try {
 				fs.readFile('/usr/local/lib/gateway/events/' + this.id + '/preview.jpg', (error, file) => {
 					if (error) {
-						handleError(error);
+						console.error(this.TAG, error_message, error);
+						reject(error_message);
+
 						return;
 					}
 
-					const image = file.toString('base64');
-
-					this.state.preview_image = image;
-
-					resolve(image);
+					resolve(file.toString('base64'));
 				});
 			} catch (error) {
-				handleError(error);
+				console.error(this.TAG, error_message, error);
+				reject(error_message);
 			}
 		});
 	}
@@ -125,15 +118,16 @@ class CameraService extends Service {
 					console.log(MOTION_TAG, data.toString());
 
 					if (data.includes('[MOTION]')) {
-						this.getPreviewImage();
-						this.state.last_recording_date = now;
+						this.state.motion_detected_date = now;
 
 						this.relayEmit('motion-started', {date: now.toISOString()});
 					} else if (data.includes('[NO MOTION]')) {
 						this.relayEmit('motion-stopped', {date: now.toISOString()});
 					} else if (data.includes('[NEW RECORDING]')) {
 						CameraRecordings.getLastRecording(this.id).then((recording) => {
-							this.relayEmit('motion-recorded', {recording, preview_image: this.state.preview_image});
+							this.getPreviewImage().then((preview_image) => {
+								this.relayEmit('motion-recorded', {recording, preview_image});
+							});
 						});
 					}
 				});
@@ -210,5 +204,51 @@ class CameraService extends Service {
 		};
 	}
 }
+
+CameraService.settings_definitions = new Map([...Service.settings_definitions])
+	.set('resolution_w', {
+		type: 'integer',
+		unit_label: 'px',
+		label: 'Resolution Width',
+		default_value: 640,
+		validation: {
+			is_required: true,
+			min: 0,
+			max: 1920
+		}
+	})
+	.set('resolution_h', {
+		type: 'integer',
+		unit_label: 'px',
+		label: 'Resolution Height',
+		default_value: 480,
+		validation: {
+			is_required: true,
+			min: 0,
+			max: 1080
+		}
+	})
+	.set('rotation', {
+		type: 'one-of',
+		label: 'Orientation',
+		value_options: [
+			{
+				value: 0,
+				label: 'Normal'
+			},
+			{
+				value: 180,
+				label: 'Upside-Down'
+			}
+		],
+		default_value: 0,
+		validation: {is_required: true}
+	})
+	.set('should_detect_motion', {
+		type: 'boolean',
+		label: 'Record Movement',
+		default_value: true,
+		validation: {is_required: false}
+	});
 
 module.exports = CameraService;

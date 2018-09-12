@@ -9,9 +9,9 @@ const Service = require('./service.js'),
 	};
 
 class ServicesManager {
-	constructor (services = [], relay_socket, device) {
+	constructor (services = [], relay_socket, save) {
 		this.relay_socket = relay_socket;
-		this.device = device;
+		this.save = save;
 		this.services = [];
 
 		this.addServices(services);
@@ -25,9 +25,8 @@ class ServicesManager {
 			return service;
 		}
 
-		service = new service_class(data, this.relay_socket);
+		service = new service_class(data, this.relay_socket, this.save);
 
-		service.device = this.device;
 		this.services.push(service);
 
 		return service;

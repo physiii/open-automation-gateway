@@ -2,29 +2,24 @@ const ServiceApi = require('./service-api.js'),
 	CameraRecordings = require('../../camera-recordings.js');
 
 class CameraApi extends ServiceApi {
-	constructor (socket, camera) {
-		super(socket, camera, 'camera');
-
-		this.camera = camera;
-		this.listen();
-	}
-
 	listen () {
+		ServiceApi.prototype.listen.call(this);
+
 		this.on('stream/live', (data, callback) => {
-			const stream_token = this.camera.streamLive();
+			const stream_token = this.service.streamLive();
 
 			// TODO: Error handling
 			callback(null, {stream_token});
 		});
 
 		this.on('stream/stop', (data, callback) => {
-			this.camera.stopStream();
+			this.service.stopStream();
 			// TODO: Error handling
 			callback(null, {});
 		});
 
 		this.on('preview/get', (data, callback) => {
-			this.camera.getPreviewImage().then((image) => {
+			this.service.getPreviewImage().then((image) => {
 				callback(null, {preview: image});
 			}).catch((error) => {
 				callback(error);
@@ -32,7 +27,7 @@ class CameraApi extends ServiceApi {
 		});
 
 		this.on('recordings/get', function (data, callback) {
-			CameraRecordings.getRecordings(this.camera.id).then((recordings) => {
+			CameraRecordings.getRecordings(this.service.id).then((recordings) => {
 				callback(null, {recordings: recordings});
 			}).catch((error) => {
 				callback(error);
@@ -40,7 +35,7 @@ class CameraApi extends ServiceApi {
 		});
 
 		this.on('recording/stream', (data, callback) => {
-			const stream_token = this.camera.generateStreamToken();
+			const stream_token = this.service.generateStreamToken();
 
 			CameraRecordings.streamRecording(data.recording_id, stream_token).then(() => {
 				callback(null, {stream_token});

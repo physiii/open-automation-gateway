@@ -1,29 +1,21 @@
 const ServiceApi = require('./service-api.js');
 
 class LockApi extends ServiceApi {
-	constructor (socket, lock) {
-		super(socket, lock, 'lock');
-
-		this.lock = lock;
-		this.listen();
-	}
-
 	listen () {
-		this.on('lock/set', (data, callback) => {
-			this.lock.lock();
+		ServiceApi.prototype.listen.call(this);
 
+		this.on('lock/set', (data, callback) => {
+			this.service.lock();
 			callback(null, {});
 		});
 
 		this.on('unlock/set', (data, callback) => {
-			this.lock.unlock();
-
+			this.service.unlock();
 			callback(null, {});
 		});
 
 		this.on('relockDelay/set', (data, callback) => {
-			this.lock.setRelockDelay(data.relock_delay);
-
+			this.service.setRelockDelay(data.relock_delay);
 			callback(null, {});
 		});
 	}
