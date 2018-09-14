@@ -18,17 +18,18 @@ class ZwaveLockDriver {
 		this.id = nodeId;
 		this.events = new EventEmitter();
 		this.ready = false;
-
-		if (zwave.is_node_ready(this.id)) {
-			this.onNodeReady();
-		} else {
-			zwave.on('node ready', (nodeId) => {
-				if (nodeId !== this.id) {
-					return;
-				}
-
+		if (config.zwave) {
+			if (zwave.is_node_ready(this.id)) {
 				this.onNodeReady();
-			});
+			} else {
+				zwave.on('node ready', (nodeId) => {
+					if (nodeId !== this.id) {
+						return;
+					}
+
+					this.onNodeReady();
+				});
+			}
 		}
 	}
 
