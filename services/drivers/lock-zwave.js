@@ -1,11 +1,17 @@
-const zwave = require('../../zwave.js'),
-	EventEmitter = require('events'),
+const EventEmitter = require('events'),
+	config = require('../../config.json'),
 	zDoorLockCC = 98,
 	zDoorLockLocked = 0,
 	zInstance = 1,
 	zwaveDeadNotification = 5,
 	zwaveAliveNotification = 6,
 	TAG = '[ZwaveLockDriver]';
+	
+	if (config.zwave) {
+		const zwave = require('../../zwave.js');
+	} else {
+		const zwave = {};
+	}
 
 class ZwaveLockDriver {
 	constructor (nodeId) {
