@@ -78,24 +78,24 @@ class WiFiThermostatDriver {
 		};
 
 		if (mode === 'heat') {
-			setMode.t_heat = this.settings.target_temp;
+			setMode.t_heat = this.state.target_temp;
 		} else if (mode === 'cool') {
-			setMode.t_cool= this.settings.target_temp;
+			setMode.t_cool= this.state.target_temp;
 		}
 
 		this.postRequest(setMode);
-		this.setHoldMode(this.settings.hold_mode);
+		this.setHoldMode(this.state.hold_mode);
 	}
 
 	setTemp (temperature) {
 		let setMode = {
-				tmode: THERMOSTAT_MODES[this.settings.mode],
-				hold: HOLD_MODES[this.settings.hold_mode]
+				tmode: THERMOSTAT_MODES[this.state.mode],
+				hold: HOLD_MODES[this.state.hold_mode]
 			};
 
-		if (this.settings.mode == 'heat') {
+		if (this.state.mode == 'heat') {
 			setMode.t_heat = temperature;
-		} else if (this.settings.mode == 'cool') {
+		} else if (this.state.mode == 'cool') {
 			setMode.t_cool = temperature;
 		}
 
