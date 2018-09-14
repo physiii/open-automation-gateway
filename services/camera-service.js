@@ -212,7 +212,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 		label: 'Resolution Width',
 		default_value: 640,
 		validation: {
-			is_required: true,
+			is_required: false,
 			min: 0,
 			max: 1920
 		}
@@ -223,7 +223,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 		label: 'Resolution Height',
 		default_value: 480,
 		validation: {
-			is_required: true,
+			is_required: false,
 			min: 0,
 			max: 1080
 		}
@@ -242,7 +242,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			}
 		],
 		default_value: 0,
-		validation: {is_required: true}
+		validation: {is_required: false}
 	})
 	.set('should_detect_motion', {
 		type: 'boolean',
