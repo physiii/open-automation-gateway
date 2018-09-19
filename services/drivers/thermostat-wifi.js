@@ -105,16 +105,17 @@ class WiFiThermostatDriver {
 	setHoldMode (mode) {
 		let setMode = {
 				tmode: THERMOSTAT_MODES[this.state.mode],				
-			};
-			
-		if (mode === 'on') setMode.hold = HOLD_MODES[mode];			 
+			};			
+	
+		if (mode === 'on') setMode.hold = HOLD_MODES[mode];
+		if (mode === 'off') setMode.hold = HOLD_MODES[mode];
 
 		if (this.state.mode == 'heat') {
 			setMode.t_heat = this.state.target_temp;
 		} else if (this.state.mode == 'cool') {
 			setMode.t_cool = this.state.target_temp;
-		}
-
+		}		
+		
 		this.postRequest(setMode);		
 	}
 
