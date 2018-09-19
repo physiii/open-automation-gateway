@@ -13,9 +13,9 @@ const request = require('request'),
 		'auto': 3
 	},
 	FAN_MODES = {
-		'1': 'auto',
+		'0': 'auto',
 		'2': 'on',
-		'auto': 1,
+		'auto': 0,
 		'on': 2
 	},
 	HOLD_MODES = {
@@ -103,7 +103,19 @@ class WiFiThermostatDriver {
 	}
 
 	setHoldMode (mode) {
-		this.postRequest({hold: HOLD_MODES[mode]});
+		let setMode = {
+				tmode: THERMOSTAT_MODES[this.state.mode],				
+			};
+			
+		if (mode === 'on') setMode.hold = HOLD_MODES[mode];			 
+
+		if (this.state.mode == 'heat') {
+			setMode.t_heat = temperature;
+		} else if (this.state.mode == 'cool') {
+			setMode.t_cool = temperature;
+		}
+
+		this.postRequest(setMode);		
 	}
 
 	setFanMode (mode) {
