@@ -110,9 +110,9 @@ class WiFiThermostatDriver {
 		if (mode === 'on') setMode.hold = HOLD_MODES[mode];			 
 
 		if (this.state.mode == 'heat') {
-			setMode.t_heat = temperature;
+			setMode.t_heat = this.state.target_temp;
 		} else if (this.state.mode == 'cool') {
-			setMode.t_cool = temperature;
+			setMode.t_cool = this.state.target_temp;
 		}
 
 		this.postRequest(setMode);		
