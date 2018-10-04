@@ -263,6 +263,7 @@ class ConnectionManager {
       iwlist.stdout.on('data', (data) => {
         let data_array = `${data}`.split('\n')
         data_array.forEach(function (ap) {
+	  //console.log(TAG,ap);
           if (ap.indexOf('ESSID') < 0) return;
           let start = ap.indexOf('\"')+1;
           let stop = ap.lastIndexOf('\"');

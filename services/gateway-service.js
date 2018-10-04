@@ -56,7 +56,7 @@ class GatewayService extends Service {
 
 	getOsCamerasList () {
 		return new Promise((resolve, reject) => {
-			exec('ls -lah --full-time /dev/video*', (error, stdout, stderr) => {
+			exec('ls -lah --full-time /dev/video0', (error, stdout, stderr) => {
 				if (error) {
 					reject(error);
 					return;
