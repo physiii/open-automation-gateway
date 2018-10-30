@@ -11,7 +11,7 @@ const spawn = require('child_process').spawn,
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	ONE_SECOND_IN_MILLISECONDS = 1000,
-	IMAGE_CAPTURE_INTERVAL_SECONDS =  10,
+	IMAGE_CAPTURE_INTERVAL_SECONDS =  60,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
 
