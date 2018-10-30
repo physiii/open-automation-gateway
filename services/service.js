@@ -13,7 +13,8 @@ class Service {
 		this.setSettings(data.settings || {});
 
 		// On state change, send updated state to state listeners.
-		this.state = utils.onChange({...data.state}, () => this._events.emit('state-changed', {state: {...this.state}}));
+		this.unproxied_state = {...data.state};
+		this.state = utils.onChange(this.unproxied_state, () => this._events.emit('state-changed', {state: {...this.unproxied_state}}));
 
 		// Set up the Relay API.
 		if (api_class) {
@@ -154,7 +155,7 @@ class Service {
 	relaySerialize () {
 		return {
 			...this.serialize(),
-			state: this.state,
+			state: this.unproxied_state,
 			settings_definitions: Array.from(this.constructor.settings_definitions.entries())
 		};
 	}

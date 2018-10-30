@@ -11,7 +11,7 @@ const spawn = require('child_process').spawn,
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	ONE_SECOND_IN_MILLISECONDS = 1000,
-	IMAGE_CAPTURE_INTERVAL_SECONDS =  60,
+	TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
 
@@ -28,9 +28,7 @@ class CameraService extends Service {
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
 
-		CameraRecordings.getLastRecording(this.id).then((recording) => {
-			this.state.motion_detected_date = recording ? recording.date : null;
-		});
+		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
 		this.setUpLoopback();
 
@@ -50,15 +48,17 @@ class CameraService extends Service {
 	}
 
 	startTimeLapse () {
-		const timelapse = setInterval(this.getImage.bind(this), IMAGE_CAPTURE_INTERVAL_SECONDS * 1000);
+		setInterval(this.saveTimeLapseImage.bind(this), TIME_LAPSE_INTERVAL);
 	}
 
-	getImage() {
-		let command = "ffmpeg -f v4l2 -i "
-			+this.getLoopbackDevicePath()+" -vframes 1 -s 1920x1080 /usr/local/lib/gateway/timelapse/"
-			+Date.now()+".jpeg";
+	saveTimeLapseImage () {
+		const command = 'ffmpeg -f v4l2 -i '
+			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 /usr/local/lib/gateway/timelapse/'
+			+ Date.now() + '.jpeg';
+
 		exec(command);
-		return console.log(TAG, 'Capturing image...', command);
+
+		console.log(TAG, 'Capturing time lapse image…', command);
 	}
 
 	getPreviewImage () {
