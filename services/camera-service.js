@@ -11,6 +11,7 @@ const spawn = require('child_process').spawn,
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	ONE_SECOND_IN_MILLISECONDS = 1000,
+	IMAGE_CAPTURE_INTERVAL_SECONDS =  10,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
 
@@ -36,6 +37,8 @@ class CameraService extends Service {
 		if (this.settings.should_detect_motion) {
 			this.startMotionDetection();
 		}
+
+		this.startTimeLapse();
 	}
 
 	getCameraNumber () {
@@ -44,6 +47,18 @@ class CameraService extends Service {
 
 	getLoopbackDevicePath () {
 		return '/dev/video1' + this.getCameraNumber();
+	}
+
+	startTimeLapse () {
+		const timelapse = setInterval(this.getImage.bind(this), IMAGE_CAPTURE_INTERVAL_SECONDS * 1000);
+	}
+
+	getImage() {
+		let command = "ffmpeg -f v4l2 -i "
+			+this.getLoopbackDevicePath()+" -vframes 1 -s 1920x1080 /usr/local/lib/gateway/timelapse/"
+			+Date.now()+".jpeg";
+		exec(command);
+		return console.log(TAG, 'Capturing image...', command);
 	}
 
 	getPreviewImage () {
