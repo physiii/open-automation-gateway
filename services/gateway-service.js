@@ -10,6 +10,7 @@ class GatewayService extends Service {
 		super(data, relay_socket, save, GatewayApi);
 
 		this.searchForAndCreateDevices();
+		this.createContactService();
 	}
 
 	getDevices () {
@@ -20,6 +21,37 @@ class GatewayService extends Service {
 		this.getOsCamerasList().then((camera_device_paths) => {
 			this.createDevicesForOsCameras(camera_device_paths);
 		}).catch((error) => console.error(TAG, 'There was an error getting the list of cameras available to the operating system.', error));
+	}
+
+	createContactService () {
+		if (config.contact_sensor) {
+			const new_devices = [],
+			  contact_service = DevicesManager.getServicesByType('contact_sensor');
+
+			return new Promise((resolve, reject) => {
+				if (contact_service) {
+					return;
+				}
+
+				DevicesManager.createDevice({
+					settings: {
+						name: 'Contact Sensor'
+					},
+					info: {
+						manufacturer: config.manufacturer
+					},
+					services: [
+						{
+							type: 'contact_sensor',
+						}
+					]
+				}).then((new_device) => {
+					new_devices.push(new_device);
+				});
+
+				resolve(new_devices);
+			});
+		}
 	}
 
 	createDevicesForOsCameras (device_paths = []) {

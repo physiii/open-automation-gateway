@@ -1,6 +1,6 @@
 const Service = require('./service.js'),
+  config = require('../config.json'),
   Gpio = require('onoff').Gpio,
-  Sensor = new Gpio(4, 'in', 'both'),
 	ContactSensorApi = require('./api/contact-sensor-api.js'),
 	TAG = '[ContactSensorService]';
 
@@ -9,6 +9,7 @@ class ContactSensorService extends Service {
 		super(data, relaySocket, save, ContactSensorApi);
 
 		this.ip = data.ip;
+    this.sensor = new Gpio(config.contact_Gpio, 'in', 'both'),
 
     this.startSensor();
 	}
@@ -22,7 +23,7 @@ class ContactSensorService extends Service {
 	}
 
   startSensor () {
-    Sensor.watch((err, value) => {
+    this.sensor.watch((err, value) => {
       if (err) {
         throw err;
       }
