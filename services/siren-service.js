@@ -20,7 +20,15 @@ class SirenService extends Service {
 	}
 
   alarmSet (value) {
-    this.siren.writeSync(value);
+
+    if(value) {
+      this.siren.writeSync(0);
+    } else if (!value) {
+      this.siren.writeSync(1);
+    } else {
+      console.log(TAG, 'Invalud value for Siren');
+    }
+
   }
 
 	dbSerialize () {
