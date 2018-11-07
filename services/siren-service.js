@@ -9,7 +9,7 @@ class SirenService extends Service {
 		super(data, relaySocket, save, SirenApi);
 
 		this.ip = data.ip;
-    this.siren = new Gpio(config.siren_Gpio, 'out'),
+    this.siren = new Gpio(config.siren_Gpio, 'out');
 	}
 
 	subscribeToDriver () {
