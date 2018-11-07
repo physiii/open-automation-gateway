@@ -1,4 +1,5 @@
 const Service = require('./service.js'),
+  Gpio = require('onoff').Gpio,
 	ContactSensorApi = require('./api/contact-sensor-api.js'),
 	TAG = '[ContactSensorService]';
 
