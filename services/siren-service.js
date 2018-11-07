@@ -1,4 +1,5 @@
 const Service = require('./service.js'),
+config = require('../config.json'),
   Gpio = require('onoff').Gpio,
 	SirenApi = require('./api/siren-api.js'),
 	TAG = '[SirenService]';
@@ -8,7 +9,7 @@ class SirenService extends Service {
 		super(data, relaySocket, save, SirenApi);
 
 		this.ip = data.ip;
-    this.siren = new Gpio(20, 'out'),
+    this.siren = new Gpio(config.siren_Gpio, 'out'),
 	}
 
 	subscribeToDriver () {
@@ -26,7 +27,7 @@ class SirenService extends Service {
     } else if (!value) {
       this.siren.writeSync(1);
     } else {
-      console.log(TAG, 'Invalud value for Siren');
+      console.log(TAG, 'Invalid value for Siren');
     }
 
   }
