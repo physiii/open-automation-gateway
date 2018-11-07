@@ -1,4 +1,6 @@
 const Service = require('./service.js'),
+  Gpio = require('onoff').Gpio,
+  Siren = new Gpio(20, 'out'),
 	SirenApi = require('./api/siren-api.js'),
 	TAG = '[SirenService]';
 
@@ -16,6 +18,10 @@ class SirenService extends Service {
 	onReady (data) {
 		return;
 	}
+
+  alarmSet (value) {
+    Siren.writeSync(value);
+  }
 
 	dbSerialize () {
 		return {

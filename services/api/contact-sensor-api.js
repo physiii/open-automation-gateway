@@ -5,10 +5,6 @@ class ContactSensorApi extends ServiceApi {
 	listen () {
 		ServiceApi.prototype.listen.call(this);
 
-		this.on('lightOn/set', (data, callback) => {
-			this.service.lightOn();
-			callback(null, {});
-		});
 	}
 }
 

@@ -5,7 +5,9 @@ const Service = require('./service.js'),
 		'thermostat': require('./thermostat-service.js'),
 		'lock': require('./lock-service.js'),
 		'light': require('./light-service.js'),
-		'hue_bridge': require('./hue-bridge-service.js')
+		'hue_bridge': require('./hue-bridge-service.js'),
+		'contact_sensor': require('./contact-sensor-service.js'),
+		'siren': require('./siren-service.js')
 	};
 
 class ServicesManager {

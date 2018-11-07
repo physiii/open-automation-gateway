@@ -5,8 +5,8 @@ class SirenApi extends ServiceApi {
 	listen () {
 		ServiceApi.prototype.listen.call(this);
 
-		this.on('lightOn/set', (data, callback) => {
-			this.service.lightOn();
+		this.on('alarm/set', (data, callback) => {
+			this.service.alarmSet(data.value);
 			callback(null, {});
 		});
 	}
