@@ -53,18 +53,22 @@ Uses motion to trigger recording to local disk and local disk can be proxied (wo
 
 ## example config.json:
     {
-     "relay_server":"127.0.0.1",
-     "relay_port":5000,
-     "zwave":false,
-     "zwave_dev":"ACM0",
-     "use_ssl":false,
+     "relay_server":"dev.pyfi.org",
+     "relay_port":5050,
+     "zwave":true,
+     "zwave_dev":"USB0",
+     "use_ssl":true,
      "use_dev":true,
      "video_stream_port":8083,
-     "rotation": 0,
+     "rotation": "",
      "lock_timer": "0",
+     "isContact": false,
+     "contact_Gpio": 4,
+     "isSiren":false,
+     "siren_Gpio": 26,
      "device_hw":"",
      "manage_network":true,
-     "disable_reboot":true,
-     "connection_timeout":60,
+     "disable_reboot":false,
+     "connection_timeout":300,
      "wifi_adapter":"wlan0"
     }
