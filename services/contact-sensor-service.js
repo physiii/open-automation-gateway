@@ -31,9 +31,11 @@ class ContactSensorService extends Service {
       if (value === 0) {
         console.log(TAG, 'Contact Sensor not connected');
         this.state.contact = false;
+        this.relayEmit('open');
       } else if (value === 1) {
         console.log(TAG, 'Contact Sensor connected');
         this.state.contact = true;
+        this.relayEmit('closed');
       } else {
         console.log(TAG, 'Value from contact sensor GPIO  invalid');
       }
