@@ -8,8 +8,10 @@ class SirenService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, SirenApi);
 
-		this.ip = data.ip;
-    this.siren = new Gpio(config.siren_Gpio, 'out');
+    this.siren_gpio = data.Gpio || config.siren_gpio;
+    this.siren = new Gpio(this.siren_gpio, 'out');
+
+    this.siren.writeSync(1);
 	}
 
 	subscribeToDriver () {
@@ -23,19 +25,27 @@ class SirenService extends Service {
   alarmSet (value) {
 
     if(value) {
-      this.siren.writeSync(0);
+      this.sirenOn();
     } else if (!value) {
-      this.siren.writeSync(1);
+      this.sirenOff();
     } else {
       console.log(TAG, 'Invalid value for Siren');
     }
 
   }
 
+  sirenOn () {
+    this.siren.writeSync(0);
+  }
+
+  sirenOff () {
+    this.siren.writeSync(1);
+  }
+
 	dbSerialize () {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
-			ip: this.ip
+      gpio: this.siren_gpio
 		};
 	}
 }

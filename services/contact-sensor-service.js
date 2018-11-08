@@ -8,8 +8,8 @@ class ContactSensorService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, ContactSensorApi);
 
-		this.ip = data.ip;
-    this.sensor = new Gpio(config.contact_Gpio, 'in', 'rising', {debounceTimeout: 10});
+    this.contact_gpio = data.gpio || config.contact_gpio
+    this.sensor = new Gpio(this.contact_gpio, 'in', 'rising', {debounceTimeout: 10});
 
     this.startSensor();
 	}
@@ -41,14 +41,14 @@ class ContactSensorService extends Service {
     });
 
     process.on('SIGINT', () => {
-      Sensor.unexport();
+      this.sensor.unexport();
     });
   }
 
 	dbSerialize () {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
-			ip: this.ip
+      gpio: this.contact_gpio
 		};
 	}
 }

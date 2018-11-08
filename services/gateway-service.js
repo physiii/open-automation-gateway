@@ -10,8 +10,9 @@ class GatewayService extends Service {
 		super(data, relay_socket, save, GatewayApi);
 
 		this.searchForAndCreateDevices();
-		this.createContactService();
-		this.createSirenService();
+
+		if (config.isContact)	this.createContactService(config.contact_gpio);
+		if (config.isSiren) this.createSirenService(config.siren_gpio);
 	}
 
 	getDevices () {
@@ -24,13 +25,15 @@ class GatewayService extends Service {
 		}).catch((error) => console.error(TAG, 'There was an error getting the list of cameras available to the operating system.', error));
 	}
 
-	createSirenService () {
-		if (config.isSiren) {
-			const new_devices = [],
-			  siren_service = DevicesManager.getServicesByType('siren');
+	createSirenService (gpio_paths = []) {
+		const new_devices = [],
+		  siren_services = DevicesManager.getServicesByType('siren');
 
-			return new Promise((resolve, reject) => {
-				if (contact_service) {
+		//console.log(TAG, '!!!!!!!!!!!!!!!!!!!!!!!Hit Siren!!!!!!!!!!!');
+
+		return new Promise((resolve, reject) => {
+			gpio_paths.forEach((gpio_path) => {
+				if (siren_services.find((siren_service) => siren_service.gpio === gpio_path)) {
 					return;
 				}
 
@@ -44,24 +47,25 @@ class GatewayService extends Service {
 					services: [
 						{
 							type: 'siren',
+							gpio: gpio_path
 						}
 					]
 				}).then((new_device) => {
 					new_devices.push(new_device);
 				});
-
-				resolve(new_devices);
 			});
-		}
+
+			resolve(new_devices);
+		});
 	}
 
-	createContactService () {
-		if (config.isContact) {
-			const new_devices = [],
-			  contact_service = DevicesManager.getServicesByType('contact_sensor');
+	createContactService (gpio_paths = []) {
+		const new_devices = [],
+		  contact_services = DevicesManager.getServicesByType('contact_sensor');
 
-			return new Promise((resolve, reject) => {
-				if (contact_service) {
+		return new Promise((resolve, reject) => {
+			gpio_paths.forEach((gpio_path) => {
+				if (contact_services.find((contact_service) => contact_service.gpio === gpio_path)) {
 					return;
 				}
 
@@ -75,15 +79,16 @@ class GatewayService extends Service {
 					services: [
 						{
 							type: 'contact_sensor',
+							gpio: gpio_path
 						}
 					]
 				}).then((new_device) => {
 					new_devices.push(new_device);
 				});
-
-				resolve(new_devices);
 			});
-		}
+
+			resolve(new_devices);
+		});
 	}
 
 	createDevicesForOsCameras (device_paths = []) {
