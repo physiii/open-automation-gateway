@@ -8,7 +8,7 @@ class ContactSensorService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, ContactSensorApi);
 
-    this.contact_gpio = data.gpio || config.contact_gpio
+    this.contact_gpio = data.gpio;
     this.sensor = new Gpio(this.contact_gpio, 'in', 'rising', {debounceTimeout: 10});
 
     this.startSensor();

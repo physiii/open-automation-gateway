@@ -8,7 +8,7 @@ class SirenService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, SirenApi);
 
-    this.siren_gpio = data.gpio || config.siren_gpio;
+    this.siren_gpio = data.gpio;
     this.siren = new Gpio(this.siren_gpio, 'out');
 
     this.siren.writeSync(1);
