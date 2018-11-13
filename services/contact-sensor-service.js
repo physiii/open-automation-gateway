@@ -9,7 +9,7 @@ class ContactSensorService extends Service {
 		super(data, relaySocket, save, ContactSensorApi);
 
     this.contact_gpio = data.gpio;
-    this.sensor = new Gpio(this.contact_gpio, 'in', 'rising', {debounceTimeout: 10});
+    this.sensor = new Gpio(this.contact_gpio, 'in', 'both');
 
     this.startSensor();
 	}
@@ -40,10 +40,6 @@ class ContactSensorService extends Service {
         console.log(TAG, 'Value from contact sensor GPIO  invalid');
       }
 
-    });
-
-    process.on('SIGINT', () => {
-      this.sensor.unexport();
     });
   }
 
