@@ -27,6 +27,9 @@ class ContactSensorService extends Service {
       if (err) {
         throw err;
       }
+      const now = new date();
+      
+      this.state.last_contact_date = now;
 
       if (value === 0) {
         console.log(TAG, 'Contact Sensor not connected');
