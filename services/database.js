@@ -229,6 +229,70 @@ class Database {
 		});
 	});
 	}
+	
+	storeAccessLog (data) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('access_log').insertOne(data, (error, record) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'storeAccessLog', error);
+					reject('Database error');
+					return;
+				}
+
+				resolve(record);
+			});
+		});
+	}
+
+	getAccessLogs () {
+		return this.connect((db, resolve, reject) => {
+			db.collection('access_log').find().toArray((error, result) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'getBAccessLog', error);
+					reject('Database Error');
+					return;
+				}
+
+				resolve(result);
+			});
+		});
+	}
+	
+	storeSirenLog (data) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('access_log').insertOne(data, (error, record) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'storeAccessLog', error);
+					reject('Database error');
+					return;
+				}
+
+				resolve(record);
+			});
+		});
+	}
+
+	getSirenLogs () {
+		return this.connect((db, resolve, reject) => {
+			db.collection('access_log').find().toArray((error, result) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'getBAccessLog', error);
+					reject('Database Error');
+					return;
+				}
+
+				resolve(result);
+			});
+		});
+	}
 }
 
 module.exports = new Database();

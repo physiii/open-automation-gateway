@@ -11,7 +11,7 @@ class ContactSensorService extends Service {
     this.contact_gpio = data.gpio;
     this.sensor = new Gpio(this.contact_gpio, 'in', 'both');
 
-    this.startSensor();
+    this._handleContactChange();
 	}
 
 	subscribeToDriver () {
@@ -21,29 +21,49 @@ class ContactSensorService extends Service {
 	onReady (data) {
 		return;
 	}
-
-  startSensor () {
+  
+  _handleContactChange () {
     this.sensor.watch((err, value) => {
       if (err) {
         throw err;
       }
-      const now = new date();
       
-      this.state.last_contact_date = now;
+      const is_open = value === 1,
+        now = new date(),
+        this.state.last_contact_date = now,
+        state_string = is_open ? 'open' : 'closed';
 
-      if (value === 0) {
-        console.log(TAG, 'Contact Sensor not connected');
-        this.state.contact = false;
-        this.relayEmit('open');
-      } else if (value === 1) {
-        console.log(TAG, 'Contact Sensor connected');
-        this.state.contact = true;
-        this.relayEmit('closed');
-      } else {
-        console.log(TAG, 'Value from contact sensor GPIO  invalid');
-      }
+      console.log(TAG, 'Received contact ' + state_string);
 
+      this.state.contact = !is_open;
+      this.relayEmit(state_string);
+      this._events.emit(state_string);
+      this._logAccess(is_open);
     });
+  }
+  
+  _logAccess (is_open) {
+		database.storeAccessLog({
+			description : is_open ? 'Opened' : 'Closed',
+			contact: this.state.contact,
+			date : new Date()
+		});
+	} 
+  
+
+	getAccessLogs () {
+		return new Promise((resolve, reject) => {
+			database.getAccessLogs().then((logs) => {
+				resolve(logs.map((log) => ({
+					description : log.description,
+					contact: log.contact,
+					date : log.date.toISOString()
+				})));
+			}).catch((error) => {
+				console.error(TAG, error);
+				reject(error);
+			});
+		});
   }
 
 	dbSerialize () {
@@ -53,5 +73,7 @@ class ContactSensorService extends Service {
 		};
 	}
 }
+
+ContactSensorService.type = 'contact-sensor';
 
 module.exports = ContactSensorService;

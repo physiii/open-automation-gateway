@@ -9,6 +9,25 @@ class SirenApi extends ServiceApi {
 			this.service.alarmSet(data.value);
 			callback(null, {});
 		});
+		
+		this.on('siren/on', (data, callback) => {
+			this.service.sirenOn();
+			callback(null, {});
+		});
+		
+		this.on('siren/off', (data, callback) => {
+			this.service.sirenOff();
+			callback(null, {});
+		});
+		
+		this.on('log/get', (data, callback) => {
+			this.service.getSirenLogs().then((log) => {
+				callback(null, {log});
+			}).catch((error) => {
+				callback(error);
+			});
+		});
+		
 	}
 }
 

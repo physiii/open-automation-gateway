@@ -23,9 +23,9 @@ class SirenService extends Service {
 	}
 
   alarmSet (value) {
-
+    
     if(value) {
-      this.sirenOn();
+      this.sirenOn();      
     } else if (!value) {
       this.sirenOff();
     } else {
@@ -35,11 +35,38 @@ class SirenService extends Service {
   }
 
   sirenOn () {
+    const now = new Date();
+    
+    this.state.last_siren_date = now,    
     this.siren.writeSync(1);
+    this._logSiren();
+    this.relayEmit('on');
+    this._events.emit('on');
   }
 
   sirenOff () {
     this.siren.writeSync(0);
+    this.relayEmit('off');
+    this._events.emit('off');
+  }
+  
+  _logSiren () {
+		database.storeSirenLog({			
+			date : this.state.last_siren_date
+		});
+	} 
+  
+  getSirenLogs () {
+		return new Promise((resolve, reject) => {
+			database.getSirenLogs().then((logs) => {
+				resolve(logs.map((log) => ({					
+					date : log.date.toISOString()
+				})));
+			}).catch((error) => {
+				console.error(TAG, error);
+				reject(error);
+			});
+		});
   }
 
 	dbSerialize () {
