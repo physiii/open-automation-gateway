@@ -9,6 +9,7 @@ class ContactSensorService extends Service {
 		super(data, relaySocket, save, ContactSensorApi);
 
     this.contact_gpio = data.gpio;
+    this.state.last_contact_date = null;
     this.sensor = new Gpio(this.contact_gpio, 'in', 'both');
 
     this._handleContactChange();
