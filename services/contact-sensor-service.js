@@ -29,7 +29,7 @@ class ContactSensorService extends Service {
       }
       
       const is_open = value === 1,
-        now = new date(),        
+        now = new Date(),        
         state_string = is_open ? 'open' : 'closed';
         
       this.state.last_contact_date = now,
