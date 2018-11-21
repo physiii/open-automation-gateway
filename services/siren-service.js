@@ -1,6 +1,7 @@
 const Service = require('./service.js'),
 config = require('../config.json'),
   Gpio = require('onoff').Gpio,
+  database = require('./database.js'),
 	SirenApi = require('./api/siren-api.js'),
 	TAG = '[SirenService]';
 
