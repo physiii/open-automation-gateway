@@ -36,7 +36,7 @@ class ContactSensorService extends Service {
       this.state.last_contact_date = now,
       console.log(TAG, 'Received contact ' + state_string);
 
-      this.state.contact = !is_open;
+      this.state.contact = state_string;
       this.relayEmit(state_string);
       this._events.emit(state_string);
       this._logAccess(is_open);
