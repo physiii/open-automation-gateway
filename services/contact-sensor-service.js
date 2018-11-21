@@ -29,7 +29,7 @@ class ContactSensorService extends Service {
         throw err;
       }
       
-      const is_open = value === 1,
+      const is_open = value === 0,
         now = new Date(),        
         state_string = is_open ? 'open' : 'closed';
         
