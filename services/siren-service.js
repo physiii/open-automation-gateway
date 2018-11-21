@@ -81,6 +81,4 @@ class SirenService extends Service {
 	}
 }
 
-SirenService.type = 'siren';
-
 module.exports = SirenService;

@@ -75,6 +75,4 @@ class ContactSensorService extends Service {
 	}
 }
 
-ContactSensorService.type = 'contact-sensor';
-
 module.exports = ContactSensorService;

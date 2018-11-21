@@ -78,7 +78,7 @@ class GatewayService extends Service {
 					},
 					services: [
 						{
-							type: 'contact_sensor',
+							type: 'contact-sensor',
 							gpio: gpio_path
 						}
 					]
