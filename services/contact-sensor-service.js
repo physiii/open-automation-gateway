@@ -8,8 +8,7 @@ class ContactSensorService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, ContactSensorApi);
 
-    this.contact_gpio = data.gpio;
-    this.state.last_contact_date = null;
+    this.contact_gpio = data.gpio;    
     this.sensor = new Gpio(this.contact_gpio, 'in', 'both');
 
     this._handleContactChange();
@@ -30,10 +29,10 @@ class ContactSensorService extends Service {
       }
       
       const is_open = value === 1,
-        now = new date(),
-        this.state.last_contact_date = now,
+        now = new date(),        
         state_string = is_open ? 'open' : 'closed';
-
+        
+      this.state.last_contact_date = now,
       console.log(TAG, 'Received contact ' + state_string);
 
       this.state.contact = !is_open;
