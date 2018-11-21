@@ -10,6 +10,7 @@ class SirenService extends Service {
 
     this.siren_gpio = data.gpio;
     this.siren = new Gpio(this.siren_gpio, 'out');
+    this.isOn = false;
 
     this.siren.writeSync(0);
 	}
@@ -37,7 +38,8 @@ class SirenService extends Service {
   sirenOn () {
     const now = new Date();
     
-    this.state.last_siren_date = now,    
+    this.state.last_siren_date = now;
+    this.isOn = true;    
     this.siren.writeSync(1);
     this._logSiren();
     this.relayEmit('on');
@@ -45,7 +47,8 @@ class SirenService extends Service {
   }
 
   sirenOff () {
-    this.siren.writeSync(0);
+    this.isOn = false; 
+    this.siren.writeSync(0);     
     this.relayEmit('off');
     this._events.emit('off');
   }
