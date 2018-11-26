@@ -13,7 +13,7 @@ class SirenService extends Service {
     this.siren = new Gpio(this.siren_gpio, 'out');
     this.isOn = false;
 
-    this.siren.writeSync(0);
+    this.siren.write(0);
 	}
 
 	subscribeToDriver () {
