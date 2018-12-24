@@ -31,6 +31,7 @@ ymin = 100
 xmax = xmin + rWidth
 ymax = ymin + rHeight
 
+MOTION_DETECT_THRESHOLD = 5
 FRAMERATE = 30
 BUFFER_SIZE = 3 * FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 30 # minimum number of consecutive frames with motion required to trigger motion detection
@@ -232,7 +233,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   # frame and running average
   cv2.accumulateWeighted(gray, avg, 0.1)
   frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
-  thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+  thresh = cv2.threshold(frameDelta, MOTION_DETECT_THRESHOLD, 255, cv2.THRESH_BINARY)[1]
 
   # dilate the thresholded image to fill in holes, then find contours
   # on thresholded image

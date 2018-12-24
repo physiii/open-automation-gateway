@@ -36,7 +36,7 @@ class VideoStreamer {
 			'-ac', '1',
 			'-b:a', '128k',
 			'-codec:v', 'mpeg1video',
-			'-b:v', '600k',
+			'-b:v', '1200k',
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
 		];
@@ -58,7 +58,7 @@ class VideoStreamer {
 			'-i', file,
 			'-f', 'mpegts',
 			'-codec:v', 'mpeg1video',
-			'-b:v', '600k',
+			'-b:v', '1200k',
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
 		], streamId);
