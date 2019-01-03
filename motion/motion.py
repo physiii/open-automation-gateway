@@ -31,7 +31,7 @@ ymin = 100
 xmax = xmin + rWidth
 ymax = ymin + rHeight
 
-MOTION_DETECT_THRESHOLD = 5
+MOTION_DETECT_THRESHOLD = 1
 FRAMERATE = 30
 BUFFER_SIZE = 3 * FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 30 # minimum number of consecutive frames with motion required to trigger motion detection

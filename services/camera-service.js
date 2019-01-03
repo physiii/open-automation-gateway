@@ -4,6 +4,7 @@ const spawn = require('child_process').spawn,
 	path = require('path'),
 	fs = require('fs'),
 	utils = require('../utils.js'),
+	cv = require('opencv4nodejs'),
 	Service = require('./service.js'),
 	config = require('../config.json'),
 	CameraApi = require('./api/camera-api.js'),
@@ -11,7 +12,7 @@ const spawn = require('child_process').spawn,
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	ONE_SECOND_IN_MILLISECONDS = 1000,
-	TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
+	TIME_LAPSE_INTERVAL = 10 * ONE_SECOND_IN_MILLISECONDS,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
 
@@ -27,6 +28,8 @@ class CameraService extends Service {
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
+		this.settings.should_take_timelapse = data.settings && data.settings.should_take_timelapse || true;
+		this.settings.timelapse_brightness_threshold = data.settings && data.settings.timelapse_brightness_threshold || 10;
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
@@ -52,13 +55,42 @@ class CameraService extends Service {
 	}
 
 	saveTimeLapseImage () {
-		const command = 'ffmpeg -f v4l2 -i '
+		const timelapse_brightness_threshold = this.settings.timelapse_brightness_threshold,
+			command = 'ffmpeg -f v4l2 -i '
 			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 /usr/local/lib/gateway/timelapse/'
 			+ Date.now() + '.jpeg';
 
-		exec(command);
+    this.getCameraImageBrightness().then(function(brightness) {
+			if (brightness > timelapse_brightness_threshold) {
+				exec(command);
+				console.log(TAG, 'Capturing time lapse image:', command);
+			} else {
+				console.log(TAG, 'Too dark for timelapse.');
+			}
+		});
+	}
 
-		console.log(TAG, 'Capturing time lapse image…', command);
+	getCameraImageBrightness () {
+		const error_message = 'There was an error getting camera image brightness.';
+		return new Promise((resolve, reject) => {
+			try {
+				const wCap = new cv.VideoCapture(this.getLoopbackDevicePath());
+				let image = wCap.read();
+
+				if (image.empty) {
+					reject(error_message);
+				}
+
+    		let gray_image = image.bgrToGray();
+				let brightness = (gray_image.sum()/1000000).toFixed(0);
+
+				resolve(brightness);
+
+			} catch (error) {
+				console.error(this.TAG, error_message, error);
+				reject(error_message);
+			}
+		});
 	}
 
 	getPreviewImage () {
@@ -262,6 +294,22 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 	.set('should_detect_motion', {
 		type: 'boolean',
 		label: 'Record Movement',
+		default_value: true,
+		validation: {is_required: false}
+	})
+	.set('timelapse_brightness_threshold', {
+		type: 'integer',
+		label: 'Timelapse Brightness Threshold',
+		default_value: 10,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 1000
+		}
+	})
+	.set('should_take_timelapse', {
+		type: 'boolean',
+		label: 'Take Timelapse',
 		default_value: true,
 		validation: {is_required: false}
 	});

@@ -114,7 +114,7 @@ class ConnectionManager {
         if (!error && response.statusCode == 200) {
           if (error !== null) console.log(error);
           module.exports.public_ip = data;
-      //console.log("stored public_ip",public_ip);
+          //console.log("stored public_ip",public_ip);
       }
     });
   }
