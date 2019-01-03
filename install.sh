@@ -15,7 +15,7 @@ sudo apt install -y curl
 curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - 
 
 sudo apt-get install -y --force-yes \
-  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
+  sshpass git nodejs mongodb dnsmasq hostapd tmux libudev-dev \
   v4l2loopback-dkms v4l2loopback-utils libasound2-dev python-pip libssl-dev \
   python-setuptools python-dev build-essential libopencv-dev python-opencv \
 
@@ -80,6 +80,7 @@ sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 ##  video loopback  ##
 ######################
 
+sudo ln -s /usr/src/linux-headers-4.14.52-v7+ /lib/modules/4.14.79-v7+/build
 sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
