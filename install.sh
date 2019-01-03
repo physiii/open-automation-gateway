@@ -21,7 +21,7 @@ sudo apt-get install -y --force-yes \
 
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
-sudo python -m pip install pymongo==3.0.3 numpy imutils opencv-python
+sudo python -m pip install pymongo==3.0.3 numpy imutils
 
 ############
 ## opencv ##
