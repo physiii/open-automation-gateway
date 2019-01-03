@@ -13,8 +13,9 @@ sudo chmod -R 777 /usr/local/lib /usr/local/src
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  v4l2loopback-dkms v4l2loopback-utils libasound2-dev ython-pip \
+  v4l2loopback-dkms v4l2loopback-utils libasound2-dev python-pip \
   python-setuptools python-dev build-essential libopencv-dev python-opencv \
+  libssl-dev \
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - 
@@ -105,7 +106,6 @@ cd FFmpeg
 sudo ./configure --arch=armel --target-os=linux --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
 make -j4
 sudo make install
-
 
 ###############
 ##  gateway  ##
