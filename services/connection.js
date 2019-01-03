@@ -24,18 +24,14 @@ class ConnectionManager {
 	}
 
   init () {
-    /*this.getLocalIP();
-    this.getPublicIP();
-    this.getMode();
-    this.connectionLoop();*/
 		return;
 	}
 
   connectionLoop() {
     var self = this;
 
-    self.getStatus().then(function(isAlive) {
-      if (isAlive) {
+    self.getLocalIP().then(function(localIPs) {
+      if (localIPs !== []) {
         self.setCurrentAPStatus("connected");
         self.setConnAttempts(0);
         self.setLastGoodConnection();
@@ -86,26 +82,45 @@ class ConnectionManager {
   }
 
   getLocalIP() {
-    var ifaces = os.networkInterfaces();
-    Object.keys(ifaces).forEach(function (ifname) {
-      var alias = 0;
-      ifaces[ifname].forEach(function (iface) {
-        if ('IPv4' !== iface.family || iface.internal !== false) {
+    return new Promise(function(resolve, reject) {
+      let localIPs = [],
+        ifaces = os.networkInterfaces();
+
+      for (const iface of Object.keys(ifaces)) {
+        for (let i=0; i<ifaces[iface].length; i++) {
           // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-          return;
+          if ('IPv4' !== ifaces[iface][i].family || ifaces[iface][i].internal !== false) {
+            continue;
+          }
+          localIPs.push(ifaces[iface][i].address);
         }
-        if (alias >= 1) {
-          // this single interface has multiple ipv4 addresses
-          //console.log(ifname + ':' + alias, iface.address);
-        } else {
-          // this interface has only one ipv4 adress
-          //console.log(ifname, iface.address);
-        }
-        ++alias;
-        return iface.address;
-      });
+      }
+
+      resolve(localIPs);
     });
   }
+
+  // getLocalIP() {
+  //   const ifaces = os.networkInterfaces();
+  //   Object.keys(ifaces).forEach(function (ifname) {
+  //     var alias = 0;
+  //     ifaces[ifname].forEach(function (iface) {
+  //       if ('IPv4' !== iface.family || iface.internal !== false) {
+  //         // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+  //         return;
+  //       }
+  //       if (alias >= 1) {
+  //         // this single interface has multiple ipv4 addresses
+  //         //console.log(ifname + ':' + alias, iface.address);
+  //       } else {
+  //         // this interface has only one ipv4 adress
+  //         //console.log(ifname, iface.address);
+  //       }
+  //       ++alias;
+  //       return iface.address;
+  //     });
+  //   });
+  // }
 
   getPublicIP() {
     request.get(
