@@ -10,16 +10,10 @@
 ## opencv ##
 ############
 
-sudo apt-get update && sudo apt-get upgrade
-sudo apt-get install -y build-essential cmake pkg-config
-sudo apt-get install -y libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev
-sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
-sudo apt-get install -y libxvidcore-dev libx264-dev
-sudo apt-get install -y libgtk2.0-dev libgtk-3-dev
-sudo apt-get install -y libatlas-base-dev gfortran
-sudo apt-get install -y python2.7-dev python3-dev
-
-sudo apt install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libgtk2.0-dev libgtk-3-dev libatlas-base-dev gfortran python2.7-dev python3-dev
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
+    libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev \
+    libatlas-base-dev gfortran python2.7-dev python3-dev libavcodec-dev libavformat-dev
 
 cd ~
 wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
