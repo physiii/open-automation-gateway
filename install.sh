@@ -96,7 +96,7 @@ cd /usr/local/src
 git clone git://git.videolan.org/x264
 cd x264
 ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
-make
+make -j4
 sudo make install
 cd /usr/local/src
 git clone https://github.com/FFmpeg/FFmpeg.git
