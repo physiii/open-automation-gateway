@@ -60,7 +60,7 @@ class CameraService extends Service {
 			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 /usr/local/lib/gateway/timelapse/'
 			+ Date.now() + '.jpeg';
 
-    this.getCameraImageBrightness().then(function(brightness) {
+    		this.getCameraImageBrightness().then(function(brightness) {
 			if (brightness > timelapse_brightness_threshold) {
 				exec(command);
 				console.log(TAG, 'Capturing time lapse image:', command);
