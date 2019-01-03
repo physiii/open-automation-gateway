@@ -98,6 +98,7 @@ cd x264
 ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
 make -j4
 sudo make install
+
 cd /usr/local/src
 git clone https://github.com/FFmpeg/FFmpeg.git
 cd FFmpeg
