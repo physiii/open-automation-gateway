@@ -111,6 +111,7 @@ sudo make install
 ##  gateway  ##
 ###############
 
+export OPENCV4NODEJS_DISABLE_AUTOBUILD=1
 cd /usr/local/src
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
