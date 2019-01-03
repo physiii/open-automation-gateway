@@ -16,9 +16,8 @@ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  v4l2loopback-dkms v4l2loopback-utils libasound2-dev python-pip \
+  v4l2loopback-dkms v4l2loopback-utils libasound2-dev python-pip libssl-dev \
   python-setuptools python-dev build-essential libopencv-dev python-opencv \
-  libssl-dev \
 
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
