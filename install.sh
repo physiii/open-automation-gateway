@@ -11,14 +11,14 @@
 
 sudo chmod -R 777 /usr/local/lib /usr/local/src
 
+sudo apt install -y curl
+curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - 
+
 sudo apt-get install -y --force-yes \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   v4l2loopback-dkms v4l2loopback-utils libasound2-dev python-pip \
   python-setuptools python-dev build-essential libopencv-dev python-opencv \
   libssl-dev \
-
-sudo apt-get install -y curl
-curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - 
 
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
