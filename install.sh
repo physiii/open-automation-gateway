@@ -81,9 +81,7 @@ sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 ##  video loopback  ##
 ######################
 
-# get /lib/modules/4.14.79-v7+/extra/v4l2loopback.ko
-# sudo nano /lib/modules/4.14.79-v7+/modules.dep
-sudo ln -s /usr/src/linux-headers-4.14.52-v7+ /lib/modules/4.14.79-v7+/build
+
 sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
@@ -91,6 +89,8 @@ cd v4l2loopback
 make && sudo make install
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,20
+# get /lib/modules/4.14.79-v7+/extra/v4l2loopback.ko
+# sudo nano /lib/modules/4.14.79-v7+/modules.dep
 
 ##############
 ##  ffmpeg  ##
