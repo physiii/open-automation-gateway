@@ -117,3 +117,13 @@ git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 sudo npm install -g pm2 openzwave-shared
 npm install
+
+#############
+## startup ##
+#############
+
+sudo -i
+sed -i -e 's/exit 0//g' /etc/rc.local
+echo "su pi -c 'pm2 start /usr/local/src/gateway/index.js --name gateway'" >> /etc/rc.local
+echo "modprobe v4l2loopback video_nr=10,20" >> /etc/rc.local
+echo "exit 0" >> /etc/rc.local
