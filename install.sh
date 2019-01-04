@@ -80,6 +80,7 @@ sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 ##  video loopback  ##
 ######################
 
+# get /usr/src and /lib/modules folders
 sudo ln -s /usr/src/linux-headers-4.14.52-v7+ /lib/modules/4.14.79-v7+/build
 sudo chown -R $USER /usr/src
 cd /usr/src
