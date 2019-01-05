@@ -11,34 +11,33 @@
 
 sudo chmod -R 777 /usr/local/lib /usr/local/src
 
-sudo apt install -y curl
-curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - 
+sudo apt update && sudo apt upgrade -y
 
-sudo apt-get install -y --force-yes \
-  sshpass git nodejs mongodb dnsmasq hostapd tmux libudev-dev \
-  libasound2-dev python-pip libssl-dev \
-  python-setuptools python-dev libopencv-dev python-opencv \
+sudo apt-get install -y curl
+curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 
-wget https://bootstrap.pypa.io/get-pip.py
-sudo python get-pip.py
-sudo pip install pymongo==3.0.3 numpy imutils bson
+sudo apt-get install -y \
+  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
+  python-pip python-setuptools python-dev libopencv-dev python-opencv \
+  libssl-dev libasound2-dev raspberrypi-kernel-headers \
+
+sudo pip install pymongo==3.0.3 numpy imutils
 
 ############
 ## opencv ##
 ############
 
-sudo apt update && sudo apt upgrade -y
 sudo apt install -y build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
     libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev \
     libatlas-base-dev gfortran python2.7-dev python3-dev libavcodec-dev libavformat-dev
-    
-cd ~
+
+cd /usr/local/src
 wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
 wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.3.0.zip
 unzip opencv.zip
 unzip opencv_contrib.zip
 
-cd ~/opencv-3.3.0/
+cd /usr/local/src/opencv-3.3.0/
 mkdir build
 cd build
 
@@ -80,7 +79,6 @@ sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 ##  video loopback  ##
 ######################
 
-
 sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
@@ -117,7 +115,7 @@ export OPENCV4NODEJS_DISABLE_AUTOBUILD=1
 cd /usr/local/src
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
-sudo npm install -g pm2 openzwave-shared
+sudo npm install -g pm2
 npm install
 
 #############

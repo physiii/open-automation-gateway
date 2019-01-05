@@ -31,7 +31,6 @@ ymin = 100
 xmax = xmin + rWidth
 ymax = ymin + rHeight
 
-MOTION_DETECT_THRESHOLD = 5
 FRAMERATE = 30
 BUFFER_SIZE = 3 * FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 30 # minimum number of consecutive frames with motion required to trigger motion detection
@@ -45,11 +44,13 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
 ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
 ap.add_argument('-r', '--rotation', dest='rotation', type=int, required=False, default=0, help='degrees of rotation for the picture - supported values: 0, 180')
+ap.add_argument('-t', '--threshold', dest='threshold', type=int, required=False, default=10, help='Threshold used to begin recording motion')
 args = vars(ap.parse_args())
 
 cameraPath = args['camera']
 cameraId = args['camera-id']
 cameraRotation = args['rotation']
+motionThreshold = args['threshold']
 
 ##################################################################################################################
 # Definitions and Classes
@@ -233,7 +234,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   # frame and running average
   cv2.accumulateWeighted(gray, avg, 0.1)
   frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
-  thresh = cv2.threshold(frameDelta, MOTION_DETECT_THRESHOLD, 255, cv2.THRESH_BINARY)[1]
+  thresh = cv2.threshold(frameDelta, motionThreshold, 255, cv2.THRESH_BINARY)[1]
 
   # dilate the thresholded image to fill in holes, then find contours
   # on thresholded image
@@ -262,7 +263,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 
     # if we are not already recording, start recording
     if consecFramesWithMotion >= MIN_MOTION_FRAMES and not kcw.recording:
-      print('[MOTION] Detected motion.')
+      print '[MOTION] Detected motion. Threshold: ',motionThreshold
 
       # save a preview image
       cv2.imwrite(getCameraPath() + '/preview.jpg', frame)

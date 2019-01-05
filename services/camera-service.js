@@ -11,8 +11,10 @@ const spawn = require('child_process').spawn,
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
+	mediaDir = "/usr/local/lib/gateway/",
+	ONE_MINUTE_IN_SECONDS = 60,
 	ONE_SECOND_IN_MILLISECONDS = 1000,
-	TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
+	//TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	TAG = '[CameraService]';
 
@@ -28,8 +30,10 @@ class CameraService extends Service {
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
 		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
+		this.settings.motion_threshold = data.settings && data.settings.motion_threshold || 10;
 		this.settings.should_take_timelapse = data.settings && data.settings.should_take_timelapse || true;
 		this.settings.timelapse_brightness_threshold = data.settings && data.settings.timelapse_brightness_threshold || 10;
+		this.settings.timelapse_interval = data.settings && data.settings.timelapse_interval || 20;
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
@@ -51,13 +55,16 @@ class CameraService extends Service {
 	}
 
 	startTimeLapse () {
-		setInterval(this.saveTimeLapseImage.bind(this), TIME_LAPSE_INTERVAL);
+		setInterval(this.saveTimeLapseImage.bind(this), this.settings.timelapse_interval
+			* ONE_MINUTE_IN_SECONDS
+			* ONE_SECOND_IN_MILLISECONDS);
 	}
 
 	saveTimeLapseImage () {
 		const timelapse_brightness_threshold = this.settings.timelapse_brightness_threshold,
 			command = 'ffmpeg -f v4l2 -i '
-			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 /usr/local/lib/gateway/timelapse/'
+			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 '
+			+ mediaDir + 'timelapse/'
 			+ Date.now() + '.jpeg';
 
     		this.getCameraImageBrightness().then(function(brightness) {
@@ -98,7 +105,7 @@ class CameraService extends Service {
 
 		return new Promise((resolve, reject) => {
 			try {
-				fs.readFile('/usr/local/lib/gateway/events/' + this.id + '/preview.jpg', (error, file) => {
+				fs.readFile(mediaDir + 'events/' + this.id + '/preview.jpg', (error, file) => {
 					if (error) {
 						console.error(this.TAG, error_message, error);
 						reject(error_message);
@@ -151,7 +158,8 @@ class CameraService extends Service {
 					motionScriptPath,
 					'--camera', this.getLoopbackDevicePath(),
 					'--camera-id', this.id,
-					'--rotation', this.settings.rotation || 0
+					'--rotation', this.settings.rotation || 0,
+					'--threshold', this.settings.motion_threshold || 10
 				]);
 
 				// Listen for motion events.
@@ -297,6 +305,31 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 		default_value: true,
 		validation: {is_required: false}
 	})
+	.set('motion_threshold', {
+		type: 'integer',
+		label: 'Motion Threshold',
+		default_value: 10,
+		validation: {
+			min: 0,
+			is_required: false
+		}
+	})
+	.set('should_take_timelapse', {
+		type: 'boolean',
+		label: 'Take Timelapse',
+		default_value: true,
+		validation: {is_required: false}
+	})
+	.set('timelapse_interval', {
+		type: 'integer',
+		label: 'Timelapse Interval (seconds)',
+		unit_label: 'seconds',
+		default_value: 20,
+		validation: {
+			min: 0,
+			is_required: false
+		}
+	})
 	.set('timelapse_brightness_threshold', {
 		type: 'integer',
 		label: 'Timelapse Brightness Threshold',
@@ -306,12 +339,6 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			min: 0,
 			max: 1000
 		}
-	})
-	.set('should_take_timelapse', {
-		type: 'boolean',
-		label: 'Take Timelapse',
-		default_value: true,
-		validation: {is_required: false}
 	});
 
 module.exports = CameraService;
