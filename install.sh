@@ -37,7 +37,7 @@ wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.3.
 unzip opencv.zip
 unzip opencv_contrib.zip
 
-cd /usr/local/src/opencv-3.3.0/
+cd opencv-3.3.0
 mkdir build
 cd build
 
@@ -117,6 +117,7 @@ git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 sudo npm install -g pm2
 npm install
+sudo chmod 777 /etc/wpa_supplicant/wpa_supplicant.conf
 
 #############
 ## startup ##
