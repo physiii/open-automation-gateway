@@ -19,17 +19,17 @@ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   python-pip python-setuptools python-dev libopencv-dev python-opencv \
-  libssl-dev libasound2-dev raspberrypi-kernel-headers \
+  python-setuptools libssl-dev libasound2-dev raspberrypi-kernel-headers \
+  build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
+  libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev \
+  libatlas-base-dev gfortran python2.7-dev python3-dev libavcodec-dev libavformat-dev
 
 sudo pip install pymongo==3.0.3 numpy imutils
+sudo npm install -g pm2
 
 ############
 ## opencv ##
 ############
-
-sudo apt install -y build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
-    libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev \
-    libatlas-base-dev gfortran python2.7-dev python3-dev libavcodec-dev libavformat-dev
 
 cd /usr/local/src
 wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
@@ -55,7 +55,7 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 	-D ENABLE_NEON=ON \
 	-D WITH_LIBV4L=ON \
 	-D WITH_FFMPEG=OFF \
-../
+  ../
 
 make -j4
 sudo make install
@@ -69,7 +69,7 @@ cd /usr/local/src
 wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
 tar zxvf openzwave-1.4.1.tar.gz
 cd openzwave-1.4.1
-make && sudo make install
+make -j4 && sudo make install
 export LD_LIBRARY_PATH=/usr/local/lib
 sudo ldconfig
 sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
@@ -86,19 +86,10 @@ cd v4l2loopback
 make && sudo make install
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,20
-# get /lib/modules/4.14.79-v7+/extra/v4l2loopback.ko
-# sudo nano /lib/modules/4.14.79-v7+/modules.dep
 
 ##############
 ##  ffmpeg  ##
 ##############
-
-cd /usr/local/src
-git clone git://git.videolan.org/x264
-cd x264
-./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl
-make -j4
-sudo make install
 
 cd /usr/local/src
 git clone https://github.com/FFmpeg/FFmpeg.git
@@ -115,7 +106,6 @@ export OPENCV4NODEJS_DISABLE_AUTOBUILD=1
 cd /usr/local/src
 git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
-sudo npm install -g pm2
 npm install
 sudo chmod 777 /etc/wpa_supplicant/wpa_supplicant.conf
 
