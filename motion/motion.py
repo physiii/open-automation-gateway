@@ -273,7 +273,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
       tempRecordingPath = getCameraTempPath() + '/' + fileName
       finishedRecordingPath = getDatePath(fileTimestamp) + '/' + fileName
 
-      kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'PIM1'), FRAMERATE)
+      kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'MJPG'), FRAMERATE)
   else:
     consecFramesWithMotion = 0
     consecFramesWithoutMotion += 1

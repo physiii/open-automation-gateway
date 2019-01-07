@@ -1,10 +1,5 @@
 #!/bin/sh -e
 
-# wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
-# sudo apt update
-# sudo apt upgrade -y
-# sudo rpi-update
-
 #############
 ## general ##
 #############
@@ -18,18 +13,35 @@ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  python-pip python-setuptools python-dev libopencv-dev python-opencv \
+  python-pip python-setuptools python-dev python2.7-dev python-opencv \
   python-setuptools libssl-dev libasound2-dev raspberrypi-kernel-headers \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev \
-  libatlas-base-dev gfortran python2.7-dev python3-dev libavcodec-dev libavformat-dev
+  libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev
 
 sudo pip install pymongo==3.0.3 numpy imutils
 sudo npm install -g pm2
 
+##############
+##  ffmpeg  ##
+##############
+
+cd /usr/local/src
+git clone https://github.com/FFmpeg/FFmpeg.git
+cd FFmpeg
+sudo ./configure --arch=armel --target-os=linux --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
+make -j4
+sudo make install
+
 ############
 ## opencv ##
 ############
+
+# may need to increase swap
+# make sure to set it back after
+# /etc/dphys-swapfile
+# sudo /etc/init.d/dphys-swapfile stop
+# sudo /etc/init.d/dphys-swapfile start
 
 cd /usr/local/src
 wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
@@ -53,9 +65,20 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 	-D INSTALL_PYTHON_EXAMPLES=OFF \
 	-D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-3.3.0/modules \
 	-D ENABLE_NEON=ON \
+  -D ENABLE_VFPV3=ON \
 	-D WITH_LIBV4L=ON \
 	-D WITH_FFMPEG=OFF \
-  ../
+  .. \
+
+# cmake -D CMAKE_BUILD_TYPE=RELEASE \
+#    -D CMAKE_INSTALL_PREFIX=/usr/local \
+#    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-3.3.0/modules \
+#    -D ENABLE_NEON=ON \
+#    -D ENABLE_VFPV3=ON \
+#    -D BUILD_TESTS=OFF \
+#    -D INSTALL_PYTHON_EXAMPLES=OFF \
+#    -D BUILD_EXAMPLES=OFF \
+#    .. \
 
 make -j4
 sudo make install
@@ -87,17 +110,6 @@ make && sudo make install
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,20
 
-##############
-##  ffmpeg  ##
-##############
-
-cd /usr/local/src
-git clone https://github.com/FFmpeg/FFmpeg.git
-cd FFmpeg
-sudo ./configure --arch=armel --target-os=linux --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
-make -j4
-sudo make install
-
 ###############
 ##  gateway  ##
 ###############
@@ -108,6 +120,7 @@ git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 npm install
 sudo chmod 777 /etc/wpa_supplicant/wpa_supplicant.conf
+sudo chmod 777 /usr/local/lib
 
 #############
 ## startup ##
