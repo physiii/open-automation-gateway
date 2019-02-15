@@ -14,6 +14,7 @@ class HueLightDriver {
 		}
 
 		this.bridge.getLightState(this.light_id).then((state) => this.events.emit('ready', this.lightStateToState(state)));
+		//this.bridge.setBrightness(this.light_id, 100).then(() => this.events.emit('brightness-changed', 100));
 	}
 
 	on () {
@@ -23,7 +24,7 @@ class HueLightDriver {
 	lightStateToState (light_state) {
 		return {
 			power: light_state.state.on,
-			brightness: light_state.state.brightness / BRIGHTNESS_SCALE,
+			brightness: light_state.state.bri / BRIGHTNESS_SCALE,
 			color: light_state.state.rgb
 		};
 	}

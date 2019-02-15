@@ -54,7 +54,7 @@
     "node-php": "0.0.1",
     "object.omit": "^2.0.0",
     "onoff": "^3.2.2",
-    "opencv4nodejs": "^4.13.0",
+    "opencv4nodejs": "^4.14.1",
     "openzwave-shared": "^1.4.3",
     "optimist": "^0.6.1",
     "passport": "^0.3.2",

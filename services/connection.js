@@ -30,6 +30,8 @@ class ConnectionManager {
   connectionLoop() {
     var self = this;
 
+    if (config.manage_network === false) return;
+
     self.getLocalIP().then(function(localIPs) {
       if (localIPs !== []) {
         self.setCurrentAPStatus("connected");

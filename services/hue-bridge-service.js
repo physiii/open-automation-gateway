@@ -8,6 +8,7 @@ class HueBridgeService extends Service {
 	constructor (data, relay_socket, save) {
 		super(data, relay_socket, save);
 
+		console.log(TAG,"data:",data);
 		this.ip = data.ip;
 		this.user = data.user;
 
@@ -54,7 +55,7 @@ class HueBridgeService extends Service {
 					throw error;
 				}
 
-				//console.log(JSON.stringify(result));
+				console.log(JSON.stringify(result));
 
 				resolve(result);
 			});
@@ -63,14 +64,10 @@ class HueBridgeService extends Service {
 
 	lightOn (device_id) {
 		return new Promise((resolve, reject) => {
-			console.log(TAG, 'Set light: on');
-
 			this.hue_api.setLightState(device_id, this.light_state.on(), function(error, result) {
 				if (error) {
 					throw error;
 				}
-
-				console.log(TAG, result);
 
 				resolve();
 			});
@@ -79,14 +76,10 @@ class HueBridgeService extends Service {
 
 	lightOff (device_id) {
 		return new Promise((resolve, reject) => {
-			console.log(TAG, 'Set light: off');
-
 			this.hue_api.setLightState(device_id, this.light_state.off(), function(error, result) {
 				if (error) {
 					throw error;
 				}
-
-				console.log(TAG, result);
 
 				resolve();
 			});
@@ -95,15 +88,10 @@ class HueBridgeService extends Service {
 
 	setColor (device_id, color) {
 		return new Promise((resolve, reject) => {
-			console.log(TAG, 'Set color');
-
 			this.hue_api.setLightState(device_id, this.light_state.rgb(color), function(error, result) {
 				if (error) {
 					throw error;
 				}
-
-				console.log(TAG, result);
-
 				resolve();
 			});
 		});
@@ -111,14 +99,10 @@ class HueBridgeService extends Service {
 
 	setBrightness (device_id, brightness) {
 		return new Promise((resolve, reject) => {
-			console.log(TAG, 'Set brightness to ' + brightness);
-
 			this.hue_api.setLightState(device_id, this.light_state.brightness(brightness), function(error, result) {
 				if (error) {
 					throw error;
 				}
-
-				console.log(TAG, result);
 
 				resolve();
 			});
