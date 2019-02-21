@@ -3,6 +3,7 @@ var $window = $(window);
 var $routerPassword = $('#ap_password');
 var $router_list = $("select[name='ap_list']")
 var $device_id = $('#device_id');
+var $gateway_id = $('#gateway_id');
 var socket = io();
 
 // stores router and password
@@ -28,6 +29,11 @@ socket.on('router list', (data) => {
 socket.on('device_id', (device_id) => {
   console.log("device_id: ",device_id);
   $device_id.html( device_id );
+});
+
+socket.on('gateway_id', (device_id) => {
+  console.log("gateway_id: ",device_id);
+  $gateway_id.html( device_id );
 });
 
 socket.on('disconnect', () => {});

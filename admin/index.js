@@ -33,6 +33,13 @@ io.on('connection', (socket) => {
       console.log(err);
   })
 
+  database.getGatewayID().then(function(gateway_id) {
+      socket.emit('gateway_id',gateway_id);
+      //console.log(device_id);
+  }, function(err) {
+      console.log(err);
+  })
+
   socket.on('store ap', (apInfo) => {
     console.log(TAG,"apInfo", apInfo);
     ConnectionManager.setWifi(apInfo);

@@ -56,18 +56,34 @@ class Database {
 	}
 
 	getDeviceID () {
-	return this.connect((db, resolve, reject) => {
-		db.collection('settings').find().toArray((error, result) => {
-			db.close();
-			let device_id = result[0].main_device_id;
-			if (error) {
-				console.error(TAG, 'getDeviceID', error);
-				reject('Database error');
-				return;
-			}
-			resolve(device_id);
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').find().toArray((error, result) => {
+				db.close();
+				let device_id = result[0].id;
+				if (error) {
+					console.error(TAG, 'getDeviceID', error);
+					reject('Database error');
+					return;
+				}
+				resolve(device_id);
+			});
 		});
-	});
+	}
+
+	getGatewayID () {
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').find().toArray((error, result) => {
+				db.close();
+				let  id = result[0].services[0].id;
+				console.log('Found Gateway ID: ',id)
+				if (error) {
+					console.error(TAG, 'getDeviceID', error);
+					reject('Database error');
+					return;
+				}
+				resolve(id);
+			});
+		});
 	}
 
 	get_settings () {
@@ -229,7 +245,7 @@ class Database {
 		});
 	});
 	}
-	
+
 	storeAccessLog (data) {
 		return this.connect((db, resolve, reject) => {
 			db.collection('access_log').insertOne(data, (error, record) => {
@@ -261,7 +277,7 @@ class Database {
 			});
 		});
 	}
-	
+
 	storeSirenLog (data) {
 		return this.connect((db, resolve, reject) => {
 			db.collection('access_log').insertOne(data, (error, record) => {
