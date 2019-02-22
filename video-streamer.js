@@ -27,6 +27,7 @@ class VideoStreamer {
 	} = {}) {
 		const options = [
 			'-s', width + 'x' + height,
+			'-r', '16',
 			'-f', 'v4l2',
 			'-i', videoDevice,
 			'-f', 'mpegts',

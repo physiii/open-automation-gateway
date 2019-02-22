@@ -33,7 +33,7 @@ class ConnectionManager {
     if (config.manage_network === false) return;
 
     self.getLocalIP().then(function(localIPs) {
-      if (localIPs !== []) {
+      if (localIPs.length > 0) {
         self.setCurrentAPStatus("connected");
         self.setConnAttempts(0);
         self.setLastGoodConnection();

@@ -4,7 +4,7 @@ const spawn = require('child_process').spawn,
 	path = require('path'),
 	fs = require('fs'),
 	utils = require('../utils.js'),
-	cv = require('opencv4nodejs'),
+	// cv = require('opencv4nodejs'),
 	Service = require('./service.js'),
 	config = require('../config.json'),
 	CameraApi = require('./api/camera-api.js'),
@@ -80,7 +80,7 @@ class CameraService extends Service {
 	getCameraImageBrightness () {
 		const error_message = 'There was an error getting camera image brightness.';
 		return new Promise((resolve, reject) => {
-			try {
+			/*try {
 				const wCap = new cv.VideoCapture(this.getLoopbackDevicePath());
 				let image = wCap.read();
 
@@ -96,7 +96,7 @@ class CameraService extends Service {
 			} catch (error) {
 				console.error(this.TAG, error_message, error);
 				reject(error_message);
-			}
+			}*/
 		});
 	}
 

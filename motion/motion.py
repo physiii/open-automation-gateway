@@ -31,9 +31,9 @@ ymin = 100
 xmax = xmin + rWidth
 ymax = ymin + rHeight
 
-FRAMERATE = 30
+FRAMERATE = 16
 BUFFER_SIZE = 3 * FRAMERATE # seconds * framerate
-MIN_MOTION_FRAMES = 30 # minimum number of consecutive frames with motion required to trigger motion detection
+MIN_MOTION_FRAMES = 16 # minimum number of consecutive frames with motion required to trigger motion detection
 MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before forcing evaluation of a new frame
 MAX_CATCH_UP_MAX_REACHED = 10 # script will exit if max catch up frames limit is reached this many times consecutively
 
@@ -239,8 +239,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   # dilate the thresholded image to fill in holes, then find contours
   # on thresholded image
   thresh = cv2.dilate(thresh, None, iterations=2)
-  im2, contours, heir = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-    cv2.CHAIN_APPROX_SIMPLE)
+  contours, heir = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
   # determine if the there's motion in this frame
   for contour in contours:
