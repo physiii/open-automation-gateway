@@ -12,7 +12,12 @@ const spawn = require('child_process').spawn,
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	mediaDir = "/usr/local/lib/gateway/",
+	ONE_DAY_IN_HOURS = 24,
+	ONE_HOUR_IN_MINUTES = 60,
 	ONE_MINUTE_IN_SECONDS = 60,
+	ONE_DAY_IN_MILLISECONDS = 86400000,
+	ONE_HOUR_IN_MILLISECONDS = 3600000,
+	ONE_MINUTE_IN_MILLISECONDS = 60000,
 	ONE_SECOND_IN_MILLISECONDS = 1000,
 	//TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
@@ -34,6 +39,10 @@ class CameraService extends Service {
 		this.settings.should_take_timelapse = data.settings && data.settings.should_take_timelapse || true;
 		this.settings.timelapse_brightness_threshold = data.settings && data.settings.timelapse_brightness_threshold || 10;
 		this.settings.timelapse_interval = data.settings && data.settings.timelapse_interval || 20;
+		this.settings.timelapse_on_time_hour = data.settings && data.settings.timelapse_on_time_hour || 6;
+		this.settings.timelapse_on_time_minute = data.settings && data.settings.timelapse_on_time_minute || 0;
+		this.settings.timelapse_off_time_hour = data.settings && data.settings.timelapse_off_time_hour || 22;
+		this.settings.timelapse_off_time_minute = data.settings && data.settings.timelapse_off_time_minute || 0;
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
@@ -55,9 +64,8 @@ class CameraService extends Service {
 	}
 
 	startTimeLapse () {
-		setInterval(this.saveTimeLapseImage.bind(this), this.settings.timelapse_interval
-			* ONE_MINUTE_IN_SECONDS
-			* ONE_SECOND_IN_MILLISECONDS);
+		setInterval(this.saveTimeLapseImage.bind(this),
+			this.settings.timelapse_interval * ONE_MINUTE_IN_MILLISECONDS);
 	}
 
 	saveTimeLapseImage () {
@@ -65,16 +73,32 @@ class CameraService extends Service {
 			command = 'ffmpeg -f v4l2 -i '
 			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 '
 			+ mediaDir + 'timelapse/'
-			+ Date.now() + '.jpeg';
+			+ Date.now() + '.jpeg',
+		on_time = this.settings.timelapse_on_time_hour * ONE_HOUR_IN_MILLISECONDS
+			+ this.settings.timelapse_on_time_minute * ONE_MINUTE_IN_MILLISECONDS,
+		off_time = this.settings.timelapse_off_time_hour * ONE_HOUR_IN_MILLISECONDS
+			+ this.settings.timelapse_off_time_minute * ONE_MINUTE_IN_MILLISECONDS,
+		date = new Date(Date.now());
 
-    		this.getCameraImageBrightness().then(function(brightness) {
+		let time = date.getHours() * ONE_HOUR_IN_MILLISECONDS
+			+ date.getMinutes() * ONE_MINUTE_IN_MILLISECONDS
+			- date.getTimezoneOffset() * ONE_MINUTE_IN_MILLISECONDS;
+
+		if (time > on_time && time < off_time) {
+			exec(command);
+			console.log(TAG, 'Capturing time lapse image:', command);
+		} else {
+			console.log(TAG, 'Current time ('+time+') is outside timelapse window ('+on_time+' to '+off_time+')');
+		}
+
+    		/*this.getCameraImageBrightness().then(function(brightness) {
 			if (brightness > timelapse_brightness_threshold) {
 				exec(command);
 				console.log(TAG, 'Capturing time lapse image:', command);
 			} else {
 				console.log(TAG, 'Too dark for timelapse.');
 			}
-		});
+		});*/
 	}
 
 	getCameraImageBrightness () {
@@ -322,7 +346,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 	})
 	.set('timelapse_interval', {
 		type: 'integer',
-		label: 'Timelapse Interval (seconds)',
+		label: 'Timelapse Interval (minutes)',
 		unit_label: 'seconds',
 		default_value: 20,
 		validation: {
@@ -339,6 +363,47 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			min: 0,
 			max: 1000
 		}
+	})
+	.set('timelapse_on_time_hours', {
+		type: 'integer',
+		label: 'Timelapse On Time (hours)',
+		default_value: 6,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 23
+		}
+	})
+	.set('timelapse_on_time_minutes', {
+		type: 'integer',
+		label: 'Timelapse On Time (minutes)',
+		default_value: 0,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 59
+		}
+	})
+	.set('timelapse_off_time_hours', {
+		type: 'integer',
+		label: 'Timelapse Off Time (hours)',
+		default_value: 22,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 23
+		}
+	})
+	.set('timelapse_off_time_minutes', {
+		type: 'integer',
+		label: 'Timelapse Off Time (minutes)',
+		default_value: 0,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 59
+		}
 	});
+
 
 module.exports = CameraService;
