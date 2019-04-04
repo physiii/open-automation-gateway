@@ -71,7 +71,8 @@ class CameraService extends Service {
 	saveTimeLapseImage () {
 		const timelapse_brightness_threshold = this.settings.timelapse_brightness_threshold,
 			date = new Date(Date.now()),
-			timestamp_filename = new Date().toISOString(),
+			tzoffset = (new Date()).getTimezoneOffset() * 60000,
+			timestamp_filename = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1),
 			command = 'ffmpeg -f v4l2 -i '
 			+ this.getLoopbackDevicePath()
 			+ ' -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: text='+"'%{localtime}'"+': x=(w-tw)/100: y=h-(2*lh): fontcolor=green: box=1: boxcolor=0x00000000@1: fontsize=30"'
@@ -86,11 +87,12 @@ class CameraService extends Service {
 
 		let time = date.getHours() * ONE_HOUR_IN_MILLISECONDS
 			+ date.getMinutes() * ONE_MINUTE_IN_MILLISECONDS
-			- date.getTimezoneOffset() * ONE_MINUTE_IN_MILLISECONDS;
+			// - date.getTimezoneOffset() * ONE_MINUTE_IN_MILLISECONDS;
 
 		if (time > on_time && time < off_time) {
 			exec(command);
 			console.log(TAG, 'Capturing time lapse image:', command);
+			console.log(TAG, 'Currently '+time+', timelapse window is from '+on_time+' to '+off_time);
 		} else {
 			console.log(TAG, 'Current time ('+time+') is outside timelapse window ('+on_time+' to '+off_time+')');
 		}
