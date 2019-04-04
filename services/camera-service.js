@@ -70,17 +70,19 @@ class CameraService extends Service {
 
 	saveTimeLapseImage () {
 		const timelapse_brightness_threshold = this.settings.timelapse_brightness_threshold,
+			date = new Date(Date.now()),
+			timestamp_filename = new Date().toISOString(),
 			command = 'ffmpeg -f v4l2 -i '
 			+ this.getLoopbackDevicePath()
 			+ ' -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: text='+"'%{localtime}'"+': x=(w-tw)/100: y=h-(2*lh): fontcolor=green: box=1: boxcolor=0x00000000@1: fontsize=30"'
 			+ ' -vframes 1 -s 1920x1080 '
 			+ mediaDir + 'timelapse/'
-			+ Date.now() + '.jpeg',
+			+ timestamp_filename + '.jpeg',
 		on_time = this.settings.timelapse_on_time_hour * ONE_HOUR_IN_MILLISECONDS
 			+ this.settings.timelapse_on_time_minute * ONE_MINUTE_IN_MILLISECONDS,
 		off_time = this.settings.timelapse_off_time_hour * ONE_HOUR_IN_MILLISECONDS
-			+ this.settings.timelapse_off_time_minute * ONE_MINUTE_IN_MILLISECONDS,
-		date = new Date(Date.now());
+			+ this.settings.timelapse_off_time_minute * ONE_MINUTE_IN_MILLISECONDS;
+
 
 		let time = date.getHours() * ONE_HOUR_IN_MILLISECONDS
 			+ date.getMinutes() * ONE_MINUTE_IN_MILLISECONDS
