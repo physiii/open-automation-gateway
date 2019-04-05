@@ -73,9 +73,11 @@ class CameraService extends Service {
 			date = new Date(Date.now()),
 			tzoffset = (new Date()).getTimezoneOffset() * 60000,
 			timestamp_filename = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1),
-			command = 'ffmpeg -f v4l2 -i '
-				+ this.getLoopbackDevicePath()
-				+ ' -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: text='+"'%{localtime}'"+': x=(w-tw)/100: y=h-(2*lh): fontcolor=green: box=1: boxcolor=0x00000000@1: fontsize=30"'
+			command = 'ffmpeg -input_format yuyv422 -i '
+				 + this.getLoopbackDevicePath()
+				// + '/dev/video0 '
+				+ ' -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: text='
+				+ "'%{localtime}'"+': x=(w-tw)/100: y=h-(2*lh): fontcolor=green: box=1: boxcolor=0x00000000@1: fontsize=30"'
 				+ ' -vframes 1 -s 1920x1080 '
 				+ mediaDir + 'timelapse/'
 				+ timestamp_filename + '.jpeg',
