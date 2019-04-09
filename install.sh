@@ -13,7 +13,7 @@ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  python-pip python-setuptools python-dev python2.7-dev \
+  python-pip python-setuptools python-dev python2.7-dev python-opencv \
   libssl-dev libasound2-dev raspberrypi-kernel-headers nmap \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev \
@@ -90,7 +90,7 @@ sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
-make && sudo make install
+make -j4 && sudo make install
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,20
 
