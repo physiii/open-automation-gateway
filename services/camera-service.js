@@ -49,7 +49,7 @@ class CameraService extends Service {
 		this.setUpLoopback();
 
 		if (this.settings.should_detect_motion) {
-			this.startMotionDetection();
+			// this.startMotionDetection();
 		}
 
 		this.startTimeLapse();
@@ -70,23 +70,31 @@ class CameraService extends Service {
 
 	saveTimeLapseImage () {
 		const timelapse_brightness_threshold = this.settings.timelapse_brightness_threshold,
-			command = 'ffmpeg -f v4l2 -i '
-			+ this.getLoopbackDevicePath() + ' -vframes 1 -s 1920x1080 '
-			+ mediaDir + 'timelapse/'
-			+ Date.now() + '.jpeg',
-		on_time = this.settings.timelapse_on_time_hour * ONE_HOUR_IN_MILLISECONDS
-			+ this.settings.timelapse_on_time_minute * ONE_MINUTE_IN_MILLISECONDS,
-		off_time = this.settings.timelapse_off_time_hour * ONE_HOUR_IN_MILLISECONDS
-			+ this.settings.timelapse_off_time_minute * ONE_MINUTE_IN_MILLISECONDS,
-		date = new Date(Date.now());
+			date = new Date(Date.now()),
+			tzoffset = (new Date()).getTimezoneOffset() * 60000,
+			timestamp_filename = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1),
+			command = 'ffmpeg -input_format yuyv422 -i '
+				 + this.getLoopbackDevicePath()
+				// + '/dev/video0 '
+				+ ' -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: text='
+				+ "'%{localtime}'"+': x=(w-tw)/100: y=h-(2*lh): fontcolor=green: box=1: boxcolor=0x00000000@1: fontsize=30"'
+				+ ' -vframes 1 -s 1920x1080 '
+				+ mediaDir + 'timelapse/'
+				+ timestamp_filename + '.jpeg',
+			on_time = this.settings.timelapse_on_time_hour * ONE_HOUR_IN_MILLISECONDS
+				+ this.settings.timelapse_on_time_minute * ONE_MINUTE_IN_MILLISECONDS,
+			off_time = this.settings.timelapse_off_time_hour * ONE_HOUR_IN_MILLISECONDS
+				+ this.settings.timelapse_off_time_minute * ONE_MINUTE_IN_MILLISECONDS;
+
 
 		let time = date.getHours() * ONE_HOUR_IN_MILLISECONDS
 			+ date.getMinutes() * ONE_MINUTE_IN_MILLISECONDS
-			- date.getTimezoneOffset() * ONE_MINUTE_IN_MILLISECONDS;
+			// - date.getTimezoneOffset() * ONE_MINUTE_IN_MILLISECONDS;
 
 		if (time > on_time && time < off_time) {
 			exec(command);
 			console.log(TAG, 'Capturing time lapse image:', command);
+			console.log(TAG, 'Currently '+time+', timelapse window is from '+on_time+' to '+off_time);
 		} else {
 			console.log(TAG, 'Current time ('+time+') is outside timelapse window ('+on_time+' to '+off_time+')');
 		}
@@ -364,7 +372,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			max: 1000
 		}
 	})
-	.set('timelapse_on_time_hours', {
+	.set('timelapse_on_time_hour', {
 		type: 'integer',
 		label: 'Timelapse On Time (hours)',
 		default_value: 6,
@@ -374,7 +382,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			max: 23
 		}
 	})
-	.set('timelapse_on_time_minutes', {
+	.set('timelapse_on_time_minute', {
 		type: 'integer',
 		label: 'Timelapse On Time (minutes)',
 		default_value: 0,
@@ -384,7 +392,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			max: 59
 		}
 	})
-	.set('timelapse_off_time_hours', {
+	.set('timelapse_off_time_hour', {
 		type: 'integer',
 		label: 'Timelapse Off Time (hours)',
 		default_value: 22,
@@ -394,7 +402,7 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 			max: 23
 		}
 	})
-	.set('timelapse_off_time_minutes', {
+	.set('timelapse_off_time_minute', {
 		type: 'integer',
 		label: 'Timelapse Off Time (minutes)',
 		default_value: 0,
