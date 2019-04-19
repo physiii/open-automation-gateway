@@ -8,7 +8,7 @@ const express = require('express'),
   ConnectionManager = require('../services/connection.js'),
   System = require('../services/system.js'),
   database = require('../services/database.js'),
-  INDEX_LOOP_TIME = 5;
+  INDEX_LOOP_TIME = 20;
 
 let TAG = "[index]";
 
