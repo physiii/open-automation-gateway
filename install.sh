@@ -103,7 +103,7 @@ cd /usr/local/src
 git clone https://github.com/physiii/open-automation-gateway -b dev gateway
 cd gateway
 npm install
-sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/hostapd.conf /usr/local/lib
+sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/hostapd.conf
 
 #############
 ## startup ##
