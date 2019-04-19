@@ -331,9 +331,9 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 		default_value: 0,
 		validation: {is_required: false}
 	})
-	.set('should_detect_motion', {
+	.set('show_on_dashboard', {
 		type: 'boolean',
-		label: 'Record Movement',
+		label: 'Show on Dashboard',
 		default_value: true,
 		validation: {is_required: false}
 	})
