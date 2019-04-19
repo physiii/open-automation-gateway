@@ -7,7 +7,8 @@ const express = require('express'),
   port = process.env.PORT || 3000,
   ConnectionManager = require('../services/connection.js'),
   System = require('../services/system.js'),
-  database = require('../services/database.js');
+  database = require('../services/database.js'),
+  INDEX_LOOP_TIME = 5;
 
 let TAG = "[index]";
 
@@ -20,11 +21,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
 
-  ConnectionManager.scanWifi().then(function(result) {
+  indexLoop();
+  function indexLoop() {
+    ConnectionManager.scanWifi().then(function(result) {
       socket.emit('router list',result);
-  }, function(err) {
-      console.log(err);
-  })
+    }, function(err) {
+        console.log(err);
+    })
+    setTimeout(function () {
+      indexLoop();
+    }, INDEX_LOOP_TIME*1000);
+  }
+
+
 
   database.getDeviceID().then(function(device_id) {
       socket.emit('device_id',device_id);

@@ -13,7 +13,9 @@ const exec = require('child_process').exec,
   config = require ("../config.json"),
   CONNECTION_LOOP_TIME = 20, //seconds between running connectionLoop
   CONNECTION_TIMEOUT = config.connection_timeout || 60, //seconds to consider connection timed out
-  TAG = "[connection-manager]";
+  TAG = "[connection-manager]"
+  router_list = [],
+  mac = "";
 
 var LastGoodConnection = Date.now();
 
@@ -112,6 +114,17 @@ class ConnectionManager {
           //console.log("stored public_ip",public_ip);
       }
     });
+  }
+
+  getMAC() {
+    return new Promise(function(resolve, reject) {
+      let ifaces = os.networkInterfaces();
+      require('getmac').getMac(function(err,macAddress){
+          if (err)  throw err
+          console.log(macAddress) // 77:31:c2:c5:03:10
+          resolve(macAddress);
+      })
+    })
   }
 
   getMode() {
@@ -254,22 +267,27 @@ class ConnectionManager {
   scanWifi() {
     return new Promise(function(resolve, reject) {
       let iwlist = spawn('sudo', ['iwlist', config.wifi_adapter,'scan']);
-      let router_list = [];
       iwlist.stdout.on('data', (data) => {
-        let data_array = `${data}`.split('\n')
-        data_array.forEach(function (ap) {
-	  //console.log(TAG,ap);
-          if (ap.indexOf('ESSID') < 0) return;
-          let start = ap.indexOf('\"')+1;
-          let stop = ap.lastIndexOf('\"');
-          ap = ap.substring(start,stop);
-          router_list.push({ssid:ap});
-        });
-        //socket.emit('router list',router_list);
-        resolve(router_list);
+      let arr = `${data}`.split('\n');
+	    for (let i=0; i < arr.length; i++) {
+          if (arr[i].indexOf('ESSID') < 0) continue;
+          let start = arr[i].indexOf('\"')+1;
+          let stop = arr[i].lastIndexOf('\"');
+          arr[i] = arr[i].substring(start,stop);
+          let matchFound = false;
+          for (let j=0; j < router_list.length; j++) {
+            if (router_list[j].ssid === arr[i]) {
+              // console.log(TAG,"Access point already in list");
+              matchFound = true;
+            }
+          }
+          if (!matchFound) router_list.push({ssid:arr[i]});
+	    }
+      resolve(router_list);
       });
     });
   }
+
 
   startAP() {
     if (!config.manage_network) {
@@ -285,18 +303,45 @@ class ConnectionManager {
     let interfaces_ap_path = __dirname + "/../files/interfaces.ap";
     let sysctl_ap_path = __dirname + "/../files/sysctl.conf.ap";
 
-    //let command = "cat "+rc_local_cl_path;
-    //exec(command, (error, stdout, stderr) => {console.log(stdout)});
-    console.log("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf");
-    //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
-    exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
-    System.reboot(3);
-  }
+    this.getMAC().then(function(mac_addr) {
+      var cam_id = mac_addr.replace(/:/g,"");
+      cam_id = cam_id.slice(-6);
+      let ssid_name = "Camera_"+cam_id;
+      console.log(TAG,"ssid set to", ssid_name);
+      let hostapd_conf = "interface=wlan0\n"
+        + "driver=nl80211\n"
+        + "ssid="+ssid_name+"\n"
+        + "hw_mode=g\n"
+        + "channel=7\n"
+        + "wmm_enabled=0\n"
+        + "macaddr_acl=0\n"
+        + "auth_algs=1\n"
+        + "ignore_broadcast_ssid=0\n"
+        + "wpa=2\n"
+        + "wpa_passphrase=pyfitech\n"
+        + "wpa_key_mgmt=WPA-PSK\n"
+        + "wpa_pairwise=TKIP\n"
+        + "rsn_pairwise=CCMP\n";
+
+        fs.writeFile("/etc/hostapd/hostapd.conf", hostapd_conf, function(err) {
+         if(err) {
+            return console.error(TAG, err);
+         }
+        });
+
+      console.log("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf");
+      //exec("sudo cp "+interfaces_ap_path+" /etc/network/interfaces", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+dhcpcd_ap_path+" /etc/dhcpcd.conf", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+dnsmasq_ap_path+" /etc/dnsmasq.conf", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+hostapd_default_ap_path+" /etc/default/hostapd", (error, stdout, stderr) => {console.log(stdout)});
+      // exec("sudo cp "+hostapd_ap_path+" /etc/hostapd/hostapd.conf", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+sysctl_ap_path+" /etc/sysctl.conf", (error, stdout, stderr) => {console.log(stdout)});
+      exec("sudo cp "+rc_local_ap_path+" /etc/rc.local", (error, stdout, stderr) => {console.log(stdout)});
+      System.reboot(3);
+
+    }, function(err) {
+        console.log(err);
+    })  }
 
 }
 
