@@ -49,7 +49,7 @@ class CameraService extends Service {
 		this.setUpLoopback();
 
 		if (this.settings.should_detect_motion) {
-			// this.startMotionDetection();
+			this.startMotionDetection();
 		}
 
 		this.startTimeLapse();
