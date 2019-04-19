@@ -4,7 +4,7 @@
 ## general ##
 #############
 
-sudo chmod -R 777 /usr/local/lib /usr/local/src
+sudo chmod -R 777 /usr/local/lib /usr/local/src /etc/hostapd/hostapd.conf
 
 sudo apt update && sudo apt upgrade -y
 
