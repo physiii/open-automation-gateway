@@ -118,7 +118,6 @@ class ConnectionManager {
 
   getMAC() {
     return new Promise(function(resolve, reject) {
-      let ifaces = os.networkInterfaces();
       require('getmac').getMac(function(err,macAddress){
           if (err)  throw err
           console.log(macAddress) // 77:31:c2:c5:03:10
