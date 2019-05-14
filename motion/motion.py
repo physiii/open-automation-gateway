@@ -220,10 +220,10 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   # rotate the frame
   if cameraRotation is 180:
     frame = imutils.rotate(frame, cameraRotation);
-
+  # continue
   # resize the frame, convert it to grayscale, and blur it
-  gray = cv2.cvtColor(imutils.resize(frame, width=600), cv2.COLOR_BGR2GRAY)
-  gray = cv2.GaussianBlur(gray, (21, 21), 0)
+  gray = cv2.cvtColor(imutils.resize(frame, width=200), cv2.COLOR_BGR2GRAY)
+  # gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
   # if the first frame is None, initialize it
   if avg is None:
@@ -232,7 +232,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
   # accumulate the weighted average between the current frame and
   # previous frames, then compute the difference between the current
   # frame and running average
-  cv2.accumulateWeighted(gray, avg, 0.1)
+  cv2.accumulateWeighted(gray, avg, 0.2)
   frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
   thresh = cv2.threshold(frameDelta, motionThreshold, 255, cv2.THRESH_BINARY)[1]
 

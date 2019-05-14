@@ -42,7 +42,7 @@ if (config.zwave) {
 //require('./admin.js');
 
 if (config.use_dev) {
-  console.warn('WARNING: Gateway is running in development mode. SSL security is compromised.');
+  console.warn('Gateway is running in development mode.');
 }
 
 ConnectionManager.connectionLoop();
