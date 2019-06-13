@@ -29,7 +29,7 @@ sudo npm install -g pm2
 cd /usr/local/src
 git clone https://github.com/FFmpeg/FFmpeg.git
 cd FFmpeg
-sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
+sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree --enable-libfreetype
 make -j4
 sudo make install
 
