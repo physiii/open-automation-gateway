@@ -17,7 +17,7 @@ sudo apt-get install -y \
   libssl-dev libasound2-dev raspberrypi-kernel-headers nmap \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
-  libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev
+  libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev libfreetype6-dev
 
 sudo pip install pymongo==3.0.3 numpy imutils
 sudo npm install -g pm2
