@@ -17,7 +17,7 @@ sudo apt-get install -y \
   libssl-dev libasound2-dev raspberrypi-kernel-headers nmap \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
-  libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev libfreetype6-dev
+  libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev
 
 sudo pip install pymongo==3.0.3 numpy imutils
 sudo npm install -g pm2
@@ -29,7 +29,7 @@ sudo npm install -g pm2
 cd /usr/local/src
 git clone https://github.com/FFmpeg/FFmpeg.git
 cd FFmpeg
-sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree --enable-libfreetype
+sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
 make -j4
 sudo make install
 
