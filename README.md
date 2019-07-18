@@ -52,23 +52,21 @@ Uses motion to trigger recording to local disk and local disk can be proxied (wo
 2. git clone https://github.com/physiii/open-automation.git && cd open-automation && sh install.sh
 
 ## example config.json:
-  {
-   "relay_server":"dev.pyfi.org",
-   "relay_port":5050,
-   "zwave":true,
-   "zwave_dev":"USB0",
-   "use_ssl":true,
-   "use_dev":true,
-   "video_stream_port":8083,
-   "rotation": "",
-   "lock_timer": "0",
-   "isContact": false,
-   "contact_gpio": [4],
-   "isSiren":false,
-   "siren_gpio": [17],
-   "device_hw":"",
-   "manage_network":true,
-   "disable_reboot":false,
-   "connection_timeout":300,
-   "wifi_adapter":"wlan0"
-  }
+ ```
+ {
+  "relay_server":"dev.pyfi.org",
+  "relay_port":5050,
+  "zwave":false,
+  "zwave_dev":"ACM0",
+  "use_ssl":true,
+  "use_dev":true,
+  "video_stream_port":8083,
+  "rotation": 0,
+  "lock_timer": "0",
+  "device_hw":"",
+  "manage_network":true,
+  "disable_reboot":false,
+  "connection_timeout":60,
+  "wifi_adapter":"wlan0"
+ }
+```
