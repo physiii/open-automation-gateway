@@ -92,7 +92,7 @@ git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
 make -j4 && sudo make install
 sudo depmod -a
-sudo modprobe v4l2loopback video_nr=10,20
+sudo modprobe v4l2loopback video_nr=10
 
 ###############
 ##  gateway  ##
@@ -112,5 +112,5 @@ sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/ho
 sudo -i
 sed -i -e 's/exit 0//g' /etc/rc.local
 echo "su pi -c 'pm2 start /usr/local/src/gateway/index.js --name gateway'" >> /etc/rc.local
-echo "modprobe v4l2loopback video_nr=10,20" >> /etc/rc.local
+echo "modprobe v4l2loopback video_nr=10" >> /etc/rc.local
 echo "exit 0" >> /etc/rc.local
