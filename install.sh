@@ -15,7 +15,7 @@ sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   python-pip python-setuptools python-dev python2.7-dev python-opencv \
   libssl-dev libasound2-dev raspberrypi-kernel-headers nmap \
-  build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev \
+  build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
   libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev
 
