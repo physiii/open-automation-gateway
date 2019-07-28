@@ -251,6 +251,7 @@ class CameraService extends Service {
 				const ffmpegProcess = spawn('ffmpeg', [
 						'-loglevel', 'panic',
 						'-f', 'v4l2',
+						'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
 						'-pix_fmt', 'rgb24',
 						'-i', this.os_device_path,
 						'-f', 'v4l2',
