@@ -52,13 +52,13 @@ wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/4.1.
 unzip opencv.zip
 unzip opencv_contrib.zip
 
-cd opencv-4.0.0
+cd opencv-4.1.0
 mkdir build
 cd build
 
 cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-4.0.0/modules \
+    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-4.1.0/modules \
     -D ENABLE_NEON=ON \
     -D ENABLE_VFPV3=ON \
     -D BUILD_TESTS=OFF \
@@ -89,15 +89,13 @@ sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 ######################
 #sudo ln -s /lib/modules/4.14.98-v7+ /lib/modules/4.14.79-v7+
 #sudo ln -s /usr/src/linux-headers-4.14.98-v7+ /lib/modules/4.14.98-v7+/build
-#sudo make KERNELRELEASE=4.19.57-v7l+
-#sudo make install KERNELRELEASE=4.19.57-v7l+
-
 
 sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
-make -j4 && sudo make install
+sudo make -j4 KERNELRELEASE=4.19.66-v7l+
+sudo make install KERNELRELEASE=4.19.66-v7l+
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10
 
@@ -105,7 +103,6 @@ sudo modprobe v4l2loopback video_nr=10
 ##  gateway  ##
 ###############
 
-export OPENCV4NODEJS_DISABLE_AUTOBUILD=1
 cd /usr/local/src
 git clone https://github.com/physiii/open-automation-gateway -b dev gateway
 cd gateway
