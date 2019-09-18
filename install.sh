@@ -47,8 +47,8 @@ sudo make install
 #sudo ln -s /usr/local/src/opencv-4.0.0/build/lib/cv2.so /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so
 
 cd /usr/local/src
-wget -O opencv.zip https://github.com/opencv/opencv/archive/4.0.0.zip
-wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/4.0.0.zip
+wget -O opencv.zip https://github.com/opencv/opencv/archive/4.1.0.zip
+wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/4.1.0.zip
 unzip opencv.zip
 unzip opencv_contrib.zip
 
