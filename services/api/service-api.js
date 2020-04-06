@@ -1,5 +1,5 @@
-const noOp = () => {};
-
+const noOp = () => {},
+	exec = require('child_process').exec;
 class ServiceApi {
 	constructor (socket, service) {
 		this.socket = socket;
@@ -20,7 +20,11 @@ class ServiceApi {
 			this.service.saveSetting(data.property, data.value).then(() => callback()).catch(callback);
 		});
 		this.on('settings', (data, callback) => {
-			this.service.saveSettings(data.settings).then(() => callback()).catch(callback);
+			this.service.saveSettings(data.settings).then(() => {
+				console.log("Restarting. ", new Date());
+				exec("pm2 restart camera", (error, stdout, stderr) => {console.log(stdout)});
+				callback();
+			}).catch(callback);
 		});
 	}
 

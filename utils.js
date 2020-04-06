@@ -5,7 +5,7 @@
 const exec = require('child_process').exec,
 	spawn = require('child_process').spawn,
 	rimraf = require('rimraf'),
-	TAG = '[utils.js]';
+	TAG = '[Utils]';
 
 // Accepts search strings as arguments and looks for processes that match those
 // search strings.
@@ -30,7 +30,7 @@ function checkIfProcessIsRunning () {
 function removeOldCameraRecordings () {
 	return new Promise((resolve, reject) => {
 		// Return only base file name without dir
-		exec('find /usr/local/lib/gateway/events -type f -printf \'%T+ %p\n\' | sort | head -n 1', (error, stdout, stderr) => {
+		exec('find /usr/local/lib/camera/events -type f -printf \'%T+ %p\n\' | sort | head -n 1', (error, stdout, stderr) => {
 			if (error) {
 				console.error(TAG, `Remove old recordings: error: ${error}`);
 				reject(error);

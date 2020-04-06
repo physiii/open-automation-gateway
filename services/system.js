@@ -3,6 +3,7 @@
 // ------------------------------- connection.js -------------------------- //
 
 const exec = require('child_process').exec,
+	spawn = require('child_process').spawn,
   diskUsage = require('diskusage'),
   config = require('../config.json');
 
@@ -37,7 +38,16 @@ class System {
   }
 
   softwareInfo () {
-    return "0.2";
+		return new Promise(function(resolve, reject) {
+			const path = __dirname.replace('/gateway',''),
+				git = spawn('git', ['-C', path, 'rev-parse', 'HEAD']);
+
+			git.stdout.on('data', (data) => {
+				resolve(`${data}`);
+			});
+
+			git.stderr.on('data', (data) => console.log(`softwareInfo: error: ${data}`));
+		});
   }
 
   hardwareInfo () {

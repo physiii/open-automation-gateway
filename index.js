@@ -3,7 +3,7 @@
 // --------------------------------- Gateway ------------------------------ //
 
 
-const TAG = '[index.js]',
+const TAG = '[Index]',
 MINIMUM_FREE_SPACE = 5; //minimum free space in precent
 
 // ----------------------------------------------------- //
@@ -47,28 +47,26 @@ if (config.use_dev) {
 
 ConnectionManager.connectionLoop();
 // Get settings and load devices from database.
-Database.get_settings().then((settings) => {
-  devices.loadDevicesFromDb().then(() => {
-    let main_device = devices.getDeviceById(settings.main_device_id);
 
-    // If the default device has not been created yet, create it.
-    if (!main_device) {
-      devices.createDevice({
-        services: [
-          {type: 'gateway'}
-        ]
-      }).then((new_main_device) => {
-        Database.store_settings({
-          ...settings,
-          main_device_id: new_main_device.id
-        });
+Database.getDevices().then((dbDevices) => {
+	devices.loadDevicesFromDb().then(() => {
+		createGatewayDevice = true;
 
-        console.log('Gateway ID:', new_main_device.id);
-      });
-    } else {
-      console.log('Gateway ID:', main_device.id);
-    }
-  });
+		for (let i = 0; i < dbDevices.length; i++) {
+			if (dbDevices[i].services[0].type == 'gateway') {
+				createGatewayDevice = false;
+			}
+		}
+
+		if (createGatewayDevice) {
+			console.log(TAG, "!! createGatewayDevice !!");
+		  devices.createDevice({
+		    services: [
+		      {type: 'gateway'}
+		    ]
+		  })
+		}
+	});
 });
 
 function main_loop () {

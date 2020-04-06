@@ -11,7 +11,7 @@ const spawn = require('child_process').spawn,
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
-	mediaDir = "/usr/local/lib/gateway/",
+	mediaDir = "/usr/local/lib/open-automation/camera/",
 	ONE_DAY_IN_HOURS = 24,
 	ONE_HOUR_IN_MINUTES = 60,
 	ONE_MINUTE_IN_SECONDS = 60,
@@ -43,11 +43,12 @@ class CameraService extends Service {
 		this.settings.timelapse_on_time_minute = data.settings && data.settings.timelapse_on_time_minute || 0;
 		this.settings.timelapse_off_time_hour = data.settings && data.settings.timelapse_off_time_hour || 22;
 		this.settings.timelapse_off_time_minute = data.settings && data.settings.timelapse_off_time_minute || 0;
+		this.settings.motionArea_x1 = data.settings && data.settings.motionArea_x1 || 0;
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
 		this.setUpLoopback();
-
+		this.setUpAudioLoopback();
 		if (this.settings.should_detect_motion) {
 			this.startMotionDetection();
 		}
@@ -99,7 +100,7 @@ class CameraService extends Service {
 			console.log(TAG, 'Current time ('+time+') is outside timelapse window ('+on_time+' to '+off_time+')');
 		}
 
-    		/*this.getCameraImageBrightness().then(function(brightness) {
+		/*this.getCameraImageBrightness().then(function(brightness) {
 			if (brightness > timelapse_brightness_threshold) {
 				exec(command);
 				console.log(TAG, 'Capturing time lapse image:', command);
@@ -176,72 +177,75 @@ class CameraService extends Service {
 	}
 
 	stopStream () {
-		VideoStreamer.stop(this.id);
+		VideoStreamer.stop();
+	}
+
+	streamLiveAudio () {
+		const stream_token = this.generateStreamToken();
+
+		VideoStreamer.streamLiveAudio(
+			this.id,
+			stream_token,
+			config.stream_audio_device_path
+		);
+
+		return stream_token;
+	}
+
+	audioStreamStop () {
+		VideoStreamer.stop();
 	}
 
 	startMotionDetection () {
 		const METHOD_TAG = this.TAG + ' [motion]',
-			MOTION_TAG = METHOD_TAG + ' [motion.py]',
-			launchMotionScript = () => {
-				console.log(METHOD_TAG, 'Starting motion detection.');
+			MOTION_TAG = METHOD_TAG + ' [motion.py]';
 
-				// Launch the motion detection script.
-				const motionProcess = spawn('python', [
-					motionScriptPath,
-					'--camera', this.getLoopbackDevicePath(),
-					'--camera-id', this.id,
-					'--rotation', this.settings.rotation || 0,
-					'--threshold', this.settings.motion_threshold || 10
-				]);
+		// Launch the motion detection script.
+		const motionProcess = spawn('python3', [
+			motionScriptPath,
+			'--camera', this.getLoopbackDevicePath(),
+			'--camera-id', this.id,
+			'--rotation', this.settings.rotation || 0,
+			'--threshold', this.settings.motion_threshold || 10,
+			// '--mic', this.settings.audio_hw || 'hw:0',
+			'--motionArea_x1', this.settings.motionArea_x1 || 0,
+			'--motionArea_y1', this.settings.motionArea_y1 || 0,
+			'--motionArea_x2', this.settings.motionArea_x2 || 0,
+			'--motionArea_y2', this.settings.motionArea_y2 || 0,
+			'--audio-device', config.motion_audio_device_path || 0,
+		]);
 
-				// Listen for motion events.
-				motionProcess.stdout.on('data', (data) => {
-					if (!data) {
-						return;
-					}
-
-					const now = new Date();
-
-					console.log(MOTION_TAG, data.toString());
-
-					if (data.includes('[MOTION]')) {
-						this.state.motion_detected_date = now;
-
-						this.relayEmit('motion-started', {date: now.toISOString()});
-					} else if (data.includes('[NO MOTION]')) {
-						this.relayEmit('motion-stopped', {date: now.toISOString()});
-					} else if (data.includes('[NEW RECORDING]')) {
-						CameraRecordings.getLastRecording(this.id).then((recording) => {
-							this.getPreviewImage().then((preview_image) => {
-								this.relayEmit('motion-recorded', {recording, preview_image});
-							});
-						});
-					}
-				});
-
-				motionProcess.stderr.on('data', (data) => {
-					console.error(MOTION_TAG, data.toString());
-				});
-			};
-
-		utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
-			if (isMotionRunning) {
-				console.log(METHOD_TAG, 'Motion detection already started.');
+		// Listen for motion events.
+		motionProcess.stdout.on('data', (data) => {
+			if (!data) {
 				return;
 			}
 
-			launchMotionScript();
+			const now = new Date();
 
-			// Every so often check to make sure motion detection is still running.
-			this.motionScriptInterval = setInterval(() => {
-				utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
-					if (!isMotionRunning) {
-						launchMotionScript();
-					}
+			console.log(MOTION_TAG, data.toString());
+
+			if (data.includes('[MOTION]')) {
+				this.state.motion_detected_date = now;
+
+				this.relayEmit('motion-started', {date: now.toISOString()});
+			} else if (data.includes('[NO MOTION]')) {
+				this.relayEmit('motion-stopped', {date: now.toISOString()});
+			} else if (data.includes('[NEW RECORDING]')) {
+				CameraRecordings.getLastRecording(this.id).then((recording) => {
+					this.getPreviewImage().then((preview_image) => {
+						this.relayEmit('motion-recorded', {recording, preview_image});
+					});
 				});
-			}, CHECK_SCRIPTS_DELAY);
-		}).catch((error) => {
-			console.error(METHOD_TAG, error);
+			}
+		});
+
+		motionProcess.on('close', (code) => {
+			console.error(TAG, `Motion process exited with code ${code}.`);
+		});
+
+		motionProcess.stderr.on('data', (data) => {
+			console.error(MOTION_TAG, data.toString());
 		});
 	}
 
@@ -283,6 +287,56 @@ class CameraService extends Service {
 				}
 			});
 		}, CHECK_SCRIPTS_DELAY);
+	}
+
+	setUpAudioLoopback () {
+		return new Promise((resolve, reject) => {
+			// ffmpeg -f alsa -i hw:2 -f alsa -ar 44100 hw:Loopback -f alsa -ar 44100 hw:Loopback_1
+			const METHOD_TAG = this.TAG + ' [Audio Loopback]',
+				forwardStreamToLoopback = () => {
+
+					let options = [
+						'-loglevel', 'panic',
+						'-f', 'alsa',
+							'-i', config.audio_device_path,
+						'-f', 'alsa',
+							'hw:Loopback',
+						'-f', 'alsa',
+							'hw:Loopback_1',
+						'-f', 'alsa',
+							'hw:Loopback_2'
+					];
+
+					const ffmpegProcess = spawn('ffmpeg', options);
+
+					VideoStreamer.printFFmpegOptions(options);
+					ffmpegProcess.stdout.on('data', (data) => {
+						console.log(METHOD_TAG, data);
+					});
+
+					ffmpegProcess.stderr.on('data', (data) => {
+						console.error(METHOD_TAG, data);
+					});
+
+					ffmpegProcess.on('close', (code) => {
+						console.log(METHOD_TAG, `FFmpeg exited with code ${code}.`);
+					});
+				};
+
+			forwardStreamToLoopback();
+
+			// Every so often, check to make sure video loopback forwarding is still running.
+			this.loopbackInterval = setInterval(() => {
+				utils.checkIfProcessIsRunning('ffmpeg', this.os_device_path, this.getLoopbackDevicePath()).then((isLoopbackRunning) => {
+					if (!isLoopbackRunning) {
+						console.log(METHOD_TAG, 'FFmpeg not running. Re-forwarding stream.');
+
+						forwardStreamToLoopback();
+					}
+				});
+			}, CHECK_SCRIPTS_DELAY);
+			resolve();
+		});
 	}
 
 	dbSerialize () {
@@ -337,15 +391,6 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 		label: 'Show on Dashboard',
 		default_value: true,
 		validation: {is_required: false}
-	})
-	.set('motion_threshold', {
-		type: 'integer',
-		label: 'Motion Threshold',
-		default_value: 10,
-		validation: {
-			min: 0,
-			is_required: false
-		}
 	})
 	.set('should_take_timelapse', {
 		type: 'boolean',
@@ -406,6 +451,63 @@ CameraService.settings_definitions = new Map([...Service.settings_definitions])
 	.set('timelapse_off_time_minute', {
 		type: 'integer',
 		label: 'Timelapse Off Time (minutes)',
+		default_value: 0,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 59
+		}
+	})
+	.set('motion_detection_enabled', {
+		type: 'boolean',
+		label: 'Motion Detection',
+		default_value: true,
+		validation: {
+			is_required: false
+		}
+	})
+	.set('motion_threshold', {
+		type: 'integer',
+		label: 'Motion Threshold',
+		default_value: 10,
+		validation: {
+			min: 0,
+			is_required: false
+		}
+	})
+	.set('motionArea_x1', {
+		type: 'decimal',
+		label: 'motion area value',
+		default_value: 0,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 59
+		}
+	})
+	.set('motionArea_y1', {
+		type: 'decimal',
+		label: 'motion area value',
+		default_value: 0,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 59
+		}
+	})
+	.set('motionArea_x2', {
+		type: 'decimal',
+		label: 'motion area value',
+		default_value: 0,
+		validation: {
+			is_required: false,
+			min: 0,
+			max: 59
+		}
+	})
+	.set('motionArea_y2', {
+		type: 'decimal',
+		label: 'motion area value',
 		default_value: 0,
 		validation: {
 			is_required: false,

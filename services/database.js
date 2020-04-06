@@ -59,7 +59,7 @@ class Database {
 		return this.connect((db, resolve, reject) => {
 			db.collection('devices').find().toArray((error, result) => {
 				db.close();
-				let device_id = result[0].id;
+				let device_id = result[1].id;
 				if (error) {
 					console.error(TAG, 'getDeviceID', error);
 					reject('Database error');
@@ -140,13 +140,13 @@ class Database {
 	});
 	}
 
-	get_devices () {
+	getDevices () {
 	return this.connect((db, resolve, reject) => {
 		db.collection('devices').find().toArray((error, result) => {
 			db.close();
 
 			if (error) {
-				console.error(TAG, 'get_devices', error);
+				console.error(TAG, 'getDevices', error);
 				reject('Database error');
 				return;
 			}
@@ -192,6 +192,22 @@ class Database {
 			resolve(result[0]);
 		});
 	});
+	}
+
+	set_camera_recording (data) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('camera_recordings').insertOne(data, (error, record) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'set_camera_recording', error);
+					reject('Database error');
+					return;
+				}
+
+				resolve(record);
+			});
+		});
 	}
 
 	delete_camera_recording (recording_id) {

@@ -43,6 +43,10 @@ class CameraRecordings {
 		});
 	}
 
+	saveRecording (data) {
+		database.set_camera_recording(data);
+	}
+
 	streamRecording (recordingId, streamToken) {
 		return new Promise((resolve, reject) => {
 			this.getRecordingById(recordingId).then((recording) => {
@@ -55,8 +59,20 @@ class CameraRecordings {
 		});
 	}
 
+	streamAudioRecording (recordingId, streamToken) {
+		return new Promise((resolve, reject) => {
+			this.getRecordingById(recordingId).then((recording) => {
+				VideoStreamer.streamAudioFile(recording.id, streamToken, recording.file);
+				resolve(recordingId);
+			}).catch((error) => {
+				console.error(TAG, error);
+				reject(error);
+			});
+		});
+	}
+
 	stopStream (recordingId) {
-		VideoStreamer.stop(recordingId);
+		VideoStreamer.stop();
 	}
 }
 
