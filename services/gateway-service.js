@@ -13,6 +13,7 @@ class GatewayService extends Service {
 
 		if (config.isContact)	this.createContactService(config.contact_gpio);
 		if (config.isSiren) this.createSirenService(config.siren_gpio);
+		if (config.thermastat_ip) this.createThermostatService(config.thermastat_ip);
 	}
 
 	getDevices () {
@@ -23,6 +24,37 @@ class GatewayService extends Service {
 		this.getOsCamerasList().then((camera_device_paths) => {
 			this.createDevicesForOsCameras(camera_device_paths);
 		}).catch((error) => console.error(TAG, 'There was an error getting the list of cameras available to the operating system.', error));
+	}
+
+	createThermostatService (gpio_paths = []) {
+		const new_devices = [],
+		  contact_services = DevicesManager.getServicesByType('contact_sensor');
+
+		return new Promise((resolve, reject) => {
+			gpio_paths.forEach((gpio_path) => {
+				if (contact_services.find((contact_service) => contact_service.gpio === gpio_path)) {
+					return;
+				}
+
+				DevicesManager.createDevice({
+					settings: {
+						name: 'Thermostat'
+					},
+					info: {
+						manufacturer: config.manufacturer
+					},
+					services: [
+						{
+							type: 'thermostat'
+						}
+					]
+				}).then((new_device) => {
+					new_devices.push(new_device);
+				});
+			});
+
+			resolve(new_devices);
+		});
 	}
 
 	createSirenService (gpio_paths = []) {
@@ -127,8 +159,8 @@ class GatewayService extends Service {
 		return new Promise((resolve, reject) => {
 			exec('ls -lah --full-time /dev/video0', (error, stdout, stderr) => {
 				if (error) {
-					reject(error);
-					return;
+					// reject(error);
+					// return;
 				}
 
 				const stdout_parts = stdout.split(/(?:\r\n|\r|\n| )/g),

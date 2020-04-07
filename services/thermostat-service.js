@@ -6,8 +6,9 @@ const Service = require('./service.js'),
 class ThermostatService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, ThermostatApi);
-
-		this.ip = data.ip;
+		console.log(TAG,"Starting...");
+		// this.ip = data.ip;
+		this.ip = '192.168.1.237';
 
 		this.driver = new WiFiThermostatDriver(this.ip);
 		this.subscribeToDriver();

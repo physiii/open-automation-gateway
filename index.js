@@ -52,6 +52,13 @@ Database.getDevices().then((dbDevices) => {
 	devices.loadDevicesFromDb().then(() => {
 		createGatewayDevice = true;
 
+
+		// devices.createDevice({
+		// 	services: [
+		// 		{type: 'thermostat'}
+		// 	]
+		// })
+
 		for (let i = 0; i < dbDevices.length; i++) {
 			if (dbDevices[i].services[0].type == 'gateway') {
 				createGatewayDevice = false;

@@ -52,6 +52,7 @@ class WiFiThermostatDriver {
 
 		setInterval((self) => {
 			self.getThermostatState().then((data) => {
+				console.log(TAG, data);
 				self.state = self.configureData(JSON.parse(data));
 			}).catch((error) => {
 				console.log(TAG, 'Polling error:', error);
@@ -104,9 +105,9 @@ class WiFiThermostatDriver {
 
 	setHoldMode (mode) {
 		let setMode = {
-				tmode: THERMOSTAT_MODES[this.state.mode],				
-			};			
-	
+				tmode: THERMOSTAT_MODES[this.state.mode],
+			};
+
 		if (mode === 'on') setMode.hold = HOLD_MODES[mode];
 		if (mode === 'off') setMode.hold = HOLD_MODES[mode];
 
@@ -114,9 +115,9 @@ class WiFiThermostatDriver {
 			setMode.t_heat = this.state.target_temp;
 		} else if (this.state.mode == 'cool') {
 			setMode.t_cool = this.state.target_temp;
-		}		
-		
-		this.postRequest(setMode);		
+		}
+
+		this.postRequest(setMode);
 	}
 
 	setFanMode (mode) {
@@ -175,7 +176,7 @@ class WiFiThermostatDriver {
 
 		return results;
 	}
-	
+
 	initializeData (data) {
 		return {
 			mode: THERMOSTAT_MODES[data.tmode],

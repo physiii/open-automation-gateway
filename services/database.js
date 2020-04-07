@@ -59,7 +59,7 @@ class Database {
 		return this.connect((db, resolve, reject) => {
 			db.collection('devices').find().toArray((error, result) => {
 				db.close();
-				let device_id = result[1].id;
+				let device_id = result[1] ? result[1].id : 'Does not exist.';
 				if (error) {
 					console.error(TAG, 'getDeviceID', error);
 					reject('Database error');

@@ -39,10 +39,11 @@ class System {
 
   softwareInfo () {
 		return new Promise(function(resolve, reject) {
-			const path = __dirname.replace('/gateway',''),
+			const path = __dirname + '/..',
 				git = spawn('git', ['-C', path, 'rev-parse', 'HEAD']);
 
 			git.stdout.on('data', (data) => {
+				console.log("softwareInfo", `${data}`);
 				resolve(`${data}`);
 			});
 
