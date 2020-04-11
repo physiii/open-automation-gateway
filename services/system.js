@@ -43,7 +43,6 @@ class System {
 				git = spawn('git', ['-C', path, 'rev-parse', 'HEAD']);
 
 			git.stdout.on('data', (data) => {
-				console.log("softwareInfo", `${data}`);
 				resolve(`${data}`);
 			});
 

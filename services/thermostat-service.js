@@ -6,7 +6,6 @@ const Service = require('./service.js'),
 class ThermostatService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, ThermostatApi);
-		console.log(TAG,"Starting...");
 		// this.ip = data.ip;
 		this.ip = '192.168.1.237';
 

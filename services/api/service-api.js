@@ -42,6 +42,7 @@ class ServiceApi {
 	}
 
 	sendState (data) {
+		console.log('sendState', data);
 		this.emit('state', {state: data.state});
 	}
 }

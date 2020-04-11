@@ -52,7 +52,7 @@ class WiFiThermostatDriver {
 
 		setInterval((self) => {
 			self.getThermostatState().then((data) => {
-				console.log(TAG, data);
+				// console.log(TAG, data);
 				self.state = self.configureData(JSON.parse(data));
 			}).catch((error) => {
 				console.log(TAG, 'Polling error:', error);

@@ -14,7 +14,11 @@ class Service {
 
 		// On state change, send updated state to state listeners.
 		this.unproxied_state = {...data.state};
-		this.state = utils.onChange(this.unproxied_state, () => this._events.emit('state-changed', {state: {...this.unproxied_state}}));
+		this.state = utils.onChange(this.unproxied_state, () => {
+			// console.log("Sending load event.", this.unproxied_state);
+			// this._events.emit('state-changed', {state: {...this.unproxied_state}});
+			this._events.emit('state-changed', {state: {...this.unproxied_state}});
+		});
 
 		// Set up the Relay API.
 		if (api_class) {
@@ -29,6 +33,7 @@ class Service {
 	}
 
 	relayEmit (event, data, callback) {
+		console.log("Emitting to relay.", data);
 		if (!this._relayEmit) {
 			console.error(TAG, this.id, 'Tried to emit event ' + event + ' to relay, but this service has no relay API.');
 			return;
