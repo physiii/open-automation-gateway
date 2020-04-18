@@ -73,8 +73,6 @@ class ThermostatService extends Service {
 		this.driver = new WiFiThermostatDriver(this.ip);
 		this.subscribeToDriver();
 
-		console.log('Hit ThermostatService constructor.', data);
-
 		this.loadState();
 		this.startScheduleLoop();
 	}

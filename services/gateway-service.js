@@ -1,5 +1,6 @@
 const exec = require('child_process').exec,
 	Service = require('./service.js'),
+	ConnectionManager = require('./connection.js'),
 	config = require('../config.json'),
 	axios = require('axios'),
 	GatewayApi = require('./api/gateway-api.js'),
@@ -53,17 +54,21 @@ class GatewayService extends Service {
 	}
 
 	searchForNetworkThermostats () {
-		for (let i = 1; i <= 255; i++) {
-			let ip = '192.168.1.' + i,
-				self = this;
-			axios.get('http://' + ip + '/tstat')
-			  .then(function (response) {
-					if (response.data.temp) {
-						self.createThermostatService(ip);
-					}
-			  })
-			  .catch(function (error) {})
-		}
+		ConnectionManager.getLocalIP()
+		.then((localIps) => {
+			let ip_base = localIps[0].substring(0, localIps[0].lastIndexOf('.') + 1);
+			for (let i = 1; i <= 255; i++) {
+				let ip = ip_base + i,
+					self = this;
+				axios.get('http://' + ip + '/tstat')
+				  .then(function (response) {
+						if (response.data.temp) {
+							self.createThermostatService(ip);
+						}
+				  })
+				  .catch(function (error) {})
+			}
+		})
 	}
 
 	createSirenService (gpio_paths = []) {
