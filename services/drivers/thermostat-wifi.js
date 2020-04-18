@@ -1,4 +1,3 @@
-//Placeholder for WiFi driver
 const request = require('request'),
 	EventEmitter = require('events'),
 	poll_delay = 5 * 1000,
@@ -48,8 +47,6 @@ class WiFiThermostatDriver {
 	}
 
 	startPolling () {
-		console.log(TAG, 'Begin Update polling for Thermostat...');
-
 		setInterval((self) => {
 			self.getThermostatState().then((data) => {
 				// console.log(TAG, data);
@@ -78,43 +75,16 @@ class WiFiThermostatDriver {
 			tmode: THERMOSTAT_MODES[mode]
 		};
 
-		if (mode === 'heat') {
-			setMode.t_heat = this.state.target_temp;
-		} else if (mode === 'cool') {
-			setMode.t_cool= this.state.target_temp;
-		}
-
 		this.postRequest(setMode);
-		this.setHoldMode(this.state.hold_mode);
 	}
 
-	setTemp (temperature) {
-		let setMode = {
-				tmode: THERMOSTAT_MODES[this.state.mode],
-				hold: HOLD_MODES[this.state.hold_mode]
-			};
+	setTemp (temperature, mode) {
+		let setMode = {};
 
-		if (this.state.mode == 'heat') {
+		if (mode == 'heat') {
 			setMode.t_heat = temperature;
-		} else if (this.state.mode == 'cool') {
+		} else if (mode == 'cool') {
 			setMode.t_cool = temperature;
-		}
-
-		this.postRequest(setMode);
-	}
-
-	setHoldMode (mode) {
-		let setMode = {
-				tmode: THERMOSTAT_MODES[this.state.mode],
-			};
-
-		if (mode === 'on') setMode.hold = HOLD_MODES[mode];
-		if (mode === 'off') setMode.hold = HOLD_MODES[mode];
-
-		if (this.state.mode == 'heat') {
-			setMode.t_heat = this.state.target_temp;
-		} else if (this.state.mode == 'cool') {
-			setMode.t_cool = this.state.target_temp;
 		}
 
 		this.postRequest(setMode);
@@ -122,19 +92,6 @@ class WiFiThermostatDriver {
 
 	setFanMode (mode) {
 		this.postRequest({fmode: FAN_MODES[mode]});
-	}
-
-	getSchedule (mode) {
-		return new Promise((resolve, reject) => {
-			request.get('http://' + this.ip + '/tstat/program/'+mode, (error, response, data) => {
-				if (error) {
-					reject(error);
-					return;
-				}
-
-				resolve(data);
-			});
-		});
 	}
 
 	setSchedule (day, daynumber, schedule, mode) {
@@ -188,6 +145,7 @@ class WiFiThermostatDriver {
 	}
 
 	postRequest (data) {
+		data.hold = 1;
 		return new Promise((resolve, reject) => {
 			request.post({
 				headers: {'content-type' : 'application/x-www-form-urlencoded'},

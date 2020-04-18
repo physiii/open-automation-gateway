@@ -15,8 +15,6 @@ class Service {
 		// On state change, send updated state to state listeners.
 		this.unproxied_state = {...data.state};
 		this.state = utils.onChange(this.unproxied_state, () => {
-			// console.log("Sending load event.", this.unproxied_state);
-			// this._events.emit('state-changed', {state: {...this.unproxied_state}});
 			this._events.emit('state-changed', {state: {...this.unproxied_state}});
 		});
 

@@ -48,7 +48,9 @@ class CameraService extends Service {
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
 		this.setUpLoopback();
-		this.setUpAudioLoopback();
+		if (!config.disable_audio) {
+			this.setUpAudioLoopback();
+		}
 		if (this.settings.should_detect_motion) {
 			this.startMotionDetection();
 		}

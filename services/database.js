@@ -86,6 +86,111 @@ class Database {
 		});
 	}
 
+	getDeviceFromServiceId (id) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').find().toArray((error, devices) => {
+				db.close();
+				devices.forEach(device => {
+					device.services.forEach((service) => {
+						if (service.id === id) {
+							resolve(device);
+						}
+					});
+				})
+				if (error) {
+					console.error(TAG, 'getThermostatSchedule', error);
+					reject('Database error');
+					return;
+				}
+			});
+		});
+	}
+
+	getThermostatState (id) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').find().toArray((error, devices) => {
+				db.close();
+				devices.forEach(device => {
+					device.services.forEach((service) => {
+						if (service.id === id) {
+							resolve(service.state);
+						}
+					});
+				})
+				if (error) {
+					console.error(TAG, 'getThermostatState', error);
+					reject('Database error');
+					return;
+				}
+			});
+		});
+	}
+
+	getThermostatSchedule (id) {
+			return this.connect((db, resolve, reject) => {
+				db.collection('devices').find().toArray((error, devices) => {
+					db.close();
+					devices.forEach(device => {
+						device.services.forEach((service) => {
+							if (service.id === id) {
+								console.log(TAG, 'getThermostatSchedule FOUND SCHEDULE!', service);
+								resolve(service.schedule);
+							}
+						});
+					})
+					if (error) {
+						console.error(TAG, 'getThermostatSchedule', error);
+						reject('Database error');
+						return;
+					}
+				});
+			});
+	}
+
+	setThermostatSchedule (id, schedule) {
+		this.getDeviceFromServiceId(id)
+		.then((device) => {
+			device.services.forEach((service, i) => {
+				if (service.id === id) {
+					device.services[i].schedule = schedule;
+
+					return this.connect((db, resolve, reject) => {
+						delete device['_id'];
+						db.collection('devices').update({}, {$set: device}, {upsert: true}, (error, item) => {
+							db.close();
+							if (error) {
+								return console.error(TAG, 'setThermostatSchedule', error);
+							}
+						});
+					});
+
+				}
+			});
+		})
+	}
+
+	saveThermostatState (id, state) {
+		this.getDeviceFromServiceId(id)
+		.then((device) => {
+			device.services.forEach((service, i) => {
+				if (service.id === id) {
+					device.services[i].state = state;
+
+					return this.connect((db, resolve, reject) => {
+						// delete device['_id'];
+						db.collection('devices').update({id: device.id}, {$set: device}, {upsert: true}, (error, item) => {
+							db.close();
+							if (error) {
+								return console.error(TAG, 'setThermostatState', error);
+							}
+						});
+					});
+
+				}
+			});
+		})
+	}
+
 	get_settings () {
 	return this.connect((db, resolve, reject) => {
 		db.collection('settings').find().toArray((error, result) => {

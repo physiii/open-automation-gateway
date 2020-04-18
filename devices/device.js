@@ -21,10 +21,17 @@ class Device {
 		this.state = {connected: (data.state && data.state.connected) || false};
 		this.settings = {...data.settings};
 		this.info = {...data.info};
-
 		this.services = new ServicesManager(data.services, this.getRelaySocketProxy(), this.save);
-
+		this.subscribeToServices();
 		this.connectToRelay();
+	}
+
+	subscribeToServices () {
+		this.services.services.forEach(service => {
+			service.on('state-changed', (data) => {
+				this.sendCurrentStateToRelay();
+			});
+		});
 	}
 
 	saveSetting (property, value) {

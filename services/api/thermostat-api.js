@@ -9,8 +9,13 @@ class ThermostatApi extends ServiceApi {
 			callback(null, {});
 		})
 
-		this.on('temp/set', (data, callback) => {
+		this.on('hold-temp/set', (data, callback) => {
 			this.service.setTemp(data.temp);
+			callback(null, {});
+		});
+
+		this.on('schedule/set', (data, callback) => {
+			this.service.setSchedule(data.temp);
 			callback(null, {});
 		});
 
@@ -21,6 +26,11 @@ class ThermostatApi extends ServiceApi {
 
 		this.on('holdMode/set', (data, callback) => {
 			this.service.setHoldMode(data.mode);
+			callback(null, {});
+		});
+
+		this.on('power/set', (data, callback) => {
+			this.service.setPower(data.mode);
 			callback(null, {});
 		});
 	}

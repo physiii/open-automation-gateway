@@ -2,14 +2,13 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- Gateway ------------------------------ //
 
-
-const TAG = '[Index]',
-MINIMUM_FREE_SPACE = 5; //minimum free space in precent
+const fs = require('fs'),
+	TAG = '[Index]',
+	MINIMUM_FREE_SPACE = 5; //minimum free space in precent
 
 // ----------------------------------------------------- //
 // import config or create new config.json with defaults //
 // ----------------------------------------------------- //
-const fs = require('fs');
 
 let config = {
   relay_server: 'localhost',
@@ -32,14 +31,13 @@ const utils = require('./utils'),
   ConnectionManager = require('./services/connection.js'),
   System = require('./services/system.js'),
   Database = require('./services/database.js'),
-  devices = require('./devices/devices-manager.js'),
+  DevicesManager = require('./devices/devices-manager.js'),
   diskUsage = require('diskusage'),
   admin = require('./admin/index.js');
 
 if (config.zwave) {
   zwave = require('./zwave.js');
 }
-//require('./admin.js');
 
 if (config.use_dev) {
   console.warn('Gateway is running in development mode.');
@@ -49,15 +47,8 @@ ConnectionManager.connectionLoop();
 // Get settings and load devices from database.
 
 Database.getDevices().then((dbDevices) => {
-	devices.loadDevicesFromDb().then(() => {
+	DevicesManager.loadDevicesFromDb().then(() => {
 		createGatewayDevice = true;
-
-
-		// devices.createDevice({
-		// 	services: [
-		// 		{type: 'thermostat'}
-		// 	]
-		// })
 
 		for (let i = 0; i < dbDevices.length; i++) {
 			if (dbDevices[i].services[0].type == 'gateway') {
@@ -67,7 +58,7 @@ Database.getDevices().then((dbDevices) => {
 
 		if (createGatewayDevice) {
 			console.log(TAG, "!! createGatewayDevice !!");
-		  devices.createDevice({
+		  DevicesManager.createDevice({
 		    services: [
 		      {type: 'gateway'}
 		    ]

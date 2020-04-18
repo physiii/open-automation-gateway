@@ -47,7 +47,6 @@ class DevicesManager {
 
 						device = new Device(data);
 						this.devices.set(device.id, device);
-
 						resolve(device);
 					})
 				})
