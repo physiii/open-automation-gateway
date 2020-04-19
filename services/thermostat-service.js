@@ -132,7 +132,13 @@ class ThermostatService extends Service {
 			console.log('Temperature in window, turning off.', targetTemp);
 		}
 
-		this.previous_target_temp = targetTemp;
+		if (this.prevMinTemp != minTemp || this.prevMaxTemp != maxTemp) {
+			this.driver.setTemp(targetTemp, mode);
+			console.log('Temperature bounds changed.', minTemp, maxTemp);
+		}
+
+		this.prevMinTemp = minTemp;
+		this.prevMaxTemp = maxTemp;
 		this.saveState();
 	}
 
@@ -174,7 +180,13 @@ class ThermostatService extends Service {
 			console.log('Temperature in window, turning off.', targetTemp);
 		}
 
-		this.previous_target_temp = targetTemp;
+		if (this.prevMinTemp != minTemp || this.prevMaxTemp != maxTemp) {
+			this.driver.setTemp(targetTemp, mode);
+			console.log('Temperature bounds changed.', minTemp, maxTemp);
+		}
+
+		this.prevMinTemp = minTemp;
+		this.prevMaxTemp = maxTemp;
 		this.saveState();
 	}
 
@@ -203,7 +215,6 @@ class ThermostatService extends Service {
 	setHoldMode (mode) {
 		this.state.hold_mode = mode;
 		this.saveState();
-		console.log(TAG, 'setHoldMode', mode);
 	}
 
 	setPower (mode) {
@@ -222,7 +233,6 @@ class ThermostatService extends Service {
 	}
 
 	setSchedule (schedule) {
-		console.log(TAG, 'setSchedule', schedule);
 		this.state.schedule = schedule;
 		this.saveState();
 	}
