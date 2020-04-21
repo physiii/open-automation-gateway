@@ -112,10 +112,10 @@ sudo systemctl enable hostapd
 sudo systemctl start hostapd
 
 cd ${HOME}
-git clone https://github.com/physiii/open-automation-gateway gateway
-cd camera
+git clone -b dev https://github.com/physiii/open-automation-gateway gateway
+cd gateway
 npm install
-sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/hostapd.conf /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
+sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
 
 #############
 ## startup ##
