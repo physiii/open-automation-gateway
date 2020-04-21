@@ -103,16 +103,16 @@ sudo make install KERNELRELEASE=`uname -r`
 sudo depmod -a
 sudo modprobe v4l2loopback video_nr=20
 
-##############
-##  camera  ##
-##############
+###############
+##  gateway  ##
+###############
 
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl start hostapd
 
 cd ${HOME}
-git clone https://github.com/physiii/camera
+git clone https://github.com/physiii/open-automation-gateway gateway
 cd camera
 npm install
 sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/hostapd.conf /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
@@ -123,7 +123,7 @@ sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/ho
 
 sudo -i
 sed -i -e 's/exit 0//g' /etc/rc.local
-echo "su pi -c 'pm2 start /home/pi/camera/index.js --name camera'" >> /etc/rc.local
+echo "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'" >> /etc/rc.local
 echo "modprobe snd-aloop enable=1,1,1 index=4,5,6" >> /etc/rc.local
 echo "modprobe v4l2loopback video_nr=20" >> /etc/rc.local
 echo "exit 0" >> /etc/rc.local
