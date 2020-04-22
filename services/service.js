@@ -31,7 +31,6 @@ class Service {
 	}
 
 	relayEmit (event, data, callback) {
-		console.log("Emitting to relay.", data);
 		if (!this._relayEmit) {
 			console.error(TAG, this.id, 'Tried to emit event ' + event + ' to relay, but this service has no relay API.');
 			return;

@@ -57,7 +57,7 @@ Database.getDevices().then((dbDevices) => {
 		}
 
 		if (createGatewayDevice) {
-			console.log(TAG, "!! createGatewayDevice !!");
+			console.log(TAG, "Creating a gateway device.");
 		  DevicesManager.createDevice({
 		    services: [
 		      {type: 'gateway'}

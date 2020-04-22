@@ -102,8 +102,8 @@ class ThermostatService extends Service {
 		let temp = state.current_temp,
 			targetTemp = state.target_temp,
 			previousTargetTemp = this.previous_target_temp,
-			minTemp = this.state.hold_temp.min,
-			maxTemp = this.state.hold_temp.max,
+			minTemp = this.state.hold_temp ? this.state.hold_temp.min : 0,
+			maxTemp = this.state.hold_temp ? this.state.hold_temp.max : 0,
 			mode = this.state.mode;
 
 		if (!this.state.power) return console.log('Thermostate is currently powered off.');

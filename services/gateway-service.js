@@ -61,19 +61,19 @@ class GatewayService extends Service {
 				let ip = ip_base + i,
 					self = this;
 				axios.get('http://' + ip + '/tstat')
-				  .then(function (response) {
+					.then(function (response) {
 						if (response.data.temp) {
 							self.createThermostatService(ip);
 						}
-				  })
-				  .catch(function (error) {})
+					})
+					.catch(function (error) {})
 			}
 		})
 	}
 
 	createSirenService (gpio_paths = []) {
 		const new_devices = [],
-		  siren_services = DevicesManager.getServicesByType('siren');
+			siren_services = DevicesManager.getServicesByType('siren');
 
 		return new Promise((resolve, reject) => {
 			gpio_paths.forEach((gpio_path) => {
@@ -105,7 +105,7 @@ class GatewayService extends Service {
 
 	createContactService (gpio_paths = []) {
 		const new_devices = [],
-		  contact_services = DevicesManager.getServicesByType('contact_sensor');
+			contact_services = DevicesManager.getServicesByType('contact_sensor');
 
 		return new Promise((resolve, reject) => {
 			gpio_paths.forEach((gpio_path) => {
