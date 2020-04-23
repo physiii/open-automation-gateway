@@ -28,7 +28,7 @@ class GatewayService extends Service {
 			this.createDevicesForOsCameras(camera_device_paths);
 		}).catch((error) => console.error(TAG, 'There was an error getting the list of cameras available to the operating system.', error));
 
-		this.searchForNetworkThermostats();
+		// this.searchForNetworkThermostats();
 	}
 
 	createThermostatService (ip) {
