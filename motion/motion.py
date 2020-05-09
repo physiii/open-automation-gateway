@@ -145,7 +145,7 @@ def getCameraNumber(camera):
 
 def createFolderIfNotExists(path):
 	if not os.path.exists(path):
-		os.mkdir(path)
+		os.makedirs(path)
 	return path
 
 def getCameraFolderName():
@@ -204,7 +204,8 @@ def localDateToUtc(date):
 	return date + utcOffset;
 
 def saveRecording(data):
-	db.camera_recordings.insert_one({
+
+	recordingData = {
 		'id': str(uuid.uuid4()),
 		'camera_id': cameraId,
 		'file': data['finishedPath'],
@@ -212,7 +213,10 @@ def saveRecording(data):
 		'duration': data['duration'],
 		'width': data['width'],
 		'height': data['height']
-	})
+	}
+
+	print('!! hit KCW finish !!', recordingData)
+	db.camera_recordings.insert_one(recordingData)
 
 	while acw.recording:
 		time.sleep(1)

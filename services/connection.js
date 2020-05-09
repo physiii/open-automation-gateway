@@ -2,8 +2,7 @@
 // ------------	https://github.com/physiii/open-automation --------------- //
 // ------------------------------- connection.js -------------------------- //
 
-const exec = require('child_process').exec,
-	{ spawn } = require('child_process'),
+const { spawn, exec, execSync } = require('child_process'),
 	request = require('request'),
 	os = require('os'),
 	fs = require('fs'),
@@ -14,8 +13,7 @@ const exec = require('child_process').exec,
 	CONNECTION_LOOP_TIME = 20, //seconds between running connectionLoop
 	CONNECTION_TIMEOUT = config.connection_timeout || 60, //seconds to consider connection timed out
 	TAG = "[connection-manager]"
-	router_list = [],
-	getMacAddress = require('getmac').default;
+	router_list = [];
 
 let LastGoodConnection = Date.now();
 
@@ -23,7 +21,7 @@ class ConnectionManager {
 
 	constructor () {
 		this.init = this.init.bind(this);
-		this.MAC = getMacAddress();
+		this.MAC = this.getMacAddress();
 		console.log("MAC Address Is: ", this.MAC);
 	}
 
@@ -116,6 +114,14 @@ class ConnectionManager {
 
 			resolve(localIPs);
 		});
+	}
+
+	getMacAddress() {
+		let MAC = execSync('ifconfig').toString(),
+			index = MAC.indexOf("ether ") + "ether ".length,
+			mac_length = 17;
+
+		return MAC.substring(index, index + mac_length).replace(/:/g,"");
 	}
 
 	getPublicIP() {
@@ -273,16 +279,17 @@ class ConnectionManager {
 		this.writeSysctl('ap');
 		this.writeRcLocal('ap');
 
-		System.reboot();
+		System.reboot(3);
 	}
 
 	writeWPA (mode, apInfo) {
 		let path = "/etc/wpa_supplicant/wpa_supplicant.conf",
-			fileAP = "rm /data/db/mongod.lock\n"
-				+ "mongod &\n"
+			fileAP = ""
+				// + "rm /data/db/mongod.lock\n"
+				// + "mongod &\n"
 				+ "\n"
-				+ "su pi -c 'pm2 start /home/pi/camera/index.js --name camera'\n"
-				+ "modprobe v4l2loopback video_nr=10,20\n"
+				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
+				+ "modprobe v4l2loopback video_nr=20\n"
 				+ "modprobe snd-aloop enable=1,1,1 index=4,5,6\n"
 				+ "\n"
 			+ "exit 0\n",
@@ -307,18 +314,18 @@ class ConnectionManager {
 	writeRcLocal (mode) {
 		let path = "/etc/rc.local",
 			fileAP = "#!/bin/sh\n\n"
-				+ "rm /data/db/mongod.lock\n"
-				+ "mongod &\n\n"
-				+ "su pi -c 'pm2 start /home/pi/camera/index.js --name camera'\n"
-				+ "modprobe v4l2loopback video_nr=10,20\n"
+				// + "rm /data/db/mongod.lock\n"
+				// + "mongod &\n\n"
+				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
+				+ "modprobe v4l2loopback video_nr=20\n"
 				+ "modprobe snd-aloop enable=1,1,1 index=4,5,6\n"
 				+ "\n"
 			+ "exit 0\n",
 			fileClient = "#!/bin/sh\n\n"
-				+ "rm /data/db/mongod.lock\n"
-				+ "mongod &\n\n"
-				+ "su pi -c 'pm2 start /home/pi/camera/index.js --name camera'\n"
-				+ "modprobe v4l2loopback video_nr=10,20\n"
+				// + "rm /data/db/mongod.lock\n"
+				// + "mongod &\n\n"
+				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
+				+ "modprobe v4l2loopback video_nr=20\n"
 				+ "modprobe snd-aloop enable=1,1,1 index=4,5,6\n"
 				+ "\n"
 				+ "exit 0\n";
@@ -391,7 +398,8 @@ class ConnectionManager {
 	writeHostAPD (mode) {
 		let cam_id = this.MAC.replace(/:/g,"").slice(-6),
 			ssid_name = "Camera_"+cam_id,
-			path = "/etc/default/hostapd",
+			// path = "/etc/default/hostapd",
+			path = "/etc/hostapd/hostapd.conf",
 			fileAP = "interface=wlan0\n"
 				+ "driver=nl80211\n"
 				+ "ssid="+ssid_name+"\n"

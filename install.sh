@@ -12,18 +12,18 @@ curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   python-setuptools python3-dev \
-  libssl-dev libasound2-dev nmap ffmpeg \
+  libssl-dev libasound2-dev nmap ffmpeg acl \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
   libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev python3-pip \
   libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0 \
-  
+
 sudo apt install -y raspberrypi-kernel-headers \
 
 # sudo apt install -y v4l2loopback-dkms v4l2loopback-utils
-# sudo apt install -y libjasper-dev libqtgui4 
+# sudo apt install -y libjasper-dev libqtgui4
 
-sudo pip3 install pymongo numpy imutils pyaudio s-tui
+python3 -m pip install pymongo==3.4.0 numpy imutils pyaudio s-tui
 sudo npm install -g pm2
 
 ##############
@@ -115,7 +115,8 @@ cd ${HOME}
 git clone -b dev https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 npm install
-sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
+sudo setfacl -R -m u:pi:rwx /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf 
+# sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
 
 #############
 ## startup ##
