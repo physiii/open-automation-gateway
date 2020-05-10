@@ -14,11 +14,13 @@ class DevicesManager {
 	}
 
 	addDevice (data) {
+		console.log(TAG, 'addDevice', data);
 		return new Promise((resolve, reject) => {
 			let device = this.getDeviceById(data.id);
 
 			ConnectionManager.getLocalIP()
 			.then((localIPs) => {
+				console.log(TAG, 'getLocalIP', localIPs);
 				let localIpString = '';
 				for (let i = 0; i < localIPs.length; i++) {
 					localIpString += localIPs[i] + ' | ';
@@ -28,14 +30,17 @@ class DevicesManager {
 			.then(() => {
 				ConnectionManager.getPublicIP()
 				.then((public_ip) => {
+					console.log(TAG, 'getPublicIP', public_ip);
 					if (data.info) data.info.public_ip = public_ip;
 				})
 				.then(() => {
 					System.softwareInfo()
 					.then((version) => {
+						console.log(TAG, 'softwareInfo', version);
 						if (data.info) data.info.firmware_version = version;
 					})
 					.then(() => {
+						console.log(TAG, 'device', device);
 						if (device) {
 							resolve(device);
 						}

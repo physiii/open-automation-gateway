@@ -74,14 +74,20 @@ class Database {
 		return this.connect((db, resolve, reject) => {
 			db.collection('devices').find().toArray((error, result) => {
 				db.close();
-				let  id = result[0].services[0].id;
-				console.log('Found Gateway ID: ',id)
+
 				if (error) {
 					console.error(TAG, 'getDeviceID', error);
 					reject('Database error');
 					return;
 				}
-				resolve(id);
+
+				if (!result[0])	{
+					reject(0);
+					return console.log('No Gateway ID Found.');
+				}
+
+				if (!result[0].services[0]) resolve(0);
+				resolve(result[0].services[0].id);
 			});
 		});
 	}

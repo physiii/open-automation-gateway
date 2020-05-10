@@ -135,8 +135,10 @@ class ConnectionManager {
 						if (error !== null) console.log(error);
 						module.exports.public_ip = data;
 						resolve(data);
-				}
-			});
+					} else {
+						resolve("0.0.0.0");
+					}
+				});
 		});
 	}
 
