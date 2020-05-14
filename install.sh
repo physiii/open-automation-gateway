@@ -115,7 +115,8 @@ cd ${HOME}
 git clone -b dev https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 npm install
-sudo setfacl -R -m u:pi:rwx /usr/local/lib /etc
+sudo setfacl -m u:pi:rwx /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
+sudo setfacl -m u:pi:rwx /etc
 # sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
 
 #############
