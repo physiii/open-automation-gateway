@@ -4,7 +4,7 @@
 ## general ##
 #############
 
-sudo apt update && sudo apt upgrade -y
+sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
