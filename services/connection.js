@@ -287,8 +287,8 @@ class ConnectionManager {
 	writeWPA (mode, apInfo) {
 		let path = "/etc/wpa_supplicant/wpa_supplicant.conf",
 			fileAP = ""
-				"rm /data/db/mongod.lock\n"
-				"mongod &\n"
+				+ "rm /data/db/mongod.lock\n"
+				+ "mongod &\n"
 				+ "\n"
 				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
 				+ "modprobe v4l2loopback video_nr=20\n"
