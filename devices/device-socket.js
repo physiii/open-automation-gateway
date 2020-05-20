@@ -7,6 +7,7 @@ const config = require('../config.json'),
 
 function createDeviceSocket (deviceId, deviceToken) {
 	const socket = io(relayUrl, {
+		upgradeTimeout: 30000,
 		transportOptions: {
 			polling: {
 				extraHeaders: {
