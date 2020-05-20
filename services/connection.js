@@ -287,8 +287,8 @@ class ConnectionManager {
 	writeWPA (mode, apInfo) {
 		let path = "/etc/wpa_supplicant/wpa_supplicant.conf",
 			fileAP = ""
-				// + "rm /data/db/mongod.lock\n"
-				// + "mongod &\n"
+				"rm /data/db/mongod.lock\n"
+				"mongod &\n"
 				+ "\n"
 				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
 				+ "modprobe v4l2loopback video_nr=20\n"
@@ -316,16 +316,16 @@ class ConnectionManager {
 	writeRcLocal (mode) {
 		let path = "/etc/rc.local",
 			fileAP = "#!/bin/sh\n\n"
-				// + "rm /data/db/mongod.lock\n"
-				// + "mongod &\n\n"
+				+ "rm /data/db/mongod.lock\n"
+				+ "mongod &\n\n"
 				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
 				+ "modprobe v4l2loopback video_nr=20\n"
 				+ "modprobe snd-aloop enable=1,1,1 index=4,5,6\n"
 				+ "\n"
 			+ "exit 0\n",
 			fileClient = "#!/bin/sh\n\n"
-				// + "rm /data/db/mongod.lock\n"
-				// + "mongod &\n\n"
+				+ "rm /data/db/mongod.lock\n"
+				+ "mongod &\n\n"
 				+ "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'\n"
 				+ "modprobe v4l2loopback video_nr=20\n"
 				+ "modprobe snd-aloop enable=1,1,1 index=4,5,6\n"
