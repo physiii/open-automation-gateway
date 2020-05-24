@@ -34,7 +34,7 @@ class CameraService extends Service {
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
-		this.settings.should_detect_motion = data.settings && data.settings.should_detect_motion || true;
+		this.settings.should_detect_motion = data.settings && data.settings.motion_detection_enabled || true;
 		this.settings.motion_threshold = data.settings && data.settings.motion_threshold || 10;
 		this.settings.should_take_timelapse = data.settings && data.settings.should_take_timelapse || true;
 		this.settings.timelapse_brightness_threshold = data.settings && data.settings.timelapse_brightness_threshold || 10;
@@ -50,9 +50,14 @@ class CameraService extends Service {
 		this.setUpLoopback();
 		if (!config.disable_audio) {
 			this.setUpAudioLoopback();
+		} else {
+			console.log(TAG, "Camera audio is disabled.");
 		}
-		if (this.settings.should_detect_motion) {
+
+		if (this.settings.motion_detection_enabled) {
 			this.startMotionDetection();
+		} else {
+			console.log(TAG, "Motion detection is disabled.");
 		}
 
 		this.startTimeLapse();
@@ -183,6 +188,8 @@ class CameraService extends Service {
 	}
 
 	streamLiveAudio () {
+		if (config.disable_audio) return console.log(TAG, "Camera audio is disabled.");
+
 		const stream_token = this.generateStreamToken();
 
 		VideoStreamer.streamLiveAudio(

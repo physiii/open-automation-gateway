@@ -14,7 +14,6 @@ class DevicesManager {
 	}
 
 	addDevice (data) {
-		console.log(TAG, 'addDevice', data);
 		return new Promise((resolve, reject) => {
 			let device = this.getDeviceById(data.id);
 

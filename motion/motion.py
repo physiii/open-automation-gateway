@@ -40,7 +40,7 @@ xmax = xmin + rWidth
 ymax = ymin + rHeight
 
 BUFFER_TIME = 30
-FRAMERATE = 20
+FRAMERATE = 8
 AUDIO_FRAMERATE = 6
 BUFFER_SIZE = BUFFER_TIME * FRAMERATE # seconds * framerate
 AUDIO_BUFFER_SIZE = BUFFER_TIME * AUDIO_FRAMERATE # seconds * framerate

@@ -22,7 +22,7 @@ class ServiceApi {
 		this.on('settings', (data, callback) => {
 			this.service.saveSettings(data.settings).then(() => {
 				console.log("Restarting. ", new Date());
-				exec("pm2 restart camera", (error, stdout, stderr) => {console.log(stdout)});
+				exec("pm2 restart gateway", (error, stdout, stderr) => {console.log(stdout)});
 				callback();
 			}).catch(callback);
 		});
