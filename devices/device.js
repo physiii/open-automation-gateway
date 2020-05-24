@@ -3,6 +3,7 @@ const uuid = require('uuid/v4'),
 	createDeviceSocket = require('./device-socket.js').createDeviceSocket,
 	ServicesManager = require('../services/services-manager.js'),
 	noOp = () => {},
+	utils = require('../utils.js'),
 	exec = require('child_process').exec,
 	spawn = require('child_process').spawn,
 	TAG = '[Device]',
@@ -71,22 +72,15 @@ class Device {
 
 	update () {
 		return new Promise((resolve, reject) => {
-				const path = __dirname + '/..',
-					git = spawn('git', ['-C', path, 'pull']);
+			const path = __dirname + '/..',
+				git = spawn('git', ['-C', path, 'pull']);
 
-				git.stdout.on('data', (data) => {
-					exec('pm2 restart camera', (error, stdout, stderr) => {
-						if (error) {
-							console.error(`Update: restart error: ${error}`);
-							return;
-						}
+			git.stdout.on('data', (data) => {
+				utils.restart();
+				console.log(`Update: ${data}`);
+			})
 
-						console.log(stdout);
-						console.log(stderr);
-					});
-					console.log(`Update: ${data}`);
-				})
-				git.stderr.on('data', (data) => console.log(`Update: error: ${data}`));
+			git.stderr.on('data', (data) => console.log(`Update: error: ${data}`));
 
 			resolve(0);
 		});

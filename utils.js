@@ -119,15 +119,8 @@ function flattenArray (array_to_flatten) {
 	return [].concat(...array_to_flatten);
 }
 
-function update () {
-	const path = __dirname.replace('/gateway',''),
-		git = spawn('git', ['-C', path, 'pull']);
 
-	console.log('Update: pull from ', path);
-
-	git.stdout.on('data', (data) => console.log(`Update: ${data}`));
-	git.stderr.on('data', (data) => console.log(`Update: error: ${data}`));
-
+function restart () {
 	exec('pm2 restart gateway', (error, stdout, stderr) => {
 		if (error) {
 			console.error(`Update: restart gateway error: ${error}`);
@@ -137,6 +130,18 @@ function update () {
 		console.log(stdout);
 		console.log(stderr);
 	});
+}
+
+function update () {
+	const path = __dirname.replace('/gateway',''),
+		git = spawn('git', ['-C', path, 'pull']);
+
+	console.log('Update: pull from ', path);
+
+	git.stdout.on('data', (data) => console.log(`Update: ${data}`));
+	git.stderr.on('data', (data) => console.log(`Update: error: ${data}`));
+
+	restart();
 }
 
 function isEmpty (value) {
@@ -196,6 +201,7 @@ const validators = {
 
 module.exports = {
 	checkIfProcessIsRunning,
+	restart,
 	removeOldCameraRecordings,
 	onChange,
 	flattenArray,

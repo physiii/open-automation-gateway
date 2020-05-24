@@ -1,4 +1,5 @@
 const noOp = () => {},
+	utils = require('../../utils.js'),
 	exec = require('child_process').exec;
 class ServiceApi {
 	constructor (socket, service) {
@@ -22,7 +23,7 @@ class ServiceApi {
 		this.on('settings', (data, callback) => {
 			this.service.saveSettings(data.settings).then(() => {
 				console.log("Restarting. ", new Date());
-				exec("pm2 restart gateway", (error, stdout, stderr) => {console.log(stdout)});
+				utils.restart();
 				callback();
 			}).catch(callback);
 		});
