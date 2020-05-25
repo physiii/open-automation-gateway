@@ -125,6 +125,8 @@ class WiFiThermostatDriver {
 			target_temp: data.t_cool || data.t_heat
 		};
 
+		if (!this.state) return console.log('State is not defined.');
+
 		if (this.state.mode != results.mode) this.events.emit('mode-changed', results.mode);
 		if (this.state.current_temp != results.current_temp) this.events.emit('current-temp-changed', results.current_temp);
 		if (this.state.target_temp != results.target_temp) this.events.emit('target-temp-changed', results.target_temp);
