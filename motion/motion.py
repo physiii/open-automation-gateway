@@ -22,12 +22,39 @@ import wave
 import os
 import subprocess
 
-from bson import BSON
-from bson import json_util
+# from bson import BSON
+# from bson import json_util
 from subprocess import call
 from pymongo import MongoClient
 from pprint import pprint
-from bson.objectid import ObjectId
+# from bson.objectid import ObjectId
+
+##################################################################################################################
+# Parse arguments
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-a', '--audio-device', dest='audio-device', type=str, required=True, help='path to video device interface (e.g. hw:7,1)')
+ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
+ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
+ap.add_argument('-r', '--rotation', dest='rotation', type=int, required=False, default=0, help='degrees of rotation for the picture - supported values: 0, 180')
+ap.add_argument('-f', '--frame-rate', dest='frame-rate', type=int, required=False, default=8, help='Video frame rate')
+ap.add_argument('-t', '--threshold', dest='threshold', type=int, required=False, default=10, help='Threshold used to begin recording motion')
+ap.add_argument('-x1', '--motionArea_x1', dest='motionArea_x1', type=float, required=False, default=10, help='Coordinates for motion record region')
+ap.add_argument('-y1', '--motionArea_y1', dest='motionArea_y1', type=float, required=False, default=10, help='Coordinates for motion record region')
+ap.add_argument('-x2', '--motionArea_x2', dest='motionArea_x2', type=float, required=False, default=10, help='Coordinates for motion record region')
+ap.add_argument('-y2', '--motionArea_y2', dest='motionArea_y2', type=float, required=False, default=10, help='Coordinates for motion record region')
+args = vars(ap.parse_args())
+
+cameraPath = args['camera']
+cameraId = args['camera-id']
+cameraRotation = args['rotation']
+motionThreshold = args['threshold']
+frameRate = args['frame-rate']
+motionArea_x1 = args['motionArea_x1']
+motionArea_y1 = args['motionArea_y1']
+motionArea_x2 = args['motionArea_x2']
+motionArea_y2 = args['motionArea_y2']
+audioDevice = args['audio-device']
 
 ##################################################################################################################
 # Globals
@@ -40,38 +67,12 @@ xmax = xmin + rWidth
 ymax = ymin + rHeight
 
 BUFFER_TIME = 30
-FRAMERATE = 8
 AUDIO_FRAMERATE = 6
-BUFFER_SIZE = BUFFER_TIME * FRAMERATE # seconds * framerate
+BUFFER_SIZE = BUFFER_TIME * frameRate # seconds * frameRate
 AUDIO_BUFFER_SIZE = BUFFER_TIME * AUDIO_FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 15 # minimum number of consecutive frames with motion required to trigger motion detection
 MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before forcing evaluation of a new frame
 MAX_CATCH_UP_MAX_REACHED = 10 # script will exit if max catch up frames limit is reached this many times consecutively
-
-##################################################################################################################
-# Parse arguments
-
-ap = argparse.ArgumentParser()
-ap.add_argument('-a', '--audio-device', dest='audio-device', type=str, required=True, help='path to video device interface (e.g. hw:7,1)')
-ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
-ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
-ap.add_argument('-r', '--rotation', dest='rotation', type=int, required=False, default=0, help='degrees of rotation for the picture - supported values: 0, 180')
-ap.add_argument('-t', '--threshold', dest='threshold', type=int, required=False, default=10, help='Threshold used to begin recording motion')
-ap.add_argument('-x1', '--motionArea_x1', dest='motionArea_x1', type=float, required=False, default=10, help='Coordinates for motion record region')
-ap.add_argument('-y1', '--motionArea_y1', dest='motionArea_y1', type=float, required=False, default=10, help='Coordinates for motion record region')
-ap.add_argument('-x2', '--motionArea_x2', dest='motionArea_x2', type=float, required=False, default=10, help='Coordinates for motion record region')
-ap.add_argument('-y2', '--motionArea_y2', dest='motionArea_y2', type=float, required=False, default=10, help='Coordinates for motion record region')
-args = vars(ap.parse_args())
-
-cameraPath = args['camera']
-cameraId = args['camera-id']
-cameraRotation = args['rotation']
-motionThreshold = args['threshold']
-motionArea_x1 = args['motionArea_x1']
-motionArea_y1 = args['motionArea_y1']
-motionArea_x2 = args['motionArea_x2']
-motionArea_y2 = args['motionArea_y2']
-audioDevice = args['audio-device']
 
 ##################################################################################################################
 # Definitions and Classes
@@ -184,8 +185,8 @@ def getDatePath(date):
 def getFileName(date):
 	return date.strftime('%Y-%m-%d_%I:%M:%S%p')
 
-def framerateInterval(FRAMERATE):
-	interval = datetime.timedelta(seconds=float(1) / FRAMERATE)
+def framerateInterval(frameRate):
+	interval = datetime.timedelta(seconds=float(1) / frameRate)
 	nextFrameTargetTime = datetime.datetime.now()
 
 	while True:
@@ -268,8 +269,8 @@ loopCnt = 0
 fileTimestamp = None
 newAudioRecording = False
 # keep looping
-for needCatchUpFrame in framerateInterval(FRAMERATE):
-	# repeat the last frame if motion detection isn't keeping up with the framerate
+for needCatchUpFrame in framerateInterval(frameRate):
+	# repeat the last frame if motion detection isn't keeping up with the frameRate
 	# if needCatchUpFrame and consecCatchUpFrames < MAX_CATCH_UP_FRAMES:
 	# 	consecCatchUpFrames += 1
 	#
@@ -315,10 +316,10 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 		continue
 
 	# rotate the frame
-	if cameraRotation is 180:
+	if cameraRotation == 180:
 		frame = imutils.rotate(frame, cameraRotation);
 
-	if (loopCnt >= FRAMERATE):
+	if (loopCnt >= frameRate):
 		loopCnt = 0
 	else:
 		loopCnt += 1
@@ -344,7 +345,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 			tempRecordingPath = getCameraTempPath() + '/' + videoFileName
 			finishedRecordingPath = getDatePath(fileTimestamp) + '/' + videoFileName
 
-			kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'MPEG'), FRAMERATE)
+			kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'MPEG'), frameRate)
 			acw.start(getAudioFilePath())
 	else:
 		consecFramesWithMotion = 0
@@ -376,7 +377,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 			'tempPath': tempRecordingPath,
 			'finishedPath': finishedRecordingPath,
 			'date': fileTimestamp,
-			'duration': float(recordingFramesLength + BUFFER_SIZE) / FRAMERATE,
+			'duration': float(recordingFramesLength + BUFFER_SIZE) / frameRate,
 			'width': frame.shape[1],
 			'height': frame.shape[0]
 		}
@@ -385,7 +386,7 @@ for needCatchUpFrame in framerateInterval(FRAMERATE):
 			'tempPath': tempRecordingPath,
 			'finishedPath': finishedRecordingPath,
 			'date': fileTimestamp,
-			'duration': float(recordingFramesLength + BUFFER_SIZE) / FRAMERATE,
+			'duration': float(recordingFramesLength + BUFFER_SIZE) / frameRate,
 			'width': frame.shape[1],
 			'height': frame.shape[0]
 		}

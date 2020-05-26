@@ -4,14 +4,16 @@
 
 const exec = require('child_process').exec,
 	spawn = require('child_process').spawn,
+	loop_delay = 60 * 1000,
   diskUsage = require('diskusage'),
-  config = require('../config.json');
+	utils = require('../utils');
 
 let TAG = "[connection-manager]";
 
 class System {
   constructor () {
 		this.init = this.init.bind(this);
+		this.loop();
 	}
 
   init () {
@@ -31,7 +33,7 @@ class System {
 
   reboot (delay) {
     if (!delay) delay = 0;
-    if (config.disable_reboot) return;
+    if (DISABLE_REBOOT) return;
     setTimeout(function () {
       exec("sudo reboot");
     }, delay * 1000);
@@ -53,6 +55,19 @@ class System {
   hardwareInfo () {
     return {"device":"raspberrypi"};
   }
+
+	loop () {
+		setInterval((self) => {
+			self.checkDiskSpace().then((info) => {
+		    let ratio = info.free / info.total;
+				console.log(TAG,'Checking disk space.', ratio);
+		    if (ratio < MINIMUM_FREE_SPACE/100) {
+		      utils.removeOldCameraRecordings();
+		    }
+		  });
+		}, loop_delay, this);
+	}
+
 }
 
 module.exports = new System();

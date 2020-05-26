@@ -4,7 +4,6 @@ const spawn = require('child_process').spawn,
 	path = require('path'),
 	fs = require('fs'),
 	utils = require('../utils.js'),
-	// cv = require('opencv4nodejs'),
 	Service = require('./service.js'),
 	config = require('../config.json'),
 	CameraApi = require('./api/camera-api.js'),
@@ -21,6 +20,7 @@ const spawn = require('child_process').spawn,
 	ONE_SECOND_IN_MILLISECONDS = 1000,
 	//TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
+	FRAME_RATE = config.camera_frame_rate || 8,
 	TAG = '[CameraService]';
 
 class CameraService extends Service {
@@ -214,6 +214,7 @@ class CameraService extends Service {
 			motionScriptPath,
 			'--camera', this.getLoopbackDevicePath(),
 			'--camera-id', this.id,
+			'--frame-rate', FRAME_RATE,
 			'--rotation', this.settings.rotation || 0,
 			'--threshold', this.settings.motion_threshold || 10,
 			// '--mic', this.settings.audio_hw || 'hw:0',

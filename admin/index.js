@@ -33,8 +33,6 @@ io.on('connection', (socket) => {
     }, INDEX_LOOP_TIME*1000);
   }
 
-
-
   database.getDeviceID().then(function(device_id) {
       socket.emit('device_id',device_id);
       //console.log(device_id);

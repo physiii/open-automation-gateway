@@ -2,30 +2,20 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- Gateway ------------------------------ //
 
-const fs = require('fs'),
-	TAG = '[Index]',
-	MINIMUM_FREE_SPACE = 5; //minimum free space in precent
-
-// ----------------------------------------------------- //
-// import config or create new config.json with defaults //
-// ----------------------------------------------------- //
-
-let config = {
-  relay_server: 'localhost',
-  relay_port: 5000
-};
+const TAG = '[Index]';
 
 try {
   config = require('./config.json');
 } catch (e) {
-  fs.writeFile(__dirname + '/config.json', JSON.stringify(config, null, '  '), (error) => {
-    if (error) {
-      throw error;
-    }
-
-    console.log(TAG, 'created config.json');
-  });
+	return console.log(TAG, 'No config.json file found. Start with config.json.example');
 }
+
+MINIMUM_FREE_SPACE = config.min_free_space_percent;
+DISABLE_REBOOT = config.disable_reboot;
+USE_DEV = config.use_dev || false;
+USE_SSL = config.use_ssl || false;
+RELAY_SERVER = config.relay_server || '127.0.0.1';
+RELAY_PORT = config.relay_port || 5050;
 
 const utils = require('./utils'),
   ConnectionManager = require('./services/connection.js'),
@@ -66,15 +56,3 @@ Database.getDevices().then((dbDevices) => {
 		}
 	});
 });
-
-function main_loop () {
-  System.checkDiskSpace().then((info) => {
-    let ratio = info.free/info.total;
-    if (ratio < MINIMUM_FREE_SPACE/100) {
-      utils.removeOldCameraRecordings();
-    }
-  });
-}
-
-main_loop();
-setInterval(main_loop, 30 * 1000);

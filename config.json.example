@@ -1,5 +1,5 @@
 {
- "relay_server":"127.0.0.1",
+ "relay_server":"192.168.1.42",
  "relay_port":5050,
  "zwave":false,
  "zwave_dev":"ACM0",
@@ -8,11 +8,15 @@
  "video_stream_port":8083,
  "rotation": 0,
  "lock_timer": "0",
- "audio_device_path":"hw:1,0",
+ "audio_device_path":"hw:2,0",
+ "disable_audio": false,
+ "motion_detection_enabled": true,
+ "min_free_space_percent": 5,
  "motion_audio_device_path":"hw:5,1",
  "stream_audio_device_path":"hw:6,1",
  "manage_network":true,
  "disable_reboot":false,
- "connection_timeout":30,
+ "connection_timeout":60,
+ "camera_frame_rate": 8,
  "wifi_adapter":"wlan0"
 }

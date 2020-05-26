@@ -106,7 +106,7 @@ class ThermostatService extends Service {
 			maxTemp = this.state.hold_temp ? this.state.hold_temp.max : 0,
 			mode = this.state.mode;
 
-		if (!this.state.power) return console.log('Thermostate is currently powered off.');
+		if (!this.state.power) return console.log('Thermostat is currently powered off.');
 
 		if (temp > maxTemp) {
 			if (mode != 'cool' || previousTargetTemp != targetTemp) {
@@ -154,7 +154,7 @@ class ThermostatService extends Service {
 			power = this.state.schedule[hour].power,
 			mode = this.state.mode;
 
-		if (!power) return console.log('Thermostate is currently powered off.');
+		if (!power) return console.log('Thermostat is currently powered off.');
 
 		if (temp > maxTemp) {
 			if (mode != 'cool' || previousTargetTemp != targetTemp) {

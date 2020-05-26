@@ -30,7 +30,7 @@ function checkIfProcessIsRunning () {
 function removeOldCameraRecordings () {
 	return new Promise((resolve, reject) => {
 		// Return only base file name without dir
-		exec('find /usr/local/lib/camera/events -type f -printf \'%T+ %p\n\' | sort | head -n 1', (error, stdout, stderr) => {
+		exec('find /usr/local/lib/open-automation/camera/events -type f -printf \'%T+ %p\n\' | sort | head -n 1', (error, stdout, stderr) => {
 			if (error) {
 				console.error(TAG, `Remove old recordings: error: ${error}`);
 				reject(error);
