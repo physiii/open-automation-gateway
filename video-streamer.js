@@ -14,6 +14,7 @@ let	audioStreamProcess,
 	fileStreamProcess,
 	audioStreamId,
 	videoStreamId,
+	isStreaming = false,
 	audioStreamToken = "init_audio_token",
 	videoStreamToken = "init_video_token";
 
@@ -51,6 +52,7 @@ class VideoStreamer {
 		rotation = defaultRotation
 		} = {}) {
 
+		isStreaming = true;
 		videoStreamToken = streamToken;
 		// ffmpeg -s 1280x720 -r 30 -f v4l2 -i /dev/video10 -f mpegts -vf transpose=2,transpose=1 -codec:a mp2 -ar 44100 -ac 1 -b:a 128k -codec:v mpeg1video -b:v 2000k -strict -1 test.avi
 		let options = [
@@ -71,16 +73,22 @@ class VideoStreamer {
 		this.printFFmpegOptions(options);
 
 		if (videoStreamProcess) videoStreamProcess.kill();
-		console.log(TAG, 'Starting audio stream stream. Stream ID:', streamId);
+		console.log(TAG, 'Starting video stream stream. Stream ID:', streamId);
 		videoStreamProcess = spawn('ffmpeg', options);
 
 		videoStreamProcess.on('close', (code) => {
-			console.log(TAG, `Audio stream exited with code ${code}. Stream ID:`, streamId);
+
+			if (isStreaming) {
+				this.streamLive( streamId, streamToken, videoDevice, {width, height, rotation});
+			}
+
+			console.log(TAG, `Video stream exited with code ${code}. Stream ID:`, streamId);
 		});
 	}
 
 	streamLiveAudio (streamId, streamToken, audioDevice) {
 
+		isStreaming = true;
 		audioStreamToken = streamToken;
 
 		let options = [
@@ -102,6 +110,9 @@ class VideoStreamer {
 		audioStreamProcess = spawn('ffmpeg', options);
 
 		audioStreamProcess.on('close', (code) => {
+			if (isStreaming) {
+				this.streamLiveAudio(streamId, streamToken, audioDevice);
+			}
 			console.log(TAG, `Audio stream exited with code ${code}. Stream ID:`, streamId);
 		});
 	}
@@ -178,6 +189,7 @@ class VideoStreamer {
 	}
 
 	stop (process) {
+		isStreaming = false;
 		if (audioStreamProcess) audioStreamProcess.kill();
 		if (videoStreamProcess) videoStreamProcess.kill();
 		if (fileStreamProcess) fileStreamProcess.kill();
