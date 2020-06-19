@@ -156,7 +156,7 @@ class ThermostatService extends Service {
 
 		if (!power) return console.log('Thermostat is currently powered off.');
 
-		if (temp > maxTemp) {
+		if (temp > maxTemp + 1) {
 			if (mode != 'cool' || previousTargetTemp != targetTemp) {
 				targetTemp = maxTemp;
 				mode = 'cool';
@@ -165,7 +165,7 @@ class ThermostatService extends Service {
 			}
 		}
 
-		if (temp < minTemp) {
+		if (temp < minTemp - 1) {
 			if (mode != 'heat' || previousTargetTemp != targetTemp) {
 				targetTemp = minTemp;
 				mode = 'heat';

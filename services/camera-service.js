@@ -207,56 +207,71 @@ class CameraService extends Service {
 
 	startMotionDetection () {
 		const METHOD_TAG = this.TAG + ' [motion]',
-			MOTION_TAG = METHOD_TAG + ' [motion.py]';
+			MOTION_TAG = METHOD_TAG + ' [motion.py]',
+			launchMotionScript = () => {
+				// Launch the motion detection script.
+				const motionProcess = spawn('python3', [
+					motionScriptPath,
+					'--camera', this.getLoopbackDevicePath(),
+					'--camera-id', this.id,
+					'--frame-rate', FRAME_RATE,
+					'--rotation', this.settings.rotation || 0,
+					'--threshold', this.settings.motion_threshold || 10,
+					// '--mic', this.settings.audio_hw || 'hw:0',
+					'--motionArea_x1', this.settings.motionArea_x1 || 0,
+					'--motionArea_y1', this.settings.motionArea_y1 || 0,
+					'--motionArea_x2', this.settings.motionArea_x2 || 0,
+					'--motionArea_y2', this.settings.motionArea_y2 || 0,
+					'--audio-device', config.motion_audio_device_path || 0,
+				]);
 
-		// Launch the motion detection script.
-		const motionProcess = spawn('python3', [
-			motionScriptPath,
-			'--camera', this.getLoopbackDevicePath(),
-			'--camera-id', this.id,
-			'--frame-rate', FRAME_RATE,
-			'--rotation', this.settings.rotation || 0,
-			'--threshold', this.settings.motion_threshold || 10,
-			// '--mic', this.settings.audio_hw || 'hw:0',
-			'--motionArea_x1', this.settings.motionArea_x1 || 0,
-			'--motionArea_y1', this.settings.motionArea_y1 || 0,
-			'--motionArea_x2', this.settings.motionArea_x2 || 0,
-			'--motionArea_y2', this.settings.motionArea_y2 || 0,
-			'--audio-device', config.motion_audio_device_path || 0,
-		]);
+				// Listen for motion events.
+				motionProcess.stdout.on('data', (data) => {
+					if (!data) {
+						return;
+					}
 
-		// Listen for motion events.
-		motionProcess.stdout.on('data', (data) => {
-			if (!data) {
-				return;
-			}
+					const now = new Date();
 
-			const now = new Date();
+					console.log(MOTION_TAG, data.toString());
 
-			console.log(MOTION_TAG, data.toString());
+					if (data.includes('[MOTION]')) {
+						this.state.motion_detected_date = now;
 
-			if (data.includes('[MOTION]')) {
-				this.state.motion_detected_date = now;
+						this.relayEmit('motion-started', {date: now.toISOString()});
+					} else if (data.includes('[NO MOTION]')) {
+						this.relayEmit('motion-stopped', {date: now.toISOString()});
+					} else if (data.includes('[NEW RECORDING]')) {
+						CameraRecordings.getLastRecording(this.id).then((recording) => {
+							this.getPreviewImage().then((preview_image) => {
+								this.relayEmit('motion-recorded', {recording, preview_image});
+							});
+						});
+					}
+				});
 
-				this.relayEmit('motion-started', {date: now.toISOString()});
-			} else if (data.includes('[NO MOTION]')) {
-				this.relayEmit('motion-stopped', {date: now.toISOString()});
-			} else if (data.includes('[NEW RECORDING]')) {
-				CameraRecordings.getLastRecording(this.id).then((recording) => {
-					this.getPreviewImage().then((preview_image) => {
-						this.relayEmit('motion-recorded', {recording, preview_image});
-					});
+				motionProcess.on('close', (code) => {
+					console.error(TAG, `Motion process exited with code ${code}.`);
+				});
+
+				motionProcess.stderr.on('data', (data) => {
+					console.error(MOTION_TAG, data.toString());
+				});
+
+				utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
+					// Every so often check to make sure motion detection is still running.
+					this.motionScriptInterval = setInterval(() => {
+						utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
+							if (!isMotionRunning) {
+								launchMotionScript();
+							}
+						});
+					}, CHECK_SCRIPTS_DELAY);
+				}).catch((error) => {
+					console.error(METHOD_TAG, error);
 				});
 			}
-		});
-
-		motionProcess.on('close', (code) => {
-			console.error(TAG, `Motion process exited with code ${code}.`);
-		});
-
-		motionProcess.stderr.on('data', (data) => {
-			console.error(MOTION_TAG, data.toString());
-		});
+		launchMotionScript();
 	}
 
 	setUpLoopback () {
