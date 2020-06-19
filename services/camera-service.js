@@ -29,7 +29,6 @@ class CameraService extends Service {
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
-		id = this.id;
 
 		// Settings
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
@@ -62,6 +61,22 @@ class CameraService extends Service {
 		}
 
 		this.startTimeLapse();
+		this.startBackup();
+	}
+
+	startBackup () {
+		this.loopbackInterval = setInterval((self) => {
+			utils.checkIfProcessIsRunning('rsync').then((isRunning) => {
+				if (!isRunning) {
+					const source_dir = config.source_dir + this.id + "/",
+						command = 'rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress '
+							+ source_dir + ' ' + config.user + '@' + config.server + ':' + config.dest_dir;
+
+					exec(command);
+					console.log(command);
+				}
+			});
+		}, CHECK_SCRIPTS_DELAY);
 	}
 
 	getCameraNumber () {
@@ -116,29 +131,6 @@ class CameraService extends Service {
 				console.log(TAG, 'Too dark for timelapse.');
 			}
 		});*/
-	}
-
-	getCameraImageBrightness () {
-		const error_message = 'There was an error getting camera image brightness.';
-		return new Promise((resolve, reject) => {
-			/*try {
-				const wCap = new cv.VideoCapture(this.getLoopbackDevicePath());
-				let image = wCap.read();
-
-				if (image.empty) {
-					reject(error_message);
-				}
-
-    		let gray_image = image.bgrToGray();
-				let brightness = (gray_image.sum()/1000000).toFixed(0);
-
-				resolve(brightness);
-
-			} catch (error) {
-				console.error(this.TAG, error_message, error);
-				reject(error_message);
-			}*/
-		});
 	}
 
 	getPreviewImage () {

@@ -64,8 +64,8 @@ class VideoStreamer {
 				'-vf', this.getRotationFromDegrees(rotation),
 				'-codec:v', 'mpeg1video',
 					'-s', width + 'x' + height,
-					'-b:v', '1000k',
-			'-q:v', '0',
+					'-b:v', '1m',
+			'-q:v', '4',
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
 		];

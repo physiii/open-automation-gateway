@@ -24,7 +24,6 @@ const utils = require('./utils'),
   Database = require('./services/database.js'),
   DevicesManager = require('./devices/devices-manager.js'),
   diskUsage = require('diskusage'),
-  Backup = require('./services/backup.js'),
   admin = require('./admin/index.js');
 
 if (config.zwave) {
