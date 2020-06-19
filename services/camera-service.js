@@ -29,6 +29,7 @@ class CameraService extends Service {
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
 		this.TAG = TAG + ' ' + this.getCameraNumber();
+		id = this.id;
 
 		// Settings
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;

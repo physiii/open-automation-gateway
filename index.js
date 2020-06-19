@@ -5,6 +5,7 @@
 const TAG = '[Index]';
 
 try {
+  id = '';
   config = require('./config.json');
 } catch (e) {
 	return console.log(TAG, 'No config.json file found. Start with config.json.example');
@@ -23,6 +24,7 @@ const utils = require('./utils'),
   Database = require('./services/database.js'),
   DevicesManager = require('./devices/devices-manager.js'),
   diskUsage = require('diskusage'),
+  Backup = require('./services/backup.js'),
   admin = require('./admin/index.js');
 
 if (config.zwave) {
