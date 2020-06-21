@@ -23,6 +23,11 @@ class MediaService extends Service {
 		this.saveState(this.id, this.state);
 	}
 
+	getAudioOutDevice () {
+		let audioDevice = config.audio_out_device || 0;
+		return audioDevice;
+	}
+
 	setClickCoords (coords) {
 		console.log("Setting click coordinates to", coords);
 		Exec('xdotool click 1');
@@ -35,7 +40,7 @@ class MediaService extends Service {
 
 	setVolume (level) {
 		Exec('xdotool key XF86AudioRaiseVolume');
-		Exec('pactl set-sink-volume 1 ' + level + '%');
+		Exec('pactl set-sink-volume ' + this.getAudioOutDevice() + ' ' + level + '%');
 		this.state.volumeLevel = level;
 		console.log("Set volume to", level);
 	}
