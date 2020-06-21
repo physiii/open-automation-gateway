@@ -73,7 +73,7 @@ class CameraService extends Service {
 							+ source_dir + ' ' + config.user + '@' + config.server + ':' + config.dest_dir;
 
 					exec(command);
-					console.log(command);
+					// console.log(command);
 				}
 			});
 		}, CHECK_SCRIPTS_DELAY);

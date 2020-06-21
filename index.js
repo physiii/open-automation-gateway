@@ -40,10 +40,14 @@ ConnectionManager.connectionLoop();
 Database.getDevices().then((dbDevices) => {
 	DevicesManager.loadDevicesFromDb().then(() => {
 		createGatewayDevice = true;
+    createMediaDevice = true;
 
 		for (let i = 0; i < dbDevices.length; i++) {
 			if (dbDevices[i].services[0].type == 'gateway') {
 				createGatewayDevice = false;
+			}
+      if (dbDevices[i].services[0].type == 'media') {
+				createMediaDevice = false;
 			}
 		}
 
@@ -55,5 +59,14 @@ Database.getDevices().then((dbDevices) => {
 		    ]
 		  })
 		}
+
+    if (createMediaDevice) {
+      console.log(TAG, "Creating a media device.");
+			DevicesManager.createDevice({
+				settings: {name: 'Media'},
+				services: [{type: 'media'}]
+			})
+    }
+
 	});
 });

@@ -60,7 +60,6 @@ class System {
 		setInterval((self) => {
 			self.checkDiskSpace().then((info) => {
 		    let ratio = info.free / info.total;
-				console.log(TAG,'Checking disk space.', ratio);
 		    if (ratio < MINIMUM_FREE_SPACE/100) {
 		      utils.removeOldCameraRecordings();
 		    }
