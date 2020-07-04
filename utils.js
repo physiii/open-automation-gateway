@@ -27,6 +27,17 @@ function checkIfProcessIsRunning () {
 	});
 }
 
+function killProcess (id) {
+	return new Promise((resolve, reject) => {
+		let command = 'kill -9 ' + id;
+
+		exec(command, (error, stdout, stderr) => {
+			resolve(1);
+		});
+		resolve(0);
+	});
+}
+
 function removeOldCameraRecordings () {
 	return new Promise((resolve, reject) => {
 		// Return only base file name without dir
@@ -201,6 +212,7 @@ const validators = {
 
 module.exports = {
 	checkIfProcessIsRunning,
+	killProcess,
 	restart,
 	removeOldCameraRecordings,
 	onChange,

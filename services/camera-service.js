@@ -18,7 +18,6 @@ const spawn = require('child_process').spawn,
 	ONE_HOUR_IN_MILLISECONDS = 3600000,
 	ONE_MINUTE_IN_MILLISECONDS = 60000,
 	ONE_SECOND_IN_MILLISECONDS = 1000,
-	//TIME_LAPSE_INTERVAL = 60 * ONE_SECOND_IN_MILLISECONDS,
 	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
 	FRAME_RATE = config.camera_frame_rate || 8,
 	TAG = '[CameraService]';
@@ -250,21 +249,22 @@ class CameraService extends Service {
 				motionProcess.stderr.on('data', (data) => {
 					console.error(MOTION_TAG, data.toString());
 				});
-
-				utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
-					// Every so often check to make sure motion detection is still running.
-					this.motionScriptInterval = setInterval(() => {
-						utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
-							if (!isMotionRunning) {
-								launchMotionScript();
-							}
-						});
-					}, CHECK_SCRIPTS_DELAY);
-				}).catch((error) => {
-					console.error(METHOD_TAG, error);
-				});
+				// Every so often check to make sure motion detection is still running.
+				this.motionScriptInterval = setInterval(() => {
+					utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
+						if (!isMotionRunning) {
+							launchMotionScript();
+						}
+					});
+				}, CHECK_SCRIPTS_DELAY);
 			}
-		launchMotionScript();
+
+		// Check if motion is already running so we do not duplicate process
+		utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((processId) => {
+			utils.killProcess(processId).then(() => {
+				launchMotionScript();
+			});
+		});
 	}
 
 	setUpLoopback () {
