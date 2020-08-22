@@ -7,7 +7,7 @@
 sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing
 
 sudo apt-get install -y curl
-curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
