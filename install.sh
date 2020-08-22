@@ -11,8 +11,7 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
-  python-setuptools python3-dev \
-  libssl-dev libasound2-dev nmap ffmpeg acl \
+  python-setuptools python3-dev libssl-dev nmap ffmpeg acl \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev \
   libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
   libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev python3-pip \
