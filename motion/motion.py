@@ -70,7 +70,7 @@ BUFFER_TIME = 30
 AUDIO_FRAMERATE = 6
 BUFFER_SIZE = BUFFER_TIME * frameRate # seconds * frameRate
 AUDIO_BUFFER_SIZE = BUFFER_TIME * AUDIO_FRAMERATE # seconds * framerate
-MIN_MOTION_FRAMES = 15 # minimum number of consecutive frames with motion required to trigger motion detection
+MIN_MOTION_FRAMES = 3 # minimum number of consecutive frames with motion required to trigger motion detection
 MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before forcing evaluation of a new frame
 MAX_CATCH_UP_MAX_REACHED = 10 # script will exit if max catch up frames limit is reached this many times consecutively
 
@@ -250,7 +250,11 @@ except:
 
 # initialize the video stream and allow the camera sensor to
 # warmup
-camera = VideoStream(src=cameraPath).start()
+# camera = VideoStream(src=cameraPath, resolution=(1280,720)).start()
+camera = cv2.VideoCapture(20)
+camera.set(3, 1280)
+camera.set(4, 720)
+(grabbed, frame) = camera.read()
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
@@ -309,7 +313,8 @@ for needCatchUpFrame in framerateInterval(frameRate):
 	frameTimestamp = datetime.datetime.now()
 
 	# grab the current frame
-	frame = camera.read()
+	# frame = camera.read()
+	(grabbed, frame) = camera.read()
 
 	# if a frame could not be grabbed, try again
 	if frame is None:
