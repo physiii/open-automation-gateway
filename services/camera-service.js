@@ -270,12 +270,25 @@ class CameraService extends Service {
 	setUpLoopback () {
 		const METHOD_TAG = this.TAG + ' [loopback]',
 			forwardStreamToLoopback = () => {
+				// const ffmpegProcess = spawn('ffmpeg', [
+				// 		'-loglevel', 'panic',
+				// 		'-f', 'v4l2',
+				// 		'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
+				// 		'-pix_fmt', 'rgb24',
+				// 		'-i', this.os_device_path,
+				// 		'-f', 'v4l2',
+				// 		this.getLoopbackDevicePath()
+				// 	]);
+
+				// ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 1280x720 -i /dev/video0 -pix_fmt yuyv422 -f v4l2 /dev/video20
 				const ffmpegProcess = spawn('ffmpeg', [
 						'-loglevel', 'panic',
 						'-f', 'v4l2',
-						'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
-						'-pix_fmt', 'rgb24',
+						'-input_format', 'mjpeg',
+						'-framerate', '30',
+						'-video_size', this.settings.resolution_w+'x'+this.settings.resolution_h,
 						'-i', this.os_device_path,
+						'-pix_fmt', 'yuyv422',
 						'-f', 'v4l2',
 						this.getLoopbackDevicePath()
 					]);

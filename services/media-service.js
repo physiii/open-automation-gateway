@@ -39,7 +39,7 @@ class MediaService extends Service {
 	}
 
 	setVolume (level) {
-		Exec('xdotool key XF86AudioRaiseVolume');
+		Exec('pactl set-sink-mute ' + this.getAudioOutDevice() + ' 0');
 		Exec('pactl set-sink-volume ' + this.getAudioOutDevice() + ' ' + level + '%');
 		this.state.volumeLevel = level;
 		console.log("Set volume to", level);

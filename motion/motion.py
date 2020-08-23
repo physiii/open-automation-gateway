@@ -21,6 +21,7 @@ import uuid
 import wave
 import os
 import subprocess
+from subprocess import  check_output, CalledProcessError, STDOUT
 
 # from bson import BSON
 # from bson import json_util
@@ -204,19 +205,40 @@ def localDateToUtc(date):
 	utcOffset = datetime.timedelta(seconds=utcOffsetSec)
 	return date + utcOffset;
 
-def saveRecording(data):
+def getVideoDuration(filename):
+	command = [
+		'ffprobe',
+		'-v',
+		'error',
+		'-show_entries',
+		'format=duration',
+		'-of',
+		'default=noprint_wrappers=1:nokey=1',
+		filename
+	  ]
 
+	print(command)
+	try:
+		output = check_output( command, stderr=STDOUT ).decode()
+	except CalledProcessError as e:
+		output = e.output.decode()
+
+	output = output.split(".", 1)
+	return int(output[0])
+
+def saveRecording(data):
+	duration = getVideoDuration(data['tempPath'])
+	print('Video duration is ', duration)
 	recordingData = {
 		'id': str(uuid.uuid4()),
 		'camera_id': cameraId,
 		'file': data['finishedPath'],
 		'date': localDateToUtc(data['date']),
-		'duration': data['duration'],
+		'duration': duration,
 		'width': data['width'],
 		'height': data['height']
 	}
 
-	print('!! hit KCW finish !!', recordingData)
 	db.camera_recordings.insert_one(recordingData)
 
 	while acw.recording:

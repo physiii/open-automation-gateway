@@ -156,18 +156,18 @@ class ThermostatService extends Service {
 
 		if (!power) return console.log('Thermostat is currently powered off.');
 
-		if (temp > maxTemp + 1) {
+		if (temp > maxTemp) {
 			if (mode != 'cool' || previousTargetTemp != targetTemp) {
-				targetTemp = maxTemp;
+				targetTemp = maxTemp - 1;
 				mode = 'cool';
 				this.driver.setTemp(targetTemp, mode);
 				console.log('Lowering temperature to', targetTemp);
 			}
 		}
 
-		if (temp < minTemp - 1) {
+		if (temp < minTemp) {
 			if (mode != 'heat' || previousTargetTemp != targetTemp) {
-				targetTemp = minTemp;
+				targetTemp = minTemp + 1;
 				mode = 'heat';
 				this.driver.setTemp(targetTemp, mode);
 				console.log('Raising temperature to', targetTemp);
