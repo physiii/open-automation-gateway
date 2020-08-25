@@ -272,11 +272,7 @@ except:
 
 # initialize the video stream and allow the camera sensor to
 # warmup
-# camera = VideoStream(src=cameraPath, resolution=(1280,720)).start()
-camera = cv2.VideoCapture(20)
-camera.set(3, 1280)
-camera.set(4, 720)
-(grabbed, frame) = camera.read()
+camera = VideoStream(src=cameraPath, resolution=(1280,720)).start()
 
 # initialize key clip writer and the consecutive number of
 # frames that have *not* contained any action
@@ -335,8 +331,7 @@ for needCatchUpFrame in framerateInterval(frameRate):
 	frameTimestamp = datetime.datetime.now()
 
 	# grab the current frame
-	# frame = camera.read()
-	(grabbed, frame) = camera.read()
+	frame = camera.read()
 
 	# if a frame could not be grabbed, try again
 	if frame is None:

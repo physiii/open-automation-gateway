@@ -78,9 +78,9 @@ class KeyClipWriter:
 			frame = self.Q.get()
 			self.writer.write(frame)
 
-		callback(callbackData)
-
 		self.writer.release()
+
+		callback(callbackData)
 
 	def finish(self, callback, callbackData):
 		# indicate that we are done recording, join the thread,
