@@ -37,7 +37,7 @@
     "file-browser": "0.0.5",
     "greenlock": "^2.2.15",
     "greenlock-express": "^2.1.4",
-    "http-proxy": "^1.17.0",
+    "http-proxy": "^1.18.1",
     "koa": "^2.5.1",
     "koa-bodyparser": "^4.2.0",
     "koa-morgan": "^1.0.1",
