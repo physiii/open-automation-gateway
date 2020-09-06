@@ -143,24 +143,24 @@ class GatewayService extends Service {
 			device_paths.forEach((device_path) => {
 				if (camera_services.find((camera_service) => camera_service.os_device_path === device_path)) {
 					return;
+				} else {
+					DevicesManager.createDevice({
+						settings: {
+							name: 'Gateway Camera'
+						},
+						info: {
+							manufacturer: config.manufacturer
+						},
+						services: [
+							{
+								type: 'camera',
+								os_device_path: device_path
+							}
+						]
+					}).then((new_device) => {
+						new_devices.push(new_device);
+					});
 				}
-
-				DevicesManager.createDevice({
-					settings: {
-						name: 'Gateway Camera'
-					},
-					info: {
-						manufacturer: config.manufacturer
-					},
-					services: [
-						{
-							type: 'camera',
-							os_device_path: device_path
-						}
-					]
-				}).then((new_device) => {
-					new_devices.push(new_device);
-				});
 			});
 
 			resolve(new_devices);

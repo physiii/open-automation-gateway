@@ -35,7 +35,12 @@ io.on('connection', (socket) => {
 
   database.getDeviceID().then(function(device_id) {
       socket.emit('device_id',device_id);
-      //console.log(device_id);
+  }, function(err) {
+      console.log(err);
+  })
+
+  database.getDevices().then(function(devices) {
+      socket.emit('device list',devices);
   }, function(err) {
       console.log(err);
   })
