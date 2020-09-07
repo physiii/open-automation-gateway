@@ -150,13 +150,18 @@ class VideoStreamer {
 		});
 	}
 
-	streamFile (streamId, streamToken, file) {
+	streamFile (streamId, streamToken, file, time) {
+
+		console.log("TRANSPORTING VIDEO TO: ", time);
+		let seconds = time % 60,
+			minutes = Math.trunc(time / 60);
 
 		videoStreamToken = streamToken;
 
 		let options = [
 			'-loglevel', 'panic',
 			'-re',
+			'-ss', '00:' + minutes + ':' + seconds,
 			'-i', file,
 			'-f', 'tee',
 				'-codec:v', 'mpeg1video',

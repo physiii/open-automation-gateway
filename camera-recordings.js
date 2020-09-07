@@ -47,10 +47,10 @@ class CameraRecordings {
 		database.set_camera_recording(data);
 	}
 
-	streamRecording (recordingId, streamToken) {
+	streamRecording (recordingId, streamToken, time = 0) {
 		return new Promise((resolve, reject) => {
 			this.getRecordingById(recordingId).then((recording) => {
-				VideoStreamer.streamFile(recording.id, streamToken, recording.file);
+				VideoStreamer.streamFile(recording.id, streamToken, recording.file, time);
 				resolve(recordingId);
 			}).catch((error) => {
 				console.error(TAG, error);
