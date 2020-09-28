@@ -8,7 +8,18 @@ var $device_id = $('#device_id');
 var $gateway_id = $('#gateway_id');
 var socket = io();
 
-// stores router and password
+const searchForNetworkThermostats = () => {
+  socket.emit('searchForNetworkThermostats');
+}
+
+const searchForLocalCameras = () => {
+  socket.emit('searchForLocalCameras');
+}
+
+const removeDevice = (deviceId) => {
+  socket.emit('removeDevice', deviceId);
+}
+
 const setRouterInfo = () => {
   if ($ssid_input.val() !== "") {
     ssid = $ssid_input.val();
@@ -34,14 +45,16 @@ socket.on('router list', (data) => {
 
 socket.on('device list', (data) => {
   let rowsAsString = "<table style='margin:15px;width:90%'>";
-  rowsAsString += "<tr><th>Device Name</th><th>UUID</th></tr>";
+  rowsAsString += "<tr><th>Device Name</th><th>UUID</th><th>Remove</th></tr>";
 
   for(var i = 0; i < data.length; i++) {
     if (!data[i].settings.name) {
-      rowsAsString += "<tr><td>Gateway</td><td>" + data[i].id + "</td></tr>";
+      rowsAsString += "<tr><td>Gateway</td><td>" + data[i].id
+        + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
       continue;
     }
-    rowsAsString += "<tr><td>" + data[i].settings.name + "</td><td>" + data[i].id + "</td></tr>";
+    rowsAsString += "<tr><td>" + data[i].settings.name + "</td><td>" + data[i].id
+      + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
   }
   rowsAsString += "</table>";
   $device_list.html( rowsAsString );

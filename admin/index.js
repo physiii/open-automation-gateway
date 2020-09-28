@@ -1,4 +1,3 @@
-// Setup basic express server
 const express = require('express'),
   app = express(),
   path = require('path'),
@@ -6,6 +5,8 @@ const express = require('express'),
   io = require('socket.io')(server),
   port = process.env.PORT || 3000,
   ConnectionManager = require('../services/connection.js'),
+  DeviceUtils = require('../services/device-utils.js'),
+	DevicesManager = require('../devices/devices-manager.js'),
   System = require('../services/system.js'),
   database = require('../services/database.js'),
   INDEX_LOOP_TIME = 20;
@@ -55,6 +56,21 @@ io.on('connection', (socket) => {
   socket.on('store ap', (apInfo) => {
     console.log(TAG,"apInfo", apInfo);
     ConnectionManager.setWifi(apInfo);
+  });
+
+  socket.on('searchForNetworkThermostats', () => {
+    console.log(TAG,"Searching for network thermostats.");
+    DeviceUtils.searchForNetworkThermostats();
+  });
+
+  socket.on('searchForLocalCameras', () => {
+    console.log(TAG,"Searching for local cameras.");
+    DeviceUtils.searchForAndCreateDevices();
+  });
+
+  socket.on('removeDevice', (deviceId) => {
+    console.log(TAG,"Removing ");
+    DeviceUtils.removeDevice(deviceId);
   });
 
 });

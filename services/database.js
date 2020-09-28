@@ -92,6 +92,12 @@ class Database {
 		});
 	}
 
+	removeDevice(id) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').remove({id: id});
+		});
+	}
+
 	getDeviceFromServiceId (id) {
 		return this.connect((db, resolve, reject) => {
 			db.collection('devices').find().toArray((error, devices) => {
@@ -104,7 +110,7 @@ class Database {
 					});
 				})
 				if (error) {
-					console.error(TAG, 'getThermostatSchedule', error);
+					console.error(TAG, 'getDeviceFromServiceId', error);
 					reject('Database error');
 					return;
 				}
