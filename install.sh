@@ -6,14 +6,13 @@
 
 sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing
 
-sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   python-setuptools python3-dev libssl-dev nmap ffmpeg acl \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev \
-  libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
+  libavcodec-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
   libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev python3-pip \
   libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0 \
 
@@ -32,7 +31,7 @@ sudo npm install -g pm2
 cd ${HOME}
 git clone https://github.com/FFmpeg/FFmpeg.git
 cd FFmpeg
-sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree
+sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree --extra-ldflags="-latomic"
 make -j4
 sudo make install
 
