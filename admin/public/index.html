@@ -7,6 +7,10 @@
       border-collapse: collapse;
       padding: 15px;
     }
+    button, select {
+      border: 1px solid black;
+      padding: 5px;
+    }
   </style>
   <meta charset="UTF-8">
   <title>Setup</title>
@@ -19,6 +23,19 @@
   <br>
   <br>
   <button type="button" onclick="searchForLocalCameras()" >Search for Attached Cameras</button>
+  <br>
+  <br>
+
+  <h3>Lighting</h3>
+  <button type="button" onclick="createLedController()" >Create Light Controller</button>
+  <br>
+  <br>
+  <button type="button" onclick="searchForHueBridges()" >Search for Hue Light Bridges (hold link button)</button>
+  <br>
+  <br>
+  <button type="button" onclick="searchForLights()" >Search for Lights</button>
+  <div id="light_list"></div>
+  <div id="linked_light_list"></div>
 
   <h3>Choose wifi from dropdown menu.</h3>
   <select name="ap_list"></select><br>

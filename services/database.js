@@ -93,7 +93,7 @@ class Database {
 	}
 
 	removeDevice(id) {
-		return this.connect((db, resolve, reject) => {
+		this.connect((db, resolve, reject) => {
 			db.collection('devices').remove({id: id});
 		});
 	}
@@ -204,95 +204,110 @@ class Database {
 	}
 
 	get_settings () {
-	return this.connect((db, resolve, reject) => {
-		db.collection('settings').find().toArray((error, result) => {
-			db.close();
+		return this.connect((db, resolve, reject) => {
+			db.collection('settings').find().toArray((error, result) => {
+				db.close();
 
-			if (error) {
-				console.error(TAG, 'get_settings', error);
-				reject('Database error');
-				return;
-			}
+				if (error) {
+					console.error(TAG, 'get_settings', error);
+					reject('Database error');
+					return;
+				}
 
-			if (result[0]) {
-				settings = result[0];
-				delete settings._id;
-			}
+				if (result[0]) {
+					settings = result[0];
+					delete settings._id;
+				}
 
-			module.exports.settings = settings;
+				module.exports.settings = settings;
 
-			resolve(settings);
+				resolve(settings);
+			});
 		});
-	});
 	}
 
 	store_settings (data) {
-	return this.connect((db, resolve, reject) => {
-		db.collection('settings').update({}, {$set: data}, {upsert: true}, (error, item) => {
-			db.close();
+		return this.connect((db, resolve, reject) => {
+			db.collection('settings').update({}, {$set: data}, {upsert: true}, (error, item) => {
+				db.close();
 
-			if (error) {
-				console.error(TAG, 'store_settings', error);
-				reject('Database error');
-				return;
-			}
+				if (error) {
+					console.error(TAG, 'store_settings', error);
+					reject('Database error');
+					return;
+				}
 
-			resolve();
+				resolve();
+			});
 		});
-	});
 	}
 
 	store_device (device) {
-	return this.connect((db, resolve, reject) => {
-		db.collection('devices').update({id: device.id}, {$set: device.dbSerialize()}, {upsert: true}, (error, record) => {
-			db.close();
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').update({id: device.id}, {$set: device.dbSerialize()}, {upsert: true}, (error, record) => {
+				db.close();
 
-			if (error) {
-				console.error(TAG, 'store_device', error);
-				reject('Database error');
-				return;
-			}
-			resolve(record);
+				if (error) {
+					console.error(TAG, 'store_device', error);
+					reject('Database error');
+					return;
+				}
+				resolve(record);
+			});
 		});
-	});
+	}
+
+	linkLightToController (id) {
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').update({id}, {$set: device.dbSerialize()}, {upsert: true}, (error, record) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'store_device', error);
+					reject('Database error');
+					return;
+				}
+				resolve(record);
+			});
+		});
 	}
 
 	getDevices () {
-	return this.connect((db, resolve, reject) => {
-		db.collection('devices').find().toArray((error, result) => {
-			db.close();
+		return this.connect((db, resolve, reject) => {
+			db.collection('devices').find().toArray((error, result) => {
+				db.close();
 
-			if (error) {
-				console.error(TAG, 'getDevices', error);
-				reject('Database error');
-				return;
-			}
+				if (error) {
+					console.error(TAG, 'getDevices', error);
+					reject('Database error');
+					return;
+				}
 
-			resolve(result);
+				resolve(result);
+			});
 		});
-	});
 	}
 
 	get_camera_recordings (camera_id) {
-	return this.connect((db, resolve, reject) => {
-		let query = {};
+		return this.connect((db, resolve, reject) => {
+			let query = {};
 
-		if (camera_id) {
-			query = {camera_id: camera_id};
-		}
-
-		db.collection('camera_recordings').find(query).toArray((error, result) => {
-			db.close();
-
-			if (error) {
-				console.error(TAG, 'get_camera_recordings', error);
-				reject('Database error');
-				return;
+			if (camera_id) {
+				query = {camera_id: camera_id};
 			}
 
-			resolve(result);
+			db.collection('camera_recordings').find(query).toArray((error, result) => {
+				db.close();
+
+				if (error) {
+					console.error(TAG, 'get_camera_recordings', error);
+					reject('Database error');
+					return;
+				}
+
+				resolve(result);
+			});
 		});
-	});
 	}
 
 	get_camera_recording (recording_id) {

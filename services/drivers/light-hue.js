@@ -4,16 +4,16 @@ const EventEmitter = require('events'),
 	TAG = '[HueLightDriver]';
 
 class HueLightDriver {
-	constructor (light_id, bridge_id) {
-		this.light_id = light_id;
+	constructor (bridge_id) {
 		this.events = new EventEmitter();
 		this.bridge = DevicesManager.getServiceById(bridge_id) || false;
 
 		if (!this.bridge) {
-			console.error(TAG, 'Could not find bridge service (' + bridge_id + ') for light ' + light_id + '.');
+			console.error(TAG, 'Could not find bridge service (' + bridge_id + ').');
+			// console.error(TAG, 'Could not find bridge service (' + bridge_id + ') for light ' + light_id + '.');
 		}
 
-		this.bridge.getLightState(this.light_id).then((state) => this.events.emit('ready', this.lightStateToState(state)));
+		// this.bridge.getLightState(this.light_id).then((state) => this.events.emit('ready', this.lightStateToState(state)));
 		//this.bridge.setBrightness(this.light_id, 100).then(() => this.events.emit('brightness-changed', 100));
 	}
 

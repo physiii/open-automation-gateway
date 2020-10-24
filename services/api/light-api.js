@@ -32,11 +32,17 @@ class LightApi extends ServiceApi {
 			if (data.property === 'lightOn') {
 				this.service.lightOn(data.value);
 			}
-			if (data.property === 'incBrightness') {
-				this.service.incBrightness(data.value);
+			if (data.property === 'setPower') {
+				this.service.setPower(data.value);
 			}
-			if (data.property === 'decBrightness') {
-				this.service.incBrightness(0-data.value);
+			if (data.property === 'setBrightness') {
+				this.service.setBrightness(data.value);
+			}
+			if (data.property === 'setTheme') {
+				this.service.saveTheme(data.value);
+			}
+			if (data.property === 'theme') {
+				this.service.setTheme(data.value);
 			}
 			if (data.property === 'nextScene') {
 				this.service.nextScene();

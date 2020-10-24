@@ -5,33 +5,7 @@ const Service = require('./service.js'),
 	LOOP_DELAY = 60,
 	TAG = '[ThermostatService]';
 
-let SCHEDULE = [
-		{label: '1 AM', value: 1, minTemp: 65, maxTemp: 80},
-		{label: '2 AM', value: 2, minTemp: 65, maxTemp: 80},
-		{label: '3 AM', value: 3, minTemp: 65, maxTemp: 80},
-		{label: '4 AM', value: 4, minTemp: 65, maxTemp: 80},
-		{label: '5 AM', value: 5, minTemp: 65, maxTemp: 80},
-		{label: '6 AM', value: 6, minTemp: 65, maxTemp: 80},
-		{label: '7 AM', value: 7, minTemp: 65, maxTemp: 80},
-		{label: '8 AM', value: 8, minTemp: 65, maxTemp: 80},
-		{label: '9 AM', value: 9, minTemp: 65, maxTemp: 80},
-		{label: '10 AM', value: 10, minTemp: 65, maxTemp: 80},
-		{label: '11 AM', value: 11, minTemp: 65, maxTemp: 80},
-		{label: '12 AM', value: 12, minTemp: 65, maxTemp: 80},
-		{label: '1 PM', value: 13, minTemp: 65, maxTemp: 80},
-		{label: '2 PM', value: 14, minTemp: 65, maxTemp: 80},
-		{label: '3 PM', value: 15, minTemp: 65, maxTemp: 80},
-		{label: '4 PM', value: 16, minTemp: 65, maxTemp: 80},
-		{label: '5 PM', value: 17, minTemp: 65, maxTemp: 80},
-		{label: '6 PM', value: 18, minTemp: 65, maxTemp: 80},
-		{label: '7 PM', value: 19, minTemp: 65, maxTemp: 80},
-		{label: '8 PM', value: 20, minTemp: 65, maxTemp: 80},
-		{label: '9 PM', value: 21, minTemp: 65, maxTemp: 80},
-		{label: '10 PM', value: 22, minTemp: 65, maxTemp: 80},
-		{label: '11 PM', value: 23, minTemp: 65, maxTemp: 80},
-		{label: '12 PM', value: 24, minTemp: 65, maxTemp: 80}
-	],
-	TEMP_VALUES = [
+let TEMP_VALUES = [
 		{id: '60', value: 60},
 		{id: '61', value: 61},
 		{id: '62', value: 62},
@@ -69,6 +43,10 @@ class ThermostatService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, ThermostatApi);
 		this.ip = data.ip;
+		this.hold = data.hold;
+		this.power = data.power;
+		this.schedule = data.schedule ? data.schedule : NEW_SCHEDULE;
+		this.saveState();
 
 		this.driver = new WiFiThermostatDriver(this.ip);
 		this.subscribeToDriver();
@@ -84,84 +62,37 @@ class ThermostatService extends Service {
 		this.driver.on('fan-mode-changed', (fan_mode) => this.state.fan_mode = fan_mode);
 		this.driver.on('mode-changed', (mode) => this.state.mode = mode);
 		this.on('state-changed', (state) => {
-			this.state.hold_mode == 'off' ? this.checkScheduleState(state.state) : this.checkHoldState(state.state);
-			this.saveState();
+			this.hold.mode == 'off' ? this.checkScheduleState(state.state) : this.checkHoldState(state.state);
+			// this.saveState();
 		});
 	}
 
 	onReady (data) {
-		if (!this.state.schedule) this.state.schedule = SCHEDULE;
+		// if (!this.schedule) this.state.schedule = NEW_SCHEDULE;
 		this.state.mode = data.mode;
 		this.state.current_temp = data.current_temp;
 		this.state.target_temp = data.target_temp;
 		this.state.fan_mode = data.fan_mode;
-		this.saveState(this.id, this.state);
+		// this.saveState(this.id, this.state);
 	}
 
 	checkHoldState(state) {
 		let temp = state.current_temp,
 			targetTemp = state.target_temp,
 			previousTargetTemp = this.previous_target_temp,
-			minTemp = this.state.hold_temp ? this.state.hold_temp.min : 0,
-			maxTemp = this.state.hold_temp ? this.state.hold_temp.max : 0,
-			mode = this.state.mode;
+			minTemp = this.hold.minTemp,
+			maxTemp = this.hold.maxTemp,
+			mode = this.hold.mode,
+			TAG = "[checkHoldState]";
 
-		if (!this.state.power) return console.log('Thermostat is currently powered off.');
-
-		if (temp > maxTemp) {
-			if (mode != 'cool' || previousTargetTemp != targetTemp) {
-				targetTemp = maxTemp;
-				mode = 'cool';
-				this.driver.setTemp(targetTemp, mode);
-				console.log('Lowering temperature to', targetTemp);
-			}
-		}
-
-		if (temp < minTemp) {
-			if (mode != 'heat' || previousTargetTemp != targetTemp) {
-				targetTemp = minTemp;
-				mode = 'heat';
-				this.driver.setTemp(targetTemp, mode);
-				console.log('Raising temperature to', targetTemp);
-			}
-		}
-
-		if (temp >= minTemp && temp <= maxTemp && mode != 'off') {
-			mode = 'off';
-			this.driver.setThermostatMode(mode);
-			console.log('Temperature in window, turning off.', targetTemp);
-		}
-
-		if (this.prevMinTemp != minTemp || this.prevMaxTemp != maxTemp) {
-			this.driver.setTemp(targetTemp, mode);
-			console.log('Temperature bounds changed.', minTemp, maxTemp);
-		}
-
-		this.prevMinTemp = minTemp;
-		this.prevMaxTemp = maxTemp;
-		this.saveState();
-	}
-
-	checkScheduleState(state) {
-		const date = new Date(),
-			hour = date.getHours() - 1;
-
-		let targetTemp = state.target_temp,
-			previousTargetTemp = this.previous_target_temp,
-			temp = state.current_temp,
-			minTemp = this.state.schedule[hour].minTemp,
-			maxTemp = this.state.schedule[hour].maxTemp,
-			power = this.state.schedule[hour].power,
-			mode = this.state.mode;
-
-		if (!power) return console.log('Thermostat is currently powered off.');
+		if (!this.power) return console.log(TAG, 'Thermostat is currently powered off.');
 
 		if (temp > maxTemp) {
 			if (mode != 'cool' || previousTargetTemp != targetTemp) {
-				targetTemp = maxTemp - 1;
+				targetTemp = maxTemp -1;
 				mode = 'cool';
 				this.driver.setTemp(targetTemp, mode);
-				console.log('Lowering temperature to', targetTemp);
+				console.log(TAG, 'Lowering temperature to', targetTemp);
 			}
 		}
 
@@ -170,24 +101,73 @@ class ThermostatService extends Service {
 				targetTemp = minTemp + 1;
 				mode = 'heat';
 				this.driver.setTemp(targetTemp, mode);
-				console.log('Raising temperature to', targetTemp);
+				console.log(TAG, 'Raising temperature to', targetTemp);
 			}
 		}
 
 		if (temp >= minTemp && temp <= maxTemp && mode != 'off') {
 			mode = 'off';
 			this.driver.setThermostatMode(mode);
-			console.log('Temperature in window, turning off.', targetTemp);
+			console.log(TAG, 'Temperature in window, turning off.', targetTemp);
 		}
 
 		if (this.prevMinTemp != minTemp || this.prevMaxTemp != maxTemp) {
 			this.driver.setTemp(targetTemp, mode);
-			console.log('Temperature bounds changed.', minTemp, maxTemp);
+			console.log(TAG, 'Temperature bounds changed.', minTemp, maxTemp);
 		}
 
 		this.prevMinTemp = minTemp;
 		this.prevMaxTemp = maxTemp;
-		this.saveState();
+		// this.saveState();
+	}
+
+	checkScheduleState(state) {
+		const date = new Date(),
+			hour = date.getHours() - 1,
+			TAG = "[checkScheduleState]";
+
+		let targetTemp = state.target_temp,
+			previousTargetTemp = this.previous_target_temp,
+			temp = state.current_temp,
+			minTemp = this.schedule[hour].minTemp,
+			maxTemp = this.schedule[hour].maxTemp,
+			power = this.schedule[hour].power,
+			mode = this.state.mode;
+
+		if (!power) return console.log(TAG, 'Thermostat is currently powered off.');
+
+		if (temp > maxTemp) {
+			if (mode != 'cool' || previousTargetTemp != targetTemp) {
+				targetTemp = maxTemp - 1;
+				mode = 'cool';
+				this.driver.setTemp(targetTemp, mode);
+				console.log(TAG, 'Lowering temperature to', targetTemp);
+			}
+		}
+
+		if (temp < minTemp) {
+			if (mode != 'heat' || previousTargetTemp != targetTemp) {
+				targetTemp = minTemp + 1;
+				mode = 'heat';
+				this.driver.setTemp(targetTemp, mode);
+				console.log(TAG, 'Raising temperature to', targetTemp);
+			}
+		}
+
+		if (temp >= minTemp && temp <= maxTemp && mode != 'off') {
+			mode = 'off';
+			this.driver.setThermostatMode(mode);
+			console.log(TAG, 'Temperature in window, turning off.', targetTemp);
+		}
+
+		if (this.prevMinTemp != minTemp || this.prevMaxTemp != maxTemp) {
+			this.driver.setTemp(targetTemp, mode);
+			console.log(TAG, 'Temperature bounds changed.', minTemp, maxTemp);
+		}
+
+		this.prevMinTemp = minTemp;
+		this.prevMaxTemp = maxTemp;
+		// this.saveState();
 	}
 
 	loadState () {
@@ -198,33 +178,28 @@ class ThermostatService extends Service {
 	}
 
 	saveState () {
-		Database.saveThermostatState(this.id, this.state);
-	}
-
-	getSchedule () {
-		Database.getThermostatSchedule(this.id)
-		.then((schedule) => {
-			if (!schedule) {
-				Database.setThermostatSchedule(this.id, SCHEDULE);
-				this.state.schedule = SCHEDULE;
-			}
-			this.state.schedule = schedule;
-		});
+		this.save();
+		this.state.schedule = this.schedule;
+		this.state.power = this.power;
+		this.state.hold = this.hold;
 	}
 
 	setHoldMode (mode) {
-		this.state.hold_mode = mode;
+		this.hold.mode = mode;
+		this.state.hold.mode = mode;
 		this.saveState();
 	}
 
 	setPower (mode) {
+		console.log('setPower', mode);
 		this.driver.setThermostatMode(mode);
-		this.state.power = mode == 'on' ? true : false;
+		this.power = mode == 'on' ? true : false;
 		this.saveState();
 	}
 
 	setTemp (temp) {
-		this.state.hold_temp = temp;
+		this.hold.minTemp = temp.min;
+		this.hold.maxTemp = temp.max;
 		this.saveState();
 	}
 
@@ -233,6 +208,7 @@ class ThermostatService extends Service {
 	}
 
 	setSchedule (schedule) {
+		this.schedule = schedule;
 		this.state.schedule = schedule;
 		this.saveState();
 	}
@@ -240,7 +216,8 @@ class ThermostatService extends Service {
 	startScheduleLoop () {
 		setInterval((self) => {
 			const date = new Date();
-			this.state.current_hour = date.getHours() - 1; // This will cause state to be checked.
+			this.state.current_hour = date.getHours() - 1;
+			// This will cause state to be checked.
 			self.saveState();
 		}, LOOP_DELAY * 1000, this);
 	}
@@ -248,7 +225,10 @@ class ThermostatService extends Service {
 	dbSerialize () {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
-			ip: this.ip
+			ip: this.ip,
+			schedule: this.schedule,
+			hold: this.hold,
+			power: this.power
 		};
 	}
 }

@@ -1,5 +1,6 @@
 const Service = require('./service.js'),
 	HueLightDriver = require('./drivers/light-hue.js'),
+	DevicesManager = require('../devices/devices-manager.js'),
 	LightApi = require('./api/light-api.js'),
 	Scenes = [
 		{ color: "red" },
@@ -21,6 +22,13 @@ const Service = require('./service.js'),
 		yellow: [255, 255, 0],
 		white: [255, 255, 255]
 	},
+	Themes = [
+		{r: 255, g: 255, b: 255},
+		{r: 255, g: 0, b: 255},
+		{r: 0, g: 0, b: 255},
+		{r: 0, g: 255, b: 0},
+	]
+	brightConversion = 255;
 	TAG = '[LightService]';
 
 class LightService extends Service {
@@ -28,39 +36,62 @@ class LightService extends Service {
 		super(data, relaySocket, save, LightApi);
 
 		this.current_scene = 0;
+		this.themes = data.themes || [];
+		this.state.themes = this.themes.map((theme) => theme.color);
 		this.alarm_state;
-		this.light_id = data.light_id;
-		this.bridge_id = data.bridge_id;
+		this.lightIds = data.lightIds;
 		this.alarmTimer = setTimeout(() => {}, 0);
+		this.bridgeService = DevicesManager.getServicesByType('hue_bridge')[0];
+	}
+	setPower (value) {
+		this.lightIds.forEach(id => {
+			this.bridgeService.setPower(id, value);
+		});
 
-		this.driver = new HueLightDriver(this.light_id, this.bridge_id);
-		this.subscribeToDriver();
+		this.state.power = value;
 	}
 
-	subscribeToDriver () {
-		this.driver.on('ready', (data) => this.onReady(data));
-		this.driver.on('power-changed', (power) => this.state.power = power);
-		this.driver.on('brightness-changed', (brightness) => this.state.brightness = brightness);
-		this.driver.on('color-changed', (color) => this.state.color = color);
+	setBrightness (value) {
+		if (value < 1) value = 1;
+		if (value > 254) value = 254;
+		this.lightIds.forEach(id => {
+			let bri = value * brightConversion / 100
+			this.bridgeService.setBrightness(id, bri);
+		});
+
+		this.state.brightness = value;
 	}
 
-	onReady (data) {
-		console.log(TAG,"onReady",data);
-		this.state.power = data.power;
-		this.state.brightness = data.brightness;
-		this.state.color = data.color;
+	setTheme (newTheme) {
+		const themeIndex = this.themes.findIndex((theme) => {
+				return theme.theme == newTheme ? true : false;
+			}),
+			color = [
+				this.themes[themeIndex].color.r,
+				this.themes[themeIndex].color.g,
+				this.themes[themeIndex].color.b
+			];
+
+		console.log(TAG,'setTheme', color);
+		this.setColor(color);
 	}
 
-	lightOn (value) {
-		value ? this.driver.lightOn() : this.driver.lightOff();
-	}
-
-	setBrightness (brightness) {
-		this.driver.setBrightness(brightness);
+	saveTheme (theme) {
+		let color = [theme.color.r, theme.color.g, theme.color.b]
+		this.lightIds.forEach(id => {
+			this.bridgeService.setColor(id, color);
+		});
+		this.setColor(color);
+		this.themes[theme.theme] = theme;
+		this.state.themes = this.themes.map((theme) => theme.color);
+		this.save();
+		console.log(TAG,'saveTheme', color);
 	}
 
 	setColor (color) {
-		this.driver.setColor(color);
+		this.lightIds.forEach(id => {
+			this.bridgeService.setColor(id, color);
+		});
 	}
 
 	incBrightness(amount) {
@@ -128,8 +159,8 @@ class LightService extends Service {
 	dbSerialize () {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
-			light_id: this.light_id,
-			bridge_id: this.bridge_id
+			lightIds: this.lightIds,
+			themes: this.themes
 		};
 	}
 }

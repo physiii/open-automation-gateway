@@ -1,20 +1,43 @@
-// -----------------------------	OPEN-AUTOMATION ------------------------- //
-// ------------	https://github.com/physiii/open-automation --------------- //
-// ----------------------------- device-utils.js ------------------------- //
-
 const exec = require('child_process').exec,
 	ConnectionManager = require('./connection.js'),
 	config = require('../config.json'),
 	axios = require('axios'),
+	v3 = require('node-hue-api').v3,
+  discovery = v3.discovery,
+  hueApi = v3.api,
+	appName = 'oa',
+	deviceName = 'gateway',
 	DevicesManager = require('../devices/devices-manager.js'),
 	Database = require ("../services/database.js"),
+	NewSchedule = [
+			{label: '1 AM', value: 1, minTemp: 65, maxTemp: 75, power: true},
+			{label: '2 AM', value: 2, minTemp: 65, maxTemp: 75, power: true},
+			{label: '3 AM', value: 3, minTemp: 65, maxTemp: 75, power: true},
+			{label: '4 AM', value: 4, minTemp: 65, maxTemp: 75, power: true},
+			{label: '5 AM', value: 5, minTemp: 65, maxTemp: 75, power: true},
+			{label: '6 AM', value: 6, minTemp: 65, maxTemp: 75, power: true},
+			{label: '7 AM', value: 7, minTemp: 65, maxTemp: 75, power: true},
+			{label: '8 AM', value: 8, minTemp: 65, maxTemp: 75, power: true},
+			{label: '9 AM', value: 9, minTemp: 65, maxTemp: 75, power: true},
+			{label: '10 AM', value: 10, minTemp: 65, maxTemp: 75, power: true},
+			{label: '11 AM', value: 11, minTemp: 65, maxTemp: 75, power: true},
+			{label: '12 AM', value: 12, minTemp: 65, maxTemp: 75, power: true},
+			{label: '1 PM', value: 13, minTemp: 65, maxTemp: 75, power: true},
+			{label: '2 PM', value: 14, minTemp: 65, maxTemp: 75, power: true},
+			{label: '3 PM', value: 15, minTemp: 65, maxTemp: 75, power: true},
+			{label: '4 PM', value: 16, minTemp: 65, maxTemp: 75, power: true},
+			{label: '5 PM', value: 17, minTemp: 65, maxTemp: 75, power: true},
+			{label: '6 PM', value: 18, minTemp: 65, maxTemp: 75, power: true},
+			{label: '7 PM', value: 19, minTemp: 65, maxTemp: 75, power: true},
+			{label: '8 PM', value: 20, minTemp: 65, maxTemp: 75, power: true},
+			{label: '9 PM', value: 21, minTemp: 65, maxTemp: 75, power: true},
+			{label: '10 PM', value: 22, minTemp: 65, maxTemp: 75, power: true},
+			{label: '11 PM', value: 23, minTemp: 65, maxTemp: 75, power: true},
+			{label: '12 PM', value: 24, minTemp: 65, maxTemp: 75, power: true}
+	],
 	TAG = '[DeviceUtils]';
 
 class DeviceUtils {
-
-	constructor () {
-		console.log(TAG, "Starting device-utils");
-	}
 
 	createSirenService (gpio_paths = []) {
 		const new_devices = [],
@@ -169,7 +192,7 @@ class DeviceUtils {
 			console.log(TAG, 'CREATING THERMOSTAT !! ', ip);
 			DevicesManager.createDevice({
 				settings: {name: 'Thermostat'},
-				services: [{type: 'thermostat', ip}]
+				services: [{type: 'thermostat', ip, schedule: NewSchedule, hold: { mode:'off', minTemp:65, maxTemp:75 }, power: false }]
 			})
 		}
 	}
@@ -192,15 +215,65 @@ class DeviceUtils {
 		})
 	}
 
+	searchForHueBridges () {
+		this.discoverAndCreateUser().then((bridge) => {
+			console.log("CREATING HUE BRIDGE DEVICE:", bridge);
+			DevicesManager.createDevice({
+				settings: {name: 'Hue Bridge'},
+				services: [{type: 'hue_bridge', ip:bridge.ip, user:bridge.user, bridge_id: bridge.user}]
+			})
+		})
+	}
+
+	async discoverBridge() {
+	  const discoveryResults = await discovery.nupnpSearch();
+
+	  if (discoveryResults.length === 0) {
+	    console.error('Failed to resolve any Hue Bridges');
+	    return null;
+	  } else {
+	    // Ignoring that you could have more than one Hue Bridge on a network as this is unlikely in 99.9% of users situations
+	    return discoveryResults[0].ipaddress;
+	  }
+	}
+
+	async discoverAndCreateUser () {
+		const ipAddress = await this.discoverBridge();
+
+	  // Create an unauthenticated instance of the Hue API so that we can create a new user
+	  const unauthenticatedApi = await hueApi.createLocal(ipAddress).connect();
+
+	  let createdUser;
+	  try {
+	    createdUser = await unauthenticatedApi.users.createUser(appName, deviceName);
+	    console.log('*******************************************************************************\n');
+	    console.log('User has been created on the Hue Bridge. The following username can be used to\n' +
+	                'authenticate with the Bridge and provide full local access to the Hue Bridge.\n' +
+	                'YOU SHOULD TREAT THIS LIKE A PASSWORD\n');
+	    console.log(`Hue Bridge User: ${createdUser.username}`);
+	    console.log(`Hue Bridge User Client Key: ${createdUser.clientkey}`);
+	    console.log('*******************************************************************************\n');
+
+	    // Create a new API instance that is authenticated with the new user we created
+	    const authenticatedApi = await hueApi.createLocal(ipAddress).connect(createdUser.username);
+
+	    // Do something with the authenticated user/api
+	    const bridgeConfig = await authenticatedApi.configuration.getConfiguration();
+	    console.log(`Connected to Hue Bridge: ${bridgeConfig.name} :: ${bridgeConfig.ipaddress}`);
+			let bridge = {ip:bridgeConfig.ipaddress, user:createdUser.username};
+			return bridge;
+	  } catch(err) {
+	    if (err.getHueErrorType() === 101) {
+	      console.error('The Link button on the bridge was not pressed. Please press the Link button and try again.');
+	    } else {
+	      console.error(`Unexpected Error: ${err.message}`);
+	    }
+	  }
+	}
+
 	getDevices () {
 		return DevicesManager.getDevices();
 	}
-
-	removeDevice (deviceId) {
-		console.log(TAG, "Removing device from database.");
-		Database.removeDevice(deviceId)
-	}
-
 }
 
 module.exports = new DeviceUtils();

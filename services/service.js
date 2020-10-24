@@ -10,7 +10,7 @@ class Service {
 		this.save = save;
 		this._events = new EventEmitter();
 
-		this.setSettings(data.settings || {});
+		this.saveSettings(data.settings || {}, false);
 
 		// On state change, send updated state to state listeners.
 		this.unproxied_state = {...data.state};
@@ -39,63 +39,13 @@ class Service {
 		this._relayEmit(event, data, callback);
 	}
 
-	setSetting (property, new_value) {
+	saveSettings (settings, restart = false) {
 		return new Promise((resolve, reject) => {
-			const errors = this._getValidationErrors({[property]: new_value}, true);
-
-			if (errors) {
-				console.error(TAG, this.id, 'Could not save new settings. Validation errors:', errors);
-				reject(errors);
-
-				return;
-			}
-
-			this.settings = {
-				...settings,
-				[property]: new_value
-			};
-
-			console.log(TAG, this.id, 'Saving new setting');
-
-			resolve({...this.settings});
-		});
-	}
-
-	saveSetting (property, new_value) {
-		return this.setSettings(property, new_value).then(this.save);
-	}
-
-	setSettings (new_settings) {
-		return new Promise((resolve, reject) => {
-			const definitions = this.constructor.settings_definitions,
-				settings = {};
-
-			// Pick only the properties that exist in the settings definitions.
-			Object.keys(new_settings).forEach((property) => {
-				if (definitions.get(property)) {
-					settings[property] = new_settings[property];
-				}
-			});
-
-			const errors = this._getValidationErrors(settings);
-
-			if (errors) {
-				console.error(TAG, this.id, 'Could not save new settings. Validation errors:', errors);
-				reject(errors);
-
-				return;
-			}
-
 			this.settings = settings;
-
-			console.log(TAG, this.id, 'Saving new settings');
-
-			resolve({...settings});
-		});
-	}
-
-	saveSettings (new_settings) {
-		return this.setSettings(new_settings).then(this.save);
+			this.save()
+			if (restart) utils.restart(3);
+			console.log("saveSettings", settings);
+		})
 	}
 
 	_getValidationErrors (settings, skip_missing_properties) {

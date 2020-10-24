@@ -1,6 +1,9 @@
 const Service = require('./service.js'),
 	hue = require ('node-hue-api'),
-	HueApi = hue.HueApi,
+	v3 = require('node-hue-api').v3,
+	LightState = v3.lightStates.LightState,
+  discovery = v3.discovery,
+  hueApi = v3.api,
 	lightState = hue.lightState,
 	TAG = '[hue-bridge-service.js]';
 
@@ -8,12 +11,29 @@ class HueBridgeService extends Service {
 	constructor (data, relay_socket, save) {
 		super(data, relay_socket, save);
 
-		console.log(TAG,"data:",data);
 		this.ip = data.ip;
 		this.user = data.user;
 
-		this.hue_api = new HueApi(this.ip, this.user);
-		this.light_state = lightState.create();
+		// this.hue_api = new HueApi(this.ip, this.user);
+		this.hue_api = v3.api.createLocal(this.ip).connect(this.user);
+
+	}
+
+	getAllLights () {
+		return new Promise((resolve, reject) => {
+			v3.discovery.nupnpSearch()
+			  .then(searchResults => {
+			    const host = searchResults[0].ipaddress;
+			    return v3.api.createLocal(host).connect(this.user);
+			  })
+			  .then(api => {
+			    return api.lights.getAll();
+			  })
+			  .then(allLights => {
+					resolve(allLights);
+			  })
+			;
+		});
 	}
 
 	findAttachedLights () {
@@ -62,50 +82,59 @@ class HueBridgeService extends Service {
 		});
 	}
 
-	lightOn (device_id) {
+	setPower (lightId, value) {
 		return new Promise((resolve, reject) => {
-			this.hue_api.setLightState(device_id, this.light_state.on(), function(error, result) {
-				if (error) {
-					throw error;
-				}
-
-				resolve();
-			});
+			v3.discovery.nupnpSearch()
+			  .then(searchResults => {
+			    const host = searchResults[0].ipaddress;
+			    return v3.api.createLocal(host).connect(this.user);
+			  })
+			  .then(api => {
+			    // Using a basic object to set the state
+			    return api.lights.setLightState(lightId, {on: value});
+			  })
+			  .then(result => {
+			    console.log(`Light state change was successful? ${result}`);
+			  })
+			;
 		});
 	}
 
-	lightOff (device_id) {
+	setBrightness (lightId, value) {
 		return new Promise((resolve, reject) => {
-			this.hue_api.setLightState(device_id, this.light_state.off(), function(error, result) {
-				if (error) {
-					throw error;
-				}
-
-				resolve();
-			});
+			v3.discovery.nupnpSearch()
+			  .then(searchResults => {
+			    const host = searchResults[0].ipaddress;
+			    return v3.api.createLocal(host).connect(this.user);
+			  })
+			  .then(api => {
+			    // Using a LightState object to build the desired state
+			    const state = new LightState().on().bri(value);
+			    return api.lights.setLightState(lightId, state);
+			  })
+			  .then(result => {
+			    console.log(`Light state change was successful? ${result}`);
+			  })
+			;
 		});
 	}
 
-	setColor (device_id, color) {
+	setColor (id, color) {
 		return new Promise((resolve, reject) => {
-			this.hue_api.setLightState(device_id, this.light_state.rgb(color), function(error, result) {
-				if (error) {
-					throw error;
-				}
-				resolve();
-			});
-		});
-	}
-
-	setBrightness (device_id, brightness) {
-		return new Promise((resolve, reject) => {
-			this.hue_api.setLightState(device_id, this.light_state.brightness(brightness), function(error, result) {
-				if (error) {
-					throw error;
-				}
-
-				resolve();
-			});
+			v3.discovery.nupnpSearch()
+			  .then(searchResults => {
+			    const host = searchResults[0].ipaddress;
+			    return v3.api.createLocal(host).connect(this.user);
+			  })
+			  .then(api => {
+			    // Using a LightState object to build the desired state
+			    const state = new LightState().on().rgb(color);
+			    return api.lights.setLightState(id, state);
+			  })
+			  .then(result => {
+			    console.log(`Light state change was successful? ${result}`);
+			  })
+			;
 		});
 	}
 
