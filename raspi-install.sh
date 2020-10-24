@@ -11,16 +11,10 @@ sudo apt update
 sudo apt upgrade -y
 
 sudo apt-get install -y --force-yes \
-  cmake sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
+  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   v4l2loopback-dkms v4l2loopback-utils cmake libasound2-dev python-pexpect python-dbus \
-<<<<<<< HEAD
-  python-setuptools python-dev build-essential libopencv-dev raspberrypi-kernel-headers \
-  # python-opencv \
-
-=======
   python-setuptools python-dev build-essential libopencv-dev raspberrypi-kernel-headers python-opencv \
   
->>>>>>> dev
 # sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
@@ -87,16 +81,12 @@ sudo depmod -a
 sudo modprobe v4l2loopback video_nr=10,20
 
 ## ffmpeg
-<<<<<<< HEAD
-sudo chown -R $USER /usr/local/src
-=======
 # binaries
 cd /usr/local/src/gateway/build/ffmpeg
 sudo cp ffmpeg /usr/local/bin/ffmpeg
 sudo cp libcrypto.so.1.1 libssl.so.1.1 /usr/lib/
 
 # from source
->>>>>>> dev
 cd /usr/local/src
 git clone git://git.videolan.org/x264
 cd x264

@@ -1,25 +1,50 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 15px;
+    }
+    button, select {
+      border: 1px solid black;
+      padding: 5px;
+    }
+  </style>
   <meta charset="UTF-8">
-  <title>setup</title>
+  <title>Setup</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body style= "padding: 15px;">
 
-        <h5>
-          Device ID <div id="device_id"></div><br><br>
-          Gateway ID <div id="gateway_id"></div>
-        </h5>
+  <div id="device_list"></div>
+  <button type="button" onclick="searchForNetworkThermostats()" >Search for Network Thermostats</button>
+  <br>
+  <br>
+  <button type="button" onclick="searchForLocalCameras()" >Search for Attached Cameras</button>
+  <br>
+  <br>
 
-        <h3>Choose wifi from dropdown menu.</h3>
-        <select name="ap_list"></select><br>
-        <h3>Or enter the wifi name manually:</h3>
-        <input id="ssid_input" placeholder="enter wifi name" class="ssid_input" type="text" />
-        <h3>Enter wifi password:</h3>
-        <input id="ap_password" placeholder="enter password" class="ap_password" type="text" />
-        <br>
-        <button type="button" onclick="setRouterInfo()" >save</button>
+  <h3>Lighting</h3>
+  <button type="button" onclick="createLedController()" >Create Light Controller</button>
+  <br>
+  <br>
+  <button type="button" onclick="searchForHueBridges()" >Search for Hue Light Bridges (hold link button)</button>
+  <br>
+  <br>
+  <button type="button" onclick="searchForLights()" >Search for Lights</button>
+  <div id="light_list"></div>
+  <div id="linked_light_list"></div>
+
+  <h3>Choose wifi from dropdown menu.</h3>
+  <select name="ap_list"></select><br>
+  <h3>Or enter the wifi name manually:</h3>
+  <input id="ssid_input" placeholder="enter wifi name" class="ssid_input" type="text" />
+  <h3>Enter wifi password:</h3>
+  <input id="ap_password" placeholder="enter password" class="ap_password" type="text" />
+  <br>
+  <button type="button" onclick="setRouterInfo()" >save</button>
 
   <script src="/jquery-min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
