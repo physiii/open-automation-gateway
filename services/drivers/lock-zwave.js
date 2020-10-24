@@ -1,28 +1,35 @@
-const zwave = require('../../zwave.js'),
-	EventEmitter = require('events'),
+const EventEmitter = require('events'),
+	config = require('../../config.json'),
 	zDoorLockCC = 98,
 	zDoorLockLocked = 0,
 	zInstance = 1,
 	zwaveDeadNotification = 5,
 	zwaveAliveNotification = 6,
 	TAG = '[ZwaveLockDriver]';
+	
+	if (config.zwave) {
+		const zwave = require('../../zwave.js');
+	} else {
+		const zwave = {};
+	}
 
 class ZwaveLockDriver {
 	constructor (nodeId) {
 		this.id = nodeId;
 		this.events = new EventEmitter();
 		this.ready = false;
-
-		if (zwave.is_node_ready(this.id)) {
-			this.onNodeReady();
-		} else {
-			zwave.on('node ready', (nodeId) => {
-				if (nodeId !== this.id) {
-					return;
-				}
-
+		if (config.zwave) {
+			if (zwave.is_node_ready(this.id)) {
 				this.onNodeReady();
-			});
+			} else {
+				zwave.on('node ready', (nodeId) => {
+					if (nodeId !== this.id) {
+						return;
+					}
+
+					this.onNodeReady();
+				});
+			}
 		}
 	}
 

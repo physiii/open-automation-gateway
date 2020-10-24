@@ -1,16 +1,24 @@
 const Service = require('./service.js'),
+	ZwaveLockDriver = require('./drivers/lock-zwave.js'),
+	MockLockDriver = require('./drivers/lock-mock.js'),
+	LockApi = require('./api/lock-api.js'),
 	TAG = '[LockService]';
 
 class LockService extends Service {
-	constructor (data, driverClass) {
-		super(data);
+	constructor (data, relaySocket, save) {
+		super(data, relaySocket, save, LockApi);
 
 		this.zwave_node_id = data.zwave_node_id;
-		this.locked = data.locked || false;
+		this.state.locked = data.state && data.state.locked;
 		this.available = data.available || false;
 		this.settings.relock_delay = data.settings && data.settings.relock_delay || false;
 
-		this.driver = new driverClass(this.zwave_node_id);
+		if (this.zwave_node_id) {
+			this.driver = new ZwaveLockDriver(this.zwave_node_id);
+		} else {
+			this.driver = new MockLockDriver();
+		}
+
 		this.subscribeToDriver();
 	}
 
@@ -18,13 +26,13 @@ class LockService extends Service {
 		this.driver.on('ready', (data) => this.onReady(data));
 		this.driver.on('timedout', () => this.onTimeout());
 		this.driver.on('reconnected', () => this.onConnected());
-		this.driver.on('locked', () => this.setLockedState(true));
-		this.driver.on('unlocked', () => this.setLockedState(false));
+		this.driver.on('locked', () => this.onLockedStateChange(true));
+		this.driver.on('unlocked', () => this.onLockedStateChange(false));
 	}
 
 	onReady (data) {
 		this.onConnected();
-		this.locked = data.locked;
+		this.state.locked = data.locked;
 	}
 
 	onConnected () {
@@ -35,11 +43,11 @@ class LockService extends Service {
 		this.available = false;
 	}
 
-	onLock () {
+	onLocked () {
 		this.clearAutoRelock();
 	}
 
-	onUnlock () {
+	onUnlocked () {
 		this.setUpAutoRelock();
 	}
 
@@ -55,15 +63,15 @@ class LockService extends Service {
 		return this.settings.relock_delay = delay;
 	}
 
-	setLockedState (isLocked) {
-		if (!this.locked && isLocked) { // If changed from unlocked to locked.
-			this.onLock();
-		} else if (this.locked && !isLocked) { // If changed from locked to unlocked.
-			this.onUnlock();
+	onLockedStateChange (isLocked) {
+		if (!this.state.locked && isLocked) { // If changed from unlocked to locked.
+			this.onLocked();
+		} else if (this.state.locked && !isLocked) { // If changed from locked to unlocked.
+			this.onUnlocked();
 		}
 
 		// Update locked state.
-		this.locked = isLocked;
+		this.state.locked = isLocked;
 	}
 
 	setUpAutoRelock (isSubsequentTry) {
@@ -75,7 +83,7 @@ class LockService extends Service {
 			console.log(
 				TAG,
 				'Door unlocked'
-				+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+				+ (this.settings.name ? (' (' + this.settings.name + ')') : '')
 				+ '. Setting relock timer. '
 				+ new Date()
 			);
@@ -85,7 +93,7 @@ class LockService extends Service {
 			console.log(
 				TAG,
 				'Relocking door'
-				+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+				+ (this.settings.name ? (' (' + this.settings.name + ')') : '')
 				+ '.'
 				+ new Date()
 			);
@@ -107,7 +115,7 @@ class LockService extends Service {
 		console.log(
 			TAG,
 			'Door locked'
-			+ (this.device.settings.name ? (' (' + this.device.settings.name + ')') : '')
+			+ (this.settings.name ? (' (' + this.settings.name + ')') : '')
 			+ '. Removing relock timer. '
 			+ new Date()
 		);

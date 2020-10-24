@@ -1,4 +1,4 @@
-const database = require('./database.js'),
+const database = require('./services/database.js'),
 	VideoStreamer = require('./video-streamer.js'),
 	TAG = '[CameraRecordings]';
 
@@ -23,10 +23,10 @@ class CameraRecordings {
 		});
 	}
 
-	getLastRecordingDate (cameraId) {
+	getLastRecording (cameraId) {
 		return new Promise((resolve, reject) => {
 			database.get_camera_recordings(cameraId).then((recordings) => {
-				resolve(recordings.pop().date);
+				resolve(recordings.pop());
 			}).catch((error) => {
 				console.error(TAG, error);
 				reject(error);
@@ -43,10 +43,26 @@ class CameraRecordings {
 		});
 	}
 
-	streamRecording (recordingId, streamToken) {
+	saveRecording (data) {
+		database.set_camera_recording(data);
+	}
+
+	streamRecording (recordingId, streamToken, time = 0) {
 		return new Promise((resolve, reject) => {
 			this.getRecordingById(recordingId).then((recording) => {
-				VideoStreamer.streamFile(recording.id, streamToken, recording.file);
+				VideoStreamer.streamFile(recording.id, streamToken, recording.file, time);
+				resolve(recordingId);
+			}).catch((error) => {
+				console.error(TAG, error);
+				reject(error);
+			});
+		});
+	}
+
+	streamAudioRecording (recordingId, streamToken) {
+		return new Promise((resolve, reject) => {
+			this.getRecordingById(recordingId).then((recording) => {
+				VideoStreamer.streamAudioFile(recording.id, streamToken, recording.file);
 				resolve(recordingId);
 			}).catch((error) => {
 				console.error(TAG, error);
@@ -56,7 +72,7 @@ class CameraRecordings {
 	}
 
 	stopStream (recordingId) {
-		VideoStreamer.stop(recordingId);
+		VideoStreamer.stop();
 	}
 }
 

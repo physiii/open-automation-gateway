@@ -1,11 +1,11 @@
 ### **open-automation** is made from a cohesive set of web languages. NodeJS for general processing, socket.io communication, PHP for generating, setting, and retreiving model (mongodb) data, and websockets for transport on microcontrollers to live token based streaming with JSMPEG decoding. Interface is angularjs. Android app for location beacons.
 
-Software for controlling cameras, dead bolts, garage openers, lights, thermostats, media, glass break, and sends alerts via text message. Camera and files are proxied out the port you set with -p [port]. Forward that port on your router to gain access to files and camera using remote tokens. 
+Software for controlling cameras, dead bolts, garage openers, lights, thermostats, media, glass break, and sends alerts via text message. Camera and files are proxied out the port you set with -p [port]. Forward that port on your router to gain access to files and camera using remote tokens.
 
 ### update: now supports streaming from behind routers, this is done through websockets; so no port forwarding necessary!
 
 ## Uses
-### Automation Gateway 
+### Automation Gateway
 Send and receive messages w wifi and zwave devices.
 ### Solar Powered Security Camera
 Adjustable bitrate for low data streaming and timeout functions to save data cost.
@@ -51,3 +51,22 @@ Uses motion to trigger recording to local disk and local disk can be proxied (wo
 1. wget https://nodejs.org/dist/v4.2.6/node-v4.2.6.tar.gz && tar -zxvf node-v4.2.6.tar.gz && cd node-v4.2.6 && ./configure && make && sudo make install
 2. git clone https://github.com/physiii/open-automation.git && cd open-automation && sh install.sh
 
+## example config.json:
+ ```
+ {
+  "relay_server":"dev.pyfi.org",
+  "relay_port":5050,
+  "zwave":false,
+  "zwave_dev":"ACM0",
+  "use_ssl":true,
+  "use_dev":true,
+  "video_stream_port":8083,
+  "rotation": 0,
+  "lock_timer": "0",
+  "device_hw":"",
+  "manage_network":true,
+  "disable_reboot":false,
+  "connection_timeout":60,
+  "wifi_adapter":"wlan0"
+ }
+```

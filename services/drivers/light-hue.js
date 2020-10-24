@@ -1,47 +1,53 @@
 const EventEmitter = require('events'),
-  DevicesManager = require('../../devices/devices-manager.js'),
-  TAG = '[HueLightDriver]';
+	DevicesManager = require('../../devices/devices-manager.js'),
+	BRIGHTNESS_SCALE = 255,
+	TAG = '[HueLightDriver]';
 
 class HueLightDriver {
-  constructor (light_id, bridge_id) {
-    this.light_id = light_id;
+	constructor (bridge_id) {
+		this.events = new EventEmitter();
+		this.bridge = DevicesManager.getServiceById(bridge_id) || false;
 
-    this.bridge = DevicesManager.getServiceById(bridge_id) || false;
+		if (!this.bridge) {
+			console.error(TAG, 'Could not find bridge service (' + bridge_id + ').');
+			// console.error(TAG, 'Could not find bridge service (' + bridge_id + ') for light ' + light_id + '.');
+		}
 
-    if (!this.bridge) {
-      console.error(TAG, 'Could not find bridge service (' + bridge_id + ') for light ' + light_id + '.');
-    }
+		// this.bridge.getLightState(this.light_id).then((state) => this.events.emit('ready', this.lightStateToState(state)));
+		//this.bridge.setBrightness(this.light_id, 100).then(() => this.events.emit('brightness-changed', 100));
+	}
 
-    this.events = new EventEmitter();
-  }
-
-  on () {
+	on () {
 		return this.events.on.apply(this.events, arguments);
 	}
 
-  lightOn () {
-    this.bridge.lightOn(this.light_id);
-  }
+	lightStateToState (light_state) {
+		return {
+			power: light_state.state.on,
+			brightness: light_state.state.bri / BRIGHTNESS_SCALE,
+			color: light_state.state.rgb
+		};
+	}
 
-  lightOff () {
-    this.bridge.lightOff(this.light_id);
-  }
+	lightOn () {
+		return this.bridge.lightOn(this.light_id).then(() => this.events.emit('power-changed', true));
+	}
 
-  setBrightness (brightness) {
-    this.bridge.setBrightness(this.light_id, brightness);
-  }
+	lightOff () {
+		return this.bridge.lightOff(this.light_id).then(() => this.events.emit('power-changed', false));
+	}
 
-  setColor (color) {
-    this.bridge.setColor(this.light_id, color);
-  }
+	setBrightness (brightness) {
+		return this.bridge.setBrightness(this.light_id, brightness * BRIGHTNESS_SCALE).then(() => this.events.emit('brightness-changed', brightness));
+	}
 
-  setLightName (name) {
-    this.bridge.setLightName(this.light_id, name);
-  }
+	setColor (color) {
+		return this.bridge.setColor(this.light_id, color).then(() => this.events.emit('color-changed', color));
+	}
 
-  setAlarm () {
-    return;
-  }
+	setLightName (name) {
+		return this.bridge.setLightName(this.light_id, name);
+	}
 }
 
 module.exports = HueLightDriver;

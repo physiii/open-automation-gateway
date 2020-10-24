@@ -2,112 +2,71 @@
 // ------------  https://github.com/physiii/open-automation --------------- //
 // --------------------------------- Gateway ------------------------------ //
 
-software_version = '0.2';
-const TAG = '[index.js]',
-  FREE_SPACE_LIMIT = 500 * 1000000;
-
-// ----------------------------------------------------- //
-// import config or create new config.json with defaults //
-// ----------------------------------------------------- //
-const fs = require('fs');
-
-let config = {
-  relay_server: '127.0.0.1',
-  relay_port: 5000
-};
+const TAG = '[Index]';
 
 try {
+  id = '';
   config = require('./config.json');
 } catch (e) {
-  let config_str = JSON.stringify(config).replace(',', '\,\n  ');
-
-  config_str = config_str.replace('{', '{\n  ').replace('}', '\n}');
-
-  fs.writeFile(__dirname + '/config.json', config_str, (error) => {
-    if (error) {
-      throw error;
-    }
-
-    console.log(TAG, 'created config.json');
-  });
+	return console.log(TAG, 'No config.json file found. Start with config.json.example');
 }
 
+MINIMUM_FREE_SPACE = config.min_free_space_percent;
+DISABLE_REBOOT = config.disable_reboot;
+USE_DEV = config.use_dev || false;
+USE_SSL = config.use_ssl || false;
+RELAY_SERVER = config.relay_server || '127.0.0.1';
+RELAY_PORT = config.relay_port || 5050;
+
 const utils = require('./utils'),
-  connection = require('./connection.js'),
-  database = require('./database'),
-  devices = require('./devices/devices-manager.js'),
-  diskUsage = require('diskusage');
+  ConnectionManager = require('./services/connection.js'),
+  System = require('./services/system.js'),
+  Database = require('./services/database.js'),
+  DevicesManager = require('./devices/devices-manager.js'),
+  diskUsage = require('diskusage'),
+  admin = require('./admin/index.js');
 
 if (config.zwave) {
   zwave = require('./zwave.js');
 }
-//require('./admin.js');
 
+if (config.use_dev) {
+  console.warn('Gateway is running in development mode.');
+}
+
+ConnectionManager.connectionLoop();
 // Get settings and load devices from database.
-database.get_settings().then((settings) => {
-  devices.loadDevicesFromDb().then(() => {
-    let main_device = devices.getDeviceById(settings.main_device_id);
 
-    // If the default device has not been created yet, create it.
-    if (!main_device) {
-      main_device = devices.createDevice({
-          services:[
-            {type: 'gateway'}
-          ]
-      });
+Database.getDevices().then((dbDevices) => {
+	DevicesManager.loadDevicesFromDb().then(() => {
+		createGatewayDevice = true;
+    createMediaDevice = true;
 
-      settings.main_device_id = main_device.id;
-      database.store_settings(settings);
+		for (let i = 0; i < dbDevices.length; i++) {
+			if (dbDevices[i].services[0].type == 'gateway') {
+				createGatewayDevice = false;
+			}
+      if (dbDevices[i].services[0].type == 'media') {
+				createMediaDevice = false;
+			}
+		}
+
+		if (createGatewayDevice) {
+			console.log(TAG, "Creating a gateway device.");
+		  DevicesManager.createDevice({
+		    services: [
+		      {type: 'gateway'}
+		    ]
+		  })
+		}
+
+    if (createMediaDevice) {
+      console.log(TAG, "Creating a media device.");
+			DevicesManager.createDevice({
+				settings: {name: 'Media'},
+				services: [{type: 'media'}]
+			})
     }
-  });
+
+	});
 });
-
-function checkDiskSpace () {
-  diskUsage.check('/', function (error, info) {
-    if (error) {
-      console.log(TAG, error);
-      return;
-    }
-
-    module.exports.disk = {
-      free: info.free,
-      total: info.total
-    };
-
-    if (info.free < FREE_SPACE_LIMIT) {
-      utils.removeOldCameraRecordings().then(checkDiskSpace);
-    }
-
-    console.log(TAG, 'free space:', info.free);
-  });
-}
-
-function main_loop () {
-  var settings = {
-    public_ip: connection.public_ip,
-    local_ip: connection.local_ip,
-    disk: utils.disk
-  };
-
-  database.store_settings(settings);
-
-  // if (database.settings.ap_mode) {
-  //   ap_time = Date.now() - ap_time_start;
-
-  //   console.log('ap_time', ap_time);
-
-  //   if (ap_time > 10 * 60 * 1000) {
-  //     console.log('Trying wifi again...');
-
-  //     set_wifi_from_db();
-  //     exec('sudo reboot');
-  //   }
-  // }
-
-  connection.get_public_ip();
-  connection.scan_wifi();
-  checkDiskSpace();
-}
-
-main_loop();
-setInterval(main_loop, 30 * 1000);

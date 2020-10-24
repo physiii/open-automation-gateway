@@ -1,30 +1,48 @@
 const ServiceApi = require('./service-api.js'),
 	CameraRecordings = require('../../camera-recordings.js');
 
+let stream_token = '',
+	recordingId = '';
+
 class CameraApi extends ServiceApi {
-	constructor (socket, camera) {
-		super(socket, camera, 'camera');
-
-		this.camera = camera;
-		this.listen();
-	}
-
 	listen () {
+		ServiceApi.prototype.listen.call(this);
+
 		this.on('stream/live', (data, callback) => {
-			const stream_token = this.camera.streamLive();
+			const stream_token = this.service.streamLive();
+
+			callback(null, {stream_token});
+		});
+
+		this.on('location/set', (data, callback) => {
+			CameraRecordings.streamRecording(recordingId, stream_token, data.time).then(() => {
+				callback(null, {stream_token});
+			}).catch((error) => {
+				callback(error);
+			});
+		});
+
+		this.on('audio/stream/live', (data, callback) => {
+			const stream_token = this.service.streamLiveAudio();
 
 			// TODO: Error handling
 			callback(null, {stream_token});
 		});
 
+		this.on('audio/stream/stop', (data, callback) => {
+			this.service.audioStreamStop();
+			// TODO: Error handling
+			callback(null, {});
+		});
+
 		this.on('stream/stop', (data, callback) => {
-			this.camera.stopStream();
+			this.service.stopStream();
 			// TODO: Error handling
 			callback(null, {});
 		});
 
 		this.on('preview/get', (data, callback) => {
-			this.camera.getPreviewImage().then((image) => {
+			this.service.getPreviewImage().then((image) => {
 				callback(null, {preview: image});
 			}).catch((error) => {
 				callback(error);
@@ -32,7 +50,7 @@ class CameraApi extends ServiceApi {
 		});
 
 		this.on('recordings/get', function (data, callback) {
-			CameraRecordings.getRecordings(this.camera.id).then((recordings) => {
+			CameraRecordings.getRecordings(this.service.id).then((recordings) => {
 				callback(null, {recordings: recordings});
 			}).catch((error) => {
 				callback(error);
@@ -40,9 +58,20 @@ class CameraApi extends ServiceApi {
 		});
 
 		this.on('recording/stream', (data, callback) => {
-			const stream_token = this.camera.generateStreamToken();
+			stream_token = this.service.generateStreamToken();
+			recordingId = data.recording_id;
 
-			CameraRecordings.streamRecording(data.recording_id, stream_token).then(() => {
+			CameraRecordings.streamRecording(recordingId, stream_token).then(() => {
+				callback(null, {stream_token});
+			}).catch((error) => {
+				callback(error);
+			});
+		});
+
+		this.on('recording/stream/audio', (data, callback) => {
+			const stream_token = this.service.generateStreamToken();
+
+			CameraRecordings.streamAudioRecording(data.recording_id, stream_token).then(() => {
 				callback(null, {stream_token});
 			}).catch((error) => {
 				callback(error);

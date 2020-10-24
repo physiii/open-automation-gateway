@@ -1,9 +1,8 @@
 #!/bin/sh -e
 #wget -qO- https://raw.githubusercontent.com/physiii/open-automation-gateway/master/install.sh | bash
-
-## set up environment
-
 #sudo rpi-update
+
+sudo apt update
 
 sudo apt-get install -y curl
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
@@ -14,9 +13,14 @@ sudo apt upgrade -y
 sudo apt-get install -y --force-yes \
   cmake sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
   v4l2loopback-dkms v4l2loopback-utils cmake libasound2-dev python-pexpect python-dbus \
+<<<<<<< HEAD
   python-setuptools python-dev build-essential libopencv-dev raspberrypi-kernel-headers \
   # python-opencv \
 
+=======
+  python-setuptools python-dev build-essential libopencv-dev raspberrypi-kernel-headers python-opencv \
+  
+>>>>>>> dev
 # sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 sudo easy_install pip
@@ -30,6 +34,11 @@ sudo npm install -g pm2
 #CONF_SWAPSIZE=1024
 #sudo /etc/init.d/dphys-swapfile stop
 #sudo /etc/init.d/dphys-swapfile start
+
+sudo apt-get install -y --force-yes \
+  libudev-dev cmake python-dbus python-setuptools python-dev build-essential \
+  libopencv-dev raspberrypi-kernel-headers python-opencv \
+  
 cd ~
 wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.3.0.zip
 unzip opencv.zip
@@ -68,16 +77,26 @@ sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
 sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/
 
 ## v4l2loopback
+sudo ln -s /lib/modules/4.14.52-v7+ /lib/modules/4.14.50-v7+
 sudo chown -R $USER /usr/src
 cd /usr/src
 git clone https://github.com/umlaeute/v4l2loopback
 cd v4l2loopback
 make && sudo make install
 sudo depmod -a
-sudo modprobe v4l2loopback video_nr=10,11,12,13,14
+sudo modprobe v4l2loopback video_nr=10,20
 
 ## ffmpeg
+<<<<<<< HEAD
 sudo chown -R $USER /usr/local/src
+=======
+# binaries
+cd /usr/local/src/gateway/build/ffmpeg
+sudo cp ffmpeg /usr/local/bin/ffmpeg
+sudo cp libcrypto.so.1.1 libssl.so.1.1 /usr/lib/
+
+# from source
+>>>>>>> dev
 cd /usr/local/src
 git clone git://git.videolan.org/x264
 cd x264
@@ -92,7 +111,12 @@ make -j4
 sudo make install
 
 ## install open-automation
-cd ~
+sudo chmod 777 -R /usr/local/lib
+sudo chmod 777 -R /usr/local/src
+sudo chmod 777 /etc/wpa_supplicant/wpa_supplicant.conf
+
+cd /usr/local/src/
 git clone https://github.com/physiii/open-automation-gateway gateway
+ln -s /usr/local/src/gateway ~/gateway
 cd gateway
 npm install

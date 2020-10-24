@@ -4,7 +4,7 @@
 
 const os = require('os'),
   config = require('./config.json'),
-  database = require('./database.js'),
+  database = require('./services/database.js'),
   OpenZWave = require('openzwave-shared'),
   zwave = new OpenZWave({
     ConsoleOutput: false,

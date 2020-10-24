@@ -1,4 +1,11 @@
-const database = require('../database.js'),
+const database = require('../services/database.js'),
+	ConnectionManager = require('../services/connection.js'),
+	Utils = require('../utils.js'),
+	System = require('../services/system.js'),
+	// If a device's dependencies haven't been met after this many attempts to
+	// create the device, it fails. This is also effectively the dependency
+	// tree depth limit.
+	DEPENDENCY_CHECK_MAX = 15,
 	TAG = '[DevicesManager]';
 
 class DevicesManager {
@@ -7,30 +14,67 @@ class DevicesManager {
 	}
 
 	addDevice (data) {
-		let device = this.getDeviceById(data.id);
+		return new Promise((resolve, reject) => {
+			let device = this.getDeviceById(data.id);
 
-		if (device) {
-			return device;
-		}
+			ConnectionManager.getLocalIP()
+			.then((localIPs) => {
+				console.log(TAG, 'getLocalIP', localIPs);
+				let localIpString = '';
+				for (let i = 0; i < localIPs.length; i++) {
+					localIpString += localIPs[i] + ' | ';
+				}
+				if (data.info) data.info.local_ip = localIpString.substring(0,localIpString.length - 3);
+			})
+			.then(() => {
+				ConnectionManager.getPublicIP()
+				.then((public_ip) => {
+					console.log(TAG, 'getPublicIP', public_ip);
+					if (data.info) data.info.public_ip = public_ip;
+				})
+				.then(() => {
+					System.softwareInfo()
+					.then((version) => {
+						console.log(TAG, 'softwareInfo', version);
+						if (data.info) data.info.firmware_version = version;
+					})
+					.then(() => {
+						console.log(TAG, 'device', device);
+						if (device) {
+							resolve(device);
+						}
 
-		if (!this.areDeviceDependenciesMet(data)) {
-			return false;
-		}
+						if (!this.areDeviceDependenciesMet(data)) {
+							console.error("Device dependencies are not met!", data);
+							// return false;
+						}
 
-		device = new Device(data);
-		this.devices.set(device.id, device);
-
-		return device;
+						device = new Device(data);
+						this.devices.set(device.id, device);
+						resolve(device);
+					})
+				})
+			})
+		});
 	}
 
 	createDevice (data) {
 		return new Promise((resolve, reject) => {
-			const device = this.addDevice(data);
+			this.addDevice(data)
+			.then((device) => {
+				if (!device) {
+					reject();
+				}
 
-			database.store_device(device).then(() => {
-				resolve(device);
-			}).catch(reject);
+				device.save().then(() => {
+					resolve(device);
+				}).catch(reject);
+			});
 		});
+	}
+
+	getDevices () {
+		return Array.from(this.devices.values());
 	}
 
 	getDeviceById (deviceId) {
@@ -51,39 +95,47 @@ class DevicesManager {
 		return device.services.getServiceById(serviceId);
 	}
 
+	getDevicesByServiceType (serviceType) {
+		return Array.from(this.devices.values()).filter((device) => device.services.hasServiceWithType(serviceType));
+	}
+
+	getServicesByType (serviceType) {
+		return Utils.flattenArray(this.getDevicesByServiceType(serviceType).map((device) => {
+			return device.services.getServicesByType(serviceType);
+		}));
+	}
+
 	loadDevicesFromDb () {
 		return new Promise((resolve, reject) => {
-			database.get_devices().then((dbDevices) => {
-				const dependenciesFailCounters = new Map(),
-					// If a device's dependencies haven't been met after this
-					// many attempts, it fails. This is also effectively the
-					// dependency tree depth limit.
-					DEPENDENCY_CHECK_MAX = 15;
+			database.getDevices().then((dbDevices) => {
+				const dependenciesFailCounters = new Map();
 
 				this.devices.clear();
 
 				while (dbDevices.length > 0) {
 					// Get next device in the list.
-					let dbDevice = dbDevices.shift(),
-						device = this.addDevice(dbDevice);
+					let dbDevice = dbDevices.shift();
 
-					// Device's dependencies are not met.
-					if (!device) {
-						let failCount = (dependenciesFailCounters.get(dbDevice.id) || 0) + 1;
+					this.addDevice(dbDevice)
+					.then((device) => {
+						// Device's dependencies are not met.
+						if (!device) {
+							let failCount = (dependenciesFailCounters.get(dbDevice.id) || 0) + 1;
 
-						// Increment this device's dependencies check fail count.
-						dependenciesFailCounters.set(dbDevice.id, failCount);
+							// Increment this device's dependencies check fail count.
+							dependenciesFailCounters.set(dbDevice.id, failCount);
 
-						// Add the device back to the end of the devices array.
-						if (failCount < DEPENDENCY_CHECK_MAX) {
-							dbDevices.push(dbDevice);
-						} else {
-							console.error(TAG, 'Device\'s dependencies were not satisfied after ' + failCount + ' attempts. Device was not loaded (' + dbDevice.id + ').');
+							// Add the device back to the end of the devices array.
+							if (failCount < DEPENDENCY_CHECK_MAX) {
+								dbDevices.push(dbDevice);
+							} else {
+								console.error(TAG, 'Device\'s dependencies were not satisfied after ' + failCount + ' attempts. Device was not loaded (' + dbDevice.id + ').');
+							}
 						}
+					})
 
-						// Move on to the next device in the array.
-						continue;
-					}
+					// Move on to the next device in the array.
+					continue;
 				}
 
 				resolve(this.devices);
@@ -109,6 +161,10 @@ class DevicesManager {
 
 	getDbSerializedDevices () {
 		return Array.from(this.devices.values()).map((device) => device.dbSerialize());
+	}
+
+	getRelaySerializedDevices () {
+		return Array.from(this.devices.values()).map((device) => device.relaySerialize());
 	}
 }
 

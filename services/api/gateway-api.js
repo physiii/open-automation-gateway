@@ -2,17 +2,11 @@ const exec = require('child_process').exec,
 	ServiceApi = require('./service-api.js');
 
 class GatewayApi extends ServiceApi {
-	constructor (socket, gateway) {
-		super(socket, gateway, 'gateway');
-
-		this.gateway = gateway;
-		this.listen();
-	}
-
 	listen () {
-		this.on('device/add', (data, callback) => {
-			const device = this.gateway.addDevice(data);
-			callback(null, device.relaySerialize());
+		ServiceApi.prototype.listen.call(this);
+
+		this.on('devices/get', (data, callback) => {
+			callback(null, {devices: this.service.getDevices().map((device) => device.relaySerialize())});
 		});
 
 		this.on('command', (data, callback) => {

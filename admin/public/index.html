@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>setup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+        <h5>
+          Device ID <div id="device_id"></div><br><br>
+          Gateway ID <div id="gateway_id"></div>
+        </h5>
+
+        <h3>Choose wifi from dropdown menu.</h3>
+        <select name="ap_list"></select><br>
+        <h3>Or enter the wifi name manually:</h3>
+        <input id="ssid_input" placeholder="enter wifi name" class="ssid_input" type="text" />
+        <h3>Enter wifi password:</h3>
+        <input id="ap_password" placeholder="enter password" class="ap_password" type="text" />
+        <br>
+        <button type="button" onclick="setRouterInfo()" >save</button>
+
+  <script src="/jquery-min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/main.js"></script>
+</body>
+</html>

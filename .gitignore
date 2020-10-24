@@ -1,6 +1,5 @@
 config.json
+package-lock.json
 node_modules/
-motion/temp
-motion/events
-motion/preview.jpg
 *.pyc
+*.blend1
