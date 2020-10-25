@@ -21,7 +21,10 @@ class ServiceApi {
 			this.service.saveSetting(data.property, data.value).then(() => callback()).catch(callback);
 		});
 		this.on('settings', (data, callback) => {
-			this.service.saveSettings(data.settings, true).then(() => callback()).catch(callback);
+			this.service.saveSettings(data.settings).then(() => {
+				callback();
+				utils.restart(3);
+			}).catch(callback);
 		});
 	}
 

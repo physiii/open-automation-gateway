@@ -131,16 +131,18 @@ function flattenArray (array_to_flatten) {
 }
 
 
-function restart () {
-	exec('pm2 restart gateway', (error, stdout, stderr) => {
-		if (error) {
-			console.error(`Update: restart gateway error: ${error}`);
-			return;
-		}
+function restart (delay) {
+	setTimeout(() => {
+		exec('pm2 restart gateway', (error, stdout, stderr) => {
+			if (error) {
+				console.error(`Update: restart gateway error: ${error}`);
+				return;
+			}
 
-		console.log(stdout);
-		console.log(stderr);
-	});
+			console.log(stdout);
+			console.log(stderr);
+		});
+	}, delay * 1000);
 }
 
 function update () {

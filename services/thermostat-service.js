@@ -50,8 +50,6 @@ class ThermostatService extends Service {
 
 		this.driver = new WiFiThermostatDriver(this.ip);
 		this.subscribeToDriver();
-
-		this.loadState();
 		this.startScheduleLoop();
 	}
 
@@ -170,12 +168,12 @@ class ThermostatService extends Service {
 		// this.saveState();
 	}
 
-	loadState () {
-		Database.getThermostatState(this.id)
-		.then((state) => {
-			Object.assign(this.state, state);
-		});
-	}
+	// loadState () {
+	// 	Database.getThermostatState(this.id)
+	// 	.then((state) => {
+	// 		Object.assign(this.state, state);
+	// 	});
+	// }
 
 	saveState () {
 		this.save();

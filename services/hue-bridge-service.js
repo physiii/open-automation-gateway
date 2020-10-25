@@ -5,6 +5,8 @@ const Service = require('./service.js'),
   discovery = v3.discovery,
   hueApi = v3.api,
 	lightState = hue.lightState,
+	msToSec = 1000,
+	ONE_SECOND_IN_MILLISECONDS = 1000,
 	TAG = '[hue-bridge-service.js]';
 
 class HueBridgeService extends Service {
@@ -83,21 +85,30 @@ class HueBridgeService extends Service {
 	}
 
 	setPower (lightId, value) {
-		return new Promise((resolve, reject) => {
-			v3.discovery.nupnpSearch()
-			  .then(searchResults => {
-			    const host = searchResults[0].ipaddress;
-			    return v3.api.createLocal(host).connect(this.user);
-			  })
-			  .then(api => {
-			    // Using a basic object to set the state
-			    return api.lights.setLightState(lightId, {on: value});
-			  })
-			  .then(result => {
-			    console.log(`Light state change was successful? ${result}`);
-			  })
-			;
-		});
+		v3.discovery.nupnpSearch()
+		  .then(searchResults => {
+		    const host = searchResults[0].ipaddress;
+		    return v3.api.createLocal(host).connect(this.user);
+		  })
+		  .then(api => {
+		    // Using a basic object to set the state
+		    return api.lights.setLightState(lightId, {on: value});
+		  })
+		  .then(result => {
+		    console.log(`Light state change was successful? ${result}`);
+		  })
+		;
+	}
+
+ later(delay, value) {
+    return new Promise(resolve => setTimeout(resolve, delay, value));
+	}
+
+	async identifyLight (lightId) {
+		this.later(ONE_SECOND_IN_MILLISECONDS).then(() => { this.setPower(lightId, false) });
+		this.later(2 * ONE_SECOND_IN_MILLISECONDS).then(() => { this.setPower(lightId, true) });
+		this.later(3 * ONE_SECOND_IN_MILLISECONDS).then(() => { this.setPower(lightId, false) });
+		this.later(4 * ONE_SECOND_IN_MILLISECONDS).then(() => { this.setPower(lightId, true) });
 	}
 
 	setBrightness (lightId, value) {

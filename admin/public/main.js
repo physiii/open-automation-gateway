@@ -116,7 +116,7 @@ socket.on('light list', (data) => {
 
 
   for(var i = 0; i < data.linkedLights.length; i++) {
-    rowsAsString += "<tr><td>" + data.linkedLights[i].id + "</td><td>" + data.linkedLights[i].controller
+    rowsAsString += "<tr><td>" + data.linkedLights[i].id + "</td><td>" + data.linkedLights[i].controller.name + " - " + data.linkedLights[i].controller.id
       + "</td><td><button type='button' onclick=\"unlinkLightToController('" + data.linkedLights[i].controller + "'," + data.linkedLights[i].id + ")\">unlink</button></td></tr>";
   }
 

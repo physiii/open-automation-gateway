@@ -111,11 +111,15 @@ io.on('connection', (socket) => {
 			lights = [];
 
 		for (let i = 0; i < lightControllers.length; i++ ) {
-			let ids = lightControllers[i].lightIds;
+			let ids = lightControllers[i].lightIds,
+				name = lightControllers[i].settings.name,
+				id = DevicesManager.getDeviceByServiceId(lightControllers[i].id).id;
+
+			console.log(TAG, name);
 			for (let j = 0; j < ids.length; j++) {
 				lights.push({
 					id: ids[j],
-					controller: DevicesManager.getDeviceByServiceId(lightControllers[i].id).id
+					controller: {id, name}
 				});
 			}
 		}
@@ -139,13 +143,16 @@ io.on('connection', (socket) => {
 	async function createLedController () {
 		await DevicesManager.createDevice({
 			settings: {name: 'Light Controller'},
-			services: [{type: 'light', BridgeId:'', lightIds:[]}]
+			services: [{type: 'light', BridgeId: '', lightIds: [] }]
 		})
 		getDeviceList();
 	}
 
 	async function linkLightToController (data) {
-		let controllerDevice = DevicesManager.getDeviceById(data.controller);
+		let controllerDevice = DevicesManager.getDeviceById(data.controller),
+			bridgeService = DevicesManager.getServicesByType('hue_bridge')[0];
+
+		bridgeService.identifyLight(data.lightId);
 
 		for (let i = 0; i < controllerDevice.services.services.length; i++ ) {
 			let id = controllerDevice.services.services[i].id,

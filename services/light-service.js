@@ -27,8 +27,8 @@ const Service = require('./service.js'),
 		{r: 255, g: 0, b: 255},
 		{r: 0, g: 0, b: 255},
 		{r: 0, g: 255, b: 0},
-	]
-	brightConversion = 255;
+	],
+	brightConversion = 255,
 	TAG = '[LightService]';
 
 class LightService extends Service {
@@ -36,12 +36,14 @@ class LightService extends Service {
 		super(data, relaySocket, save, LightApi);
 
 		this.current_scene = 0;
-		this.themes = data.themes || [];
+		this.themes = data.themes || Themes;
 		this.state.themes = this.themes.map((theme) => theme.color);
 		this.alarm_state;
 		this.lightIds = data.lightIds;
 		this.alarmTimer = setTimeout(() => {}, 0);
 		this.bridgeService = DevicesManager.getServicesByType('hue_bridge')[0];
+		console.log(TAG, this.state);
+		this.save();
 	}
 	setPower (value) {
 		this.lightIds.forEach(id => {
@@ -59,7 +61,10 @@ class LightService extends Service {
 			this.bridgeService.setBrightness(id, bri);
 		});
 
+		this.state.power = value;
 		this.state.brightness = value;
+
+		this.save();
 	}
 
 	setTheme (newTheme) {
@@ -73,6 +78,9 @@ class LightService extends Service {
 			];
 
 		console.log(TAG,'setTheme', color);
+
+		this.save();
+		this.state.power = true;
 		this.setColor(color);
 	}
 

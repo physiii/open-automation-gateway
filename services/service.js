@@ -10,7 +10,7 @@ class Service {
 		this.save = save;
 		this._events = new EventEmitter();
 
-		this.saveSettings(data.settings || {}, false);
+		this.saveSettings(data.settings || {});
 
 		// On state change, send updated state to state listeners.
 		this.unproxied_state = {...data.state};
@@ -39,12 +39,12 @@ class Service {
 		this._relayEmit(event, data, callback);
 	}
 
-	saveSettings (settings, restart = false) {
+	saveSettings (settings) {
 		return new Promise((resolve, reject) => {
 			this.settings = settings;
 			this.save()
-			if (restart) utils.restart(3);
 			console.log("saveSettings", settings);
+			resolve();
 		})
 	}
 
