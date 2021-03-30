@@ -67,9 +67,10 @@ ymin = 100
 xmax = xmin + rWidth
 ymax = ymin + rHeight
 
-BUFFER_TIME = 30
+BUFFER_TIME = 1
 AUDIO_FRAMERATE = 6
-BUFFER_SIZE = BUFFER_TIME * frameRate # seconds * frameRate
+# BUFFER_SIZE = BUFFER_TIME * frameRate # seconds * frameRate
+BUFFER_SIZE = 3
 AUDIO_BUFFER_SIZE = BUFFER_TIME * AUDIO_FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 15 # minimum number of consecutive frames with motion required to trigger motion detection
 MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before forcing evaluation of a new frame
@@ -79,7 +80,7 @@ MAX_CATCH_UP_MAX_REACHED = 10 # script will exit if max catch up frames limit is
 # Definitions and Classes
 
 def detectMotion(frame, avg):
-	motionDetected = False
+	motionStarted = False
 	croppedFrame = None
 
 	# crop image to motion area
@@ -96,7 +97,7 @@ def detectMotion(frame, avg):
 	# cv2.rectangle(frame, (x, y), (xh, yh), (255,0,0), 2)
 
 	# resize the frame, convert it to grayscale, and blur it
-	gray = cv2.cvtColor(imutils.resize(croppedFrame, width=100), cv2.COLOR_BGR2GRAY)
+	gray = cv2.cvtColor(imutils.resize(croppedFrame, width=300), cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
 	# if the first frame is None, initialize it
@@ -106,7 +107,7 @@ def detectMotion(frame, avg):
 	# accumulate the weighted average between the current frame and
 	# previous frames, then compute the difference between the current
 	# frame and running average
-	cv2.accumulateWeighted(gray, avg, 0.1)
+	cv2.accumulateWeighted(gray, avg, 0.001)
 	frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
 	thresh = cv2.threshold(frameDelta, motionThreshold, 255, cv2.THRESH_BINARY)[1]
 
@@ -126,11 +127,11 @@ def detectMotion(frame, avg):
 
 		if regionDetect:
 			if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
-				motionDetected = True
+				motionStarted = True
 		else:
-			motionDetected = True
+			motionStarted = True
 
-	return motionDetected, avg
+	return motionStarted, avg
 
 def percentage(percent, wholeNum):
 	if wholeNum == 0:
@@ -241,9 +242,9 @@ def saveRecording(data):
 
 	db.camera_recordings.insert_one(recordingData)
 
-	while acw.recording:
-		time.sleep(1)
-		print('Waiting on audio clip to finish!')
+	# while acw.recording:
+	# 	time.sleep(1)
+	# 	print('Waiting on audio clip to finish!')
 
 	audioFile = getAudioFilePath()
 	print('[NEW RECORDING] Recording saved.', audioFile)
@@ -284,56 +285,17 @@ recordingFramesLength = 0
 frame = None
 avg = None
 motionDetected = False
+motionStarted = False
 regionDetect = False
-kcw = KeyClipWriter(BUFFER_SIZE)
-acw = AudioClipWriter(audioDevice, AUDIO_BUFFER_SIZE)
 loopCnt = 0
 fileTimestamp = None
 newAudioRecording = False
 # keep looping
 for needCatchUpFrame in framerateInterval(frameRate):
-	# repeat the last frame if motion detection isn't keeping up with the frameRate
-	# if needCatchUpFrame and consecCatchUpFrames < MAX_CATCH_UP_FRAMES:
-	# 	consecCatchUpFrames += 1
-	#
-	# 	kcw.update(frame)
-	#
-	# 	if motionDetected:
-	# 		consecFramesWithMotion += 1
-	# 	else:
-	# 		consecFramesWithoutMotion += 1
-	#
-	# 	if kcw.recording:
-	# 		recordingFramesLength += 1
-	#
-	# 	print("repeat the last frame if motion detection isn't keeping up with the framerate")
-	# 	continue
-
-	# if too many catch-up frames have been needed, force getting a fresh frame from the camera
-	if consecCatchUpFrames >= MAX_CATCH_UP_FRAMES:
-		consecCatchUpMaxReached += 1
-
-		# if motion detection is failing to keep up with the framerate for too
-		# long, terminate the script so the camera service can try starting
-		# motion detection again.
-		if consecCatchUpMaxReached >= MAX_CATCH_UP_MAX_REACHED and not kcw.recording:
-			print('Cannot process frames fast enough for motion detection. Exiting.')
-			sys.stdout.flush()
-			# sys.exit()
-
-		print('Reached maximum number of catch-up frames (' + str(MAX_CATCH_UP_FRAMES) + '). Forcing evaluation of new frame from camera.')
-		sys.stdout.flush()
-	else:
-		consecCatchUpMaxReached = 0
-
-	consecCatchUpFrames = 0
-
 	frameTimestamp = datetime.datetime.now()
 
 	# grab the current frame
 	frame = camera.read()
-
-	# if a frame could not be grabbed, try again
 	if frame is None:
 		continue
 
@@ -341,86 +303,23 @@ for needCatchUpFrame in framerateInterval(frameRate):
 	if cameraRotation == 180:
 		frame = imutils.rotate(frame, cameraRotation);
 
-	if (loopCnt >= frameRate):
-		loopCnt = 0
-	else:
-		loopCnt += 1
+	motionStarted, avg = detectMotion(frame, avg)
 
-
-	if (loopCnt % 4 == 0):
-		motionDetected = False
-		motionDetected, avg = detectMotion(frame, avg)
-
-	if motionDetected:
+	if motionStarted:
 		consecFramesWithoutMotion = 0
 		consecFramesWithMotion += 1
 
-		# if we are not already recording, start recording
-		if consecFramesWithMotion >= MIN_MOTION_FRAMES and not kcw.recording:
+		if consecFramesWithMotion >= MIN_MOTION_FRAMES and not motionDetected:
+			motionDetected = True
 			print('[MOTION] Detected motion. Threshold: ',motionThreshold)
 
-			# save a preview image
-			cv2.imwrite(getCameraPath() + '/preview.jpg', frame)
-
-			fileTimestamp = frameTimestamp
-			videoFileName = getFileName(fileTimestamp) + '.avi'
-			tempRecordingPath = getCameraTempPath() + '/' + videoFileName
-			finishedRecordingPath = getDatePath(fileTimestamp) + '/' + videoFileName
-
-			kcw.start(tempRecordingPath, cv2.VideoWriter_fourcc(*'MPEG'), frameRate)
-			acw.start(getAudioFilePath())
 	else:
 		consecFramesWithMotion = 0
 		consecFramesWithoutMotion += 1
 
-	if kcw.recording:
-		recordingFramesLength += 1
-
-	# add frameTimestamp text to frame
-	# text shadow
-	cv2.putText(frame, frameTimestamp.strftime('%-m/%-d/%Y %-I:%M:%S %p'),
-		(11, frame.shape[0] - 9), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 4)
-	# text
-	cv2.putText(frame, frameTimestamp.strftime('%-m/%-d/%Y %-I:%M:%S %p'),
-		(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 255, 60), 2)
-
-	# Draw region detection area
-	if regionDetect:
-		cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
-
-	kcw.update(frame)
-
-	if kcw.recording and consecFramesWithoutMotion >= BUFFER_SIZE:
+	if consecFramesWithoutMotion >= BUFFER_SIZE and motionDetected:
+		motionDetected = False
 		print('[NO MOTION] Recording finished capturing.')
-
-		sys.stdout.flush()
-
-		recordingData = {
-			'tempPath': tempRecordingPath,
-			'finishedPath': finishedRecordingPath,
-			'date': fileTimestamp,
-			'duration': float(recordingFramesLength + BUFFER_SIZE) / frameRate,
-			'width': frame.shape[1],
-			'height': frame.shape[0]
-		}
-
-		recordingAudioData = {
-			'tempPath': tempRecordingPath,
-			'finishedPath': finishedRecordingPath,
-			'date': fileTimestamp,
-			'duration': float(recordingFramesLength + BUFFER_SIZE) / frameRate,
-			'width': frame.shape[1],
-			'height': frame.shape[0]
-		}
-
-		kcw.finish(saveRecording, recordingData)
-		acw.finish()
-
-		# create a new KeyClipWriter. the existing one continues saving the
-		# recording in a separate thread
-		kcw = KeyClipWriter(BUFFER_SIZE)
-
-		recordingFramesLength = 0
 
 	sys.stdout.flush()
 	continue

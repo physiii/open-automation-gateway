@@ -1,5 +1,6 @@
 const spawn = require('child_process').spawn,
 	exec = require('child_process').exec,
+	execSync = require('child_process').execSync,
 	crypto = require('crypto'),
 	path = require('path'),
 	fs = require('fs'),
@@ -11,6 +12,8 @@ const spawn = require('child_process').spawn,
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	mediaDir = "/usr/local/lib/open-automation/camera/",
+	eventsDir = "/usr/local/lib/open-automation/camera/events/",
+	tmpDir = "/tmp/open-automation/",
 	ONE_DAY_IN_HOURS = 24,
 	ONE_HOUR_IN_MINUTES = 60,
 	ONE_MINUTE_IN_SECONDS = 60,
@@ -18,16 +21,29 @@ const spawn = require('child_process').spawn,
 	ONE_HOUR_IN_MILLISECONDS = 3600000,
 	ONE_MINUTE_IN_MILLISECONDS = 60000,
 	ONE_SECOND_IN_MILLISECONDS = 1000,
-	CHECK_SCRIPTS_DELAY = 30 * ONE_SECOND_IN_MILLISECONDS,
+	CHECK_SCRIPTS_DELAY = 60 * ONE_MINUTE_IN_MILLISECONDS,
 	FRAME_RATE = config.camera_frame_rate || 8,
+	BUFFER_DURATION = 0.5 * ONE_MINUTE_IN_MILLISECONDS,
+	PRELOAD_DURATION = 5 * ONE_SECOND_IN_MILLISECONDS,
+	POSTLOAD_DURATION = PRELOAD_DURATION,
+	AUDIO_LOOPBACK_DEVICE = 'hw:4,1',
 	TAG = '[CameraService]';
+
+let bufferNum = 0,
+	ffmpegCapture = [];
 
 class CameraService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, CameraApi);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
-		this.TAG = TAG + ' ' + this.getCameraNumber();
+		this.TAG = TAG;
+		this.loopbackStarted = false;
+		this.motionDetected = false;
+		this.motionTimestamp = 0;
+		this.currentPosition = 0;
+		this.isRecording = false;
+		this.postloadTimeout;
 
 		// Settings
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
@@ -47,24 +63,25 @@ class CameraService extends Service {
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
 		this.setUpLoopback();
-		if (!config.disable_audio) {
+		// if (!config.disable_audio) {
 			this.setUpAudioLoopback();
-		} else {
-			console.log(TAG, "Camera audio is disabled.");
-		}
-
-		if (this.settings.motion_detection_enabled) {
-			this.startMotionDetection();
-		} else {
-			console.log(TAG, "Motion detection is disabled.");
-		}
+		// } else {
+		// 	console.log(TAG, "Camera audio is disabled.");
+		// }
 
 		this.startTimeLapse();
 		this.startBackup();
+
+		fs.mkdir(tmpDir, { recursive: true }, (err) => {
+			if (err) throw err;
+		});
+		fs.mkdir(eventsDir, { recursive: true }, (err) => {
+			if (err) throw err;
+		});
 	}
 
 	startBackup () {
-		this.loopbackInterval = setInterval((self) => {
+		this.loopbackInterval = setInterval(() => {
 			utils.checkIfProcessIsRunning('rsync').then((isRunning) => {
 				if (!isRunning) {
 					const source_dir = config.source_dir + this.id + "/",
@@ -72,7 +89,7 @@ class CameraService extends Service {
 							+ source_dir + ' ' + config.user + '@' + config.server + ':' + config.dest_dir;
 
 					exec(command);
-					// console.log(command);
+					console.log(command);
 				}
 			});
 		}, CHECK_SCRIPTS_DELAY);
@@ -198,7 +215,7 @@ class CameraService extends Service {
 	}
 
 	startMotionDetection () {
-		const METHOD_TAG = this.TAG + ' [motion]',
+		const METHOD_TAG = this.TAG + ' [startMotionDetection]',
 			MOTION_TAG = METHOD_TAG + ' [motion.py]',
 			launchMotionScript = () => {
 				// Launch the motion detection script.
@@ -217,47 +234,69 @@ class CameraService extends Service {
 					'--audio-device', config.motion_audio_device_path || 0,
 				]);
 
-				// Listen for motion events.
-				motionProcess.stdout.on('data', (data) => {
-					if (!data) {
-						return;
-					}
+			this.startCapture();
 
-					const now = new Date();
+			// Listen for motion events.
+			motionProcess.stdout.on('data', (data) => {
+				if (!data) {
+					return;
+				}
 
-					console.log(MOTION_TAG, data.toString());
+				const now = new Date();
 
-					if (data.includes('[MOTION]')) {
+				console.log(MOTION_TAG, data.toString());
+
+				if (data.includes('[MOTION]')) {
+					if (!this.motionDetected)  {
 						this.state.motion_detected_date = now;
+						this.motionDetected = true;
+						this.motionTimestamp = this.currentPosition;
+						this.isRecording = true;
+					}
 
-						this.relayEmit('motion-started', {date: now.toISOString()});
-					} else if (data.includes('[NO MOTION]')) {
-						this.relayEmit('motion-stopped', {date: now.toISOString()});
-					} else if (data.includes('[NEW RECORDING]')) {
-						CameraRecordings.getLastRecording(this.id).then((recording) => {
-							this.getPreviewImage().then((preview_image) => {
-								this.relayEmit('motion-recorded', {recording, preview_image});
-							});
+					console.log(METHOD_TAG, "Motion detected so clearing motionCaptureInterval and postloadTimeout.");
+
+					clearTimeout(this.postloadTimeout);
+					clearInterval(this.motionCaptureInterval);
+
+					this.relayEmit('motion-started', {date: now.toISOString()});
+				} else if (data.includes('[NO MOTION]')) {
+					this.postloadTimeout = setTimeout(() => {
+						console.log(METHOD_TAG, "Finished postload and preload on capture so killing recording process.");
+						if (ffmpegCapture[bufferNum]) ffmpegCapture[bufferNum].kill();
+
+						bufferNum = bufferNum == 1 ? 0 : 1;
+						this.startCapture();
+					}, POSTLOAD_DURATION);
+
+					console.log(METHOD_TAG, "Motion has stopped so finishing postload on recording and starting preload on capture.");
+					this.motionDetected = false;
+					this.relayEmit('motion-stopped', {date: now.toISOString()});
+				} else if (data.includes('[NEW RECORDING]')) {
+					CameraRecordings.getLastRecording(this.id).then((recording) => {
+						this.getPreviewImage().then((preview_image) => {
+							this.relayEmit('motion-recorded', {recording, preview_image});
 						});
+					});
+				}
+			});
+
+			motionProcess.on('close', (code) => {
+				console.error(TAG, `Motion process exited with code ${code}.`);
+			});
+
+			motionProcess.stderr.on('data', (data) => {
+				console.error(MOTION_TAG, data.toString());
+			});
+			// Every so often check to make sure motion detection is still running.
+			this.motionScriptInterval = setInterval(() => {
+				utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
+					if (!isMotionRunning) {
+						launchMotionScript();
 					}
 				});
-
-				motionProcess.on('close', (code) => {
-					console.error(TAG, `Motion process exited with code ${code}.`);
-				});
-
-				motionProcess.stderr.on('data', (data) => {
-					console.error(MOTION_TAG, data.toString());
-				});
-				// Every so often check to make sure motion detection is still running.
-				this.motionScriptInterval = setInterval(() => {
-					utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
-						if (!isMotionRunning) {
-							launchMotionScript();
-						}
-					});
-				}, CHECK_SCRIPTS_DELAY);
-			}
+			}, CHECK_SCRIPTS_DELAY);
+		}
 
 		// Check if motion is already running so we do not duplicate process
 		utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((processId) => {
@@ -267,28 +306,140 @@ class CameraService extends Service {
 		});
 	}
 
+	fillBuffer (num) {
+		const METHOD_TAG = this.TAG + ' [fillBuffer]';
+		// ffmpeg -f alsa -ar 44100 -i hw:1,0 -f mpegts -codec:a mp2 -f v4l2 -s 1280x720 -i /dev/video20 -s 1280x720 -q:v 4 test.avi -y
+
+		const options = [
+				// '-loglevel', 'panic',
+				'-f', 'alsa',
+				'-ar', '44100',
+				'-i', num ? 'hw:4,1' : 'hw:5,1',
+				'-f', 'mpegts',
+				'-codec:a', 'mp2',
+				'-f', 'v4l2',
+				'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
+				'-i', this.getLoopbackDevicePath(),
+				'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
+				'-q:v', '4',
+				tmpDir + 'capBuffer' + num + '.avi', '-y'
+			];
+
+		VideoStreamer.printFFmpegOptions(options);
+		ffmpegCapture[num] = spawn('ffmpeg', options);
+
+		ffmpegCapture[num].stdout.on('data', (data) => {
+			console.log(METHOD_TAG, 'stdout', data);
+		});
+
+		ffmpegCapture[num].stderr.on('data', (data) => {
+			let match = "time=";
+
+			if (num != bufferNum) return;
+			data = data.toString('utf-8');
+			let index = data.indexOf(match);
+			if (index < 0) return;
+
+			let arr = data.substr(index + match.length, 8).split(':');
+			this.currentPosition = parseInt(
+				arr[0]) * ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS
+				+ parseInt(arr[1]) * ONE_MINUTE_IN_SECONDS
+				+ parseInt(arr[2]);
+			// console.log(METHOD_TAG, "currentPosition", this.currentPosition);
+		});
+
+		ffmpegCapture[num].on('close', (code) => {
+			// console.log(METHOD_TAG, 'close', `FFmpeg exited with code ${code}.`);
+			console.log(METHOD_TAG, "ffmpegCapture closed.", num);
+			if (this.isRecording) {
+				console.log(METHOD_TAG, "Saving video.");
+				this.saveVideo(num);
+			}
+		});
+	}
+
+	startCapture () {
+		const METHOD_TAG = this.TAG + ' [capture]';
+
+		this.fillBuffer(bufferNum);
+		this.motionCaptureInterval = setInterval(() => {
+			console.log(METHOD_TAG, "motionCaptureInterval");
+			// if (!this.motionDetected) {
+				setTimeout(() => {
+					let num = bufferNum == 0 ? 1 : 0;
+					console.log(METHOD_TAG, "killing ffmpegCapture", num);
+					if (ffmpegCapture[num]) {
+						ffmpegCapture[num].kill();
+						if (!this.isRecording) fs.unlinkSync(tmpDir + 'capBuffer' + num + '.avi');
+					}
+				}, PRELOAD_DURATION);
+
+				bufferNum = bufferNum ? 0 : 1;
+				this.fillBuffer(bufferNum);
+			// } else {
+			// 	console.log(TAG, "Motion detected so not switching buffers.");
+			// }
+		}, BUFFER_DURATION);
+	}
+
+	saveVideo (num) {
+		const METHOD_TAG = this.TAG + ' [saveVideo]';
+
+		let src = tmpDir + 'capBuffer' + num + '.avi',
+			stamp = this.state.motion_detected_date.toISOString(),
+			year = stamp.substr(0,4) + '/',
+			month = stamp.substr(5,2) + '/',
+			day = stamp.substr(8,2) + '/',
+			filename = stamp.substr(0,19).replace('T','_') + '.avi',
+			destDir = eventsDir + this.id + '/'
+				+ year + month + day,
+			destPath = destDir + filename,
+			pos = this.motionTimestamp - PRELOAD_DURATION / ONE_SECOND_IN_MILLISECONDS,
+			start = Math.floor(pos / (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS))
+				+ ':' + Math.floor(pos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) / ONE_MINUTE_IN_SECONDS)
+				+ ':' + Math.floor(pos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) % ONE_MINUTE_IN_SECONDS);
+
+		console.log("Recording destination path", destPath);
+
+		const options = [
+				// '-loglevel', 'panic',
+				'-i', src,
+				'-ss', start,
+				'-c', 'copy',
+				destPath, '-y'
+			];
+
+		VideoStreamer.printFFmpegOptions(options);
+		execSync('mkdir -p ' + destDir);
+		let ffmpegRecording = spawn('ffmpeg', options);
+
+		ffmpegRecording.stdout.on('data', (data) => {
+			// console.log(METHOD_TAG, 'stdout', data);
+		});
+
+		ffmpegRecording.stderr.on('data', (data) => {
+			// console.log(METHOD_TAG, "stderr");
+		});
+
+		ffmpegRecording.on('close', (code) => {
+			console.log(METHOD_TAG, "Saved video.");
+			this.isRecording = false;
+		});
+	}
+
 	setUpLoopback () {
 		const METHOD_TAG = this.TAG + ' [loopback]',
 			forwardStreamToLoopback = () => {
-				// const ffmpegProcess = spawn('ffmpeg', [
-				// 		'-loglevel', 'panic',
-				// 		'-f', 'v4l2',
-				// 		'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
-				// 		'-pix_fmt', 'rgb24',
-				// 		'-i', this.os_device_path,
-				// 		'-f', 'v4l2',
-				// 		this.getLoopbackDevicePath()
-				// 	]);
-
 				// ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 1280x720 -i /dev/video0 -pix_fmt yuyv422 -f v4l2 /dev/video20
 				const ffmpegProcess = spawn('ffmpeg', [
-						'-loglevel', 'panic',
+						// '-loglevel', 'panic',
 						'-f', 'v4l2',
 						'-input_format', 'mjpeg',
 						'-framerate', '30',
 						'-video_size', this.settings.resolution_w+'x'+this.settings.resolution_h,
 						'-i', this.os_device_path,
-						'-pix_fmt', 'yuyv422',
+						'-vf', 'format=yuv420p',
+						// '-pix_fmt', 'yuyv422',
 						'-f', 'v4l2',
 						this.getLoopbackDevicePath()
 					]);
@@ -298,7 +449,17 @@ class CameraService extends Service {
 				});
 
 				ffmpegProcess.stderr.on('data', (data) => {
-					console.error(METHOD_TAG, data);
+					if (!this.loopbackStarted) {
+						setTimeout(() => {
+							if (this.settings.motion_detection_enabled) {
+								this.startMotionDetection();
+							} else {
+								console.log(TAG, "Motion detection is disabled.");
+							}
+						}, PRELOAD_DURATION);
+	    			this.loopbackStarted = true;
+					}
+					// console.error(METHOD_TAG, 'stderr', data.toString('utf-8'));
 				});
 
 				ffmpegProcess.on('close', (code) => {
@@ -338,9 +499,10 @@ class CameraService extends Service {
 							'hw:Loopback_2'
 					];
 
+					VideoStreamer.printFFmpegOptions(options);
+
 					const ffmpegProcess = spawn('ffmpeg', options);
 
-					VideoStreamer.printFFmpegOptions(options);
 					ffmpegProcess.stdout.on('data', (data) => {
 						console.log(METHOD_TAG, data);
 					});
