@@ -38,12 +38,12 @@ ap.add_argument('-a', '--audio-device', dest='audio-device', type=str, required=
 ap.add_argument('-c', '--camera', dest='camera', type=str, required=True, help='path to video device interface (e.g. /dev/video0)')
 ap.add_argument('-i', '--camera-id', dest='camera-id', type=str, required=True, help='unique id of camera service')
 ap.add_argument('-r', '--rotation', dest='rotation', type=int, required=False, default=0, help='degrees of rotation for the picture - supported values: 0, 180')
-ap.add_argument('-f', '--frame-rate', dest='frame-rate', type=int, required=False, default=8, help='Video frame rate')
-ap.add_argument('-t', '--threshold', dest='threshold', type=int, required=False, default=10, help='Threshold used to begin recording motion')
-ap.add_argument('-x1', '--motionArea_x1', dest='motionArea_x1', type=float, required=False, default=10, help='Coordinates for motion record region')
-ap.add_argument('-y1', '--motionArea_y1', dest='motionArea_y1', type=float, required=False, default=10, help='Coordinates for motion record region')
-ap.add_argument('-x2', '--motionArea_x2', dest='motionArea_x2', type=float, required=False, default=10, help='Coordinates for motion record region')
-ap.add_argument('-y2', '--motionArea_y2', dest='motionArea_y2', type=float, required=False, default=10, help='Coordinates for motion record region')
+ap.add_argument('-f', '--frame-rate', dest='frame-rate', type=int, required=False, default=3, help='Video frame rate')
+ap.add_argument('-t', '--threshold', dest='threshold', type=int, required=False, default=4, help='Threshold used to begin recording motion')
+ap.add_argument('-x1', '--motionArea_x1', dest='motionArea_x1', type=float, required=False, default=0, help='Coordinates for motion record region')
+ap.add_argument('-y1', '--motionArea_y1', dest='motionArea_y1', type=float, required=False, default=0, help='Coordinates for motion record region')
+ap.add_argument('-x2', '--motionArea_x2', dest='motionArea_x2', type=float, required=False, default=0, help='Coordinates for motion record region')
+ap.add_argument('-y2', '--motionArea_y2', dest='motionArea_y2', type=float, required=False, default=0, help='Coordinates for motion record region')
 args = vars(ap.parse_args())
 
 cameraPath = args['camera']
@@ -67,10 +67,10 @@ ymin = 100
 xmax = xmin + rWidth
 ymax = ymin + rHeight
 
+MIN_CONTOUR_AREA = 0
 BUFFER_TIME = 1
 AUDIO_FRAMERATE = 6
-# BUFFER_SIZE = BUFFER_TIME * frameRate # seconds * frameRate
-BUFFER_SIZE = 3
+BUFFER_SIZE = BUFFER_TIME * frameRate # seconds * frameRate
 AUDIO_BUFFER_SIZE = BUFFER_TIME * AUDIO_FRAMERATE # seconds * framerate
 MIN_MOTION_FRAMES = 15 # minimum number of consecutive frames with motion required to trigger motion detection
 MAX_CATCH_UP_FRAMES = 30 # maximum number of consecutive catch-up frames before forcing evaluation of a new frame
@@ -107,7 +107,7 @@ def detectMotion(frame, avg):
 	# accumulate the weighted average between the current frame and
 	# previous frames, then compute the difference between the current
 	# frame and running average
-	cv2.accumulateWeighted(gray, avg, 0.001)
+	cv2.accumulateWeighted(gray, avg, 0.5)
 	frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
 	thresh = cv2.threshold(frameDelta, motionThreshold, 255, cv2.THRESH_BINARY)[1]
 
@@ -119,17 +119,19 @@ def detectMotion(frame, avg):
 	# determine if the there's motion in this frame
 	for contour in contours:
 		# if the contour is too small, ignore it
-		if cv2.contourArea(contour) < 1000:
+		if cv2.contourArea(contour) < MIN_CONTOUR_AREA:
 			continue
 
-		# compute the bounding box for the contour
-		(x, y, w, h) = cv2.boundingRect(contour)
+		# # compute the bounding box for the contour
+		# (x, y, w, h) = cv2.boundingRect(contour)
+		#
+		# if regionDetect:
+		# 	if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
+		# 		motionStarted = True
+		# else:
+		# 	motionStarted = True
 
-		if regionDetect:
-			if y < ymax and x < xmax and x+w > xmin and y+h > ymin:
-				motionStarted = True
-		else:
-			motionStarted = True
+		motionStarted = True
 
 	return motionStarted, avg
 
@@ -286,7 +288,6 @@ frame = None
 avg = None
 motionDetected = False
 motionStarted = False
-regionDetect = False
 loopCnt = 0
 fileTimestamp = None
 newAudioRecording = False
@@ -309,9 +310,9 @@ for needCatchUpFrame in framerateInterval(frameRate):
 		consecFramesWithoutMotion = 0
 		consecFramesWithMotion += 1
 
-		if consecFramesWithMotion >= MIN_MOTION_FRAMES and not motionDetected:
+		if not motionDetected:
 			motionDetected = True
-			print('[MOTION] Detected motion. Threshold: ',motionThreshold)
+			print('[MOTION]')
 
 	else:
 		consecFramesWithMotion = 0
@@ -319,7 +320,7 @@ for needCatchUpFrame in framerateInterval(frameRate):
 
 	if consecFramesWithoutMotion >= BUFFER_SIZE and motionDetected:
 		motionDetected = False
-		print('[NO MOTION] Recording finished capturing.')
+		print('[NO MOTION]')
 
 	sys.stdout.flush()
 	continue
