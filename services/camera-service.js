@@ -25,8 +25,9 @@ const spawn = require('child_process').spawn,
 	CHECK_SCRIPTS_DELAY = 60 * ONE_MINUTE_IN_MILLISECONDS,
 	FRAME_RATE = config.motion_frame_rate || 3,
 	BUFFER_DURATION = 5 * ONE_MINUTE_IN_MILLISECONDS,
-	PRELOAD_DURATION = 20 * ONE_SECOND_IN_MILLISECONDS,
+	PRELOAD_DURATION = 10 * ONE_SECOND_IN_MILLISECONDS,
 	POSTLOAD_DURATION = PRELOAD_DURATION,
+	NO_MOTION_DURATION = 60 * ONE_SECOND_IN_MILLISECONDS,
 	AUDIO_LOOPBACK_DEVICE = 'hw:4,1',
 	TAG = '[CameraService]';
 
@@ -42,6 +43,7 @@ class CameraService extends Service {
 		this.loopbackStarted = false;
 		this.motionDetected = false;
 		this.motionTimestamp = 0;
+		this.noMotionTimestamp = 0;
 		this.currentPosition = [];
 		this.isRecording = false;
 		this.recordingBuffer = 0;
@@ -267,21 +269,20 @@ class CameraService extends Service {
 					this.relayEmit('motion-started', {date: now.toISOString()});
 				} else if (data.includes('[NO MOTION]')) {
 					console.log(METHOD_TAG, "Motion has stopped so finishing postload on recording and starting preload on capture.");
-
-					this.motionDetected = false;
-					this.relayEmit('motion-stopped', {date: now.toISOString()});
-
+					this.noMotionTimestamp = this.currentPosition[currentBuffer];
 					this.fillBuffer(currentBuffer ? 0 : 1);
 
 					this.postloadTimeout = setTimeout(() => {
 						console.log(METHOD_TAG, "Finished postload on recording and preload on capture so killing recording process.");
+
 						this.motionDuration = this.currentPosition[currentBuffer] - this.motionTimestamp;
 						if (ffmpegCapture[currentBuffer]) ffmpegCapture[currentBuffer].kill();
 
 						currentBuffer = currentBuffer ? 0 : 1;
 						this.startCapture();
-
-					}, POSTLOAD_DURATION);
+						this.motionDetected = false;
+						this.relayEmit('motion-stopped', {date: now.toISOString()});
+					}, NO_MOTION_DURATION);
 				}
 			});
 
@@ -330,7 +331,7 @@ class CameraService extends Service {
 
 	fillBuffer (num) {
 		let METHOD_TAG = this.TAG + ' [fillBuffer ' + num + ']';
-		// ffmpeg -f alsa -ar 44100 -i hw:1,0 -f mpegts -codec:a mp2 -f v4l2 -s 1280x720 -i /dev/video20 -s 1280x720 -q:v 4 test.avi -y
+		// ffmpeg -f alsa -ar 44100 -i hw:1,0 -f mpegts -codec:a mp2 -f v4l2 -s 1280x720 -i /dev/video20 -s 1280x720 -q:v 4 -async 1 test.avi -y
 
 		let options = [
 				// '-loglevel', 'panic',
@@ -344,6 +345,7 @@ class CameraService extends Service {
 				'-i', this.getLoopbackDevicePath(),
 				'-s', this.settings.resolution_w+'x'+this.settings.resolution_h,
 				'-q:v', '4',
+				'-async', '1',
 				tmpDir + 'capBuffer' + num + '.avi', '-y'
 			];
 
@@ -392,17 +394,22 @@ class CameraService extends Service {
 			destDir = eventsDir + this.id + '/'
 				+ year + month + day,
 			destPath = destDir + filename,
-			pos = this.motionTimestamp - PRELOAD_DURATION / ONE_SECOND_IN_MILLISECONDS,
-			start = Math.floor(pos / (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS))
-				+ ':' + Math.floor(pos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) / ONE_MINUTE_IN_SECONDS)
-				+ ':' + Math.floor(pos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) % ONE_MINUTE_IN_SECONDS);
+			startPos = this.motionTimestamp - PRELOAD_DURATION / ONE_SECOND_IN_MILLISECONDS,
+			stopPos = this.noMotionTimestamp + POSTLOAD_DURATION / ONE_SECOND_IN_MILLISECONDS,
+			start = Math.floor(startPos / (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS))
+				+ ':' + Math.floor(startPos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) / ONE_MINUTE_IN_SECONDS)
+				+ ':' + Math.floor(startPos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) % ONE_MINUTE_IN_SECONDS),
+			stop = Math.floor(stopPos / (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS))
+				+ ':' + Math.floor(stopPos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) / ONE_MINUTE_IN_SECONDS)
+				+ ':' + Math.floor(stopPos % (ONE_HOUR_IN_MINUTES * ONE_MINUTE_IN_SECONDS) % ONE_MINUTE_IN_SECONDS);
 
-		console.log("cut position:", pos, " | start", start);
+		console.log(METHOD_TAG, "cut:", start, stop);
 
 		const options = [
 				// '-loglevel', 'panic',
 				'-i', src,
 				'-ss', start,
+				'-to', stop,
 				'-c', 'copy',
 				destPath, '-y'
 			];
