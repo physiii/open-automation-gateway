@@ -200,12 +200,12 @@ class VideoStreamer {
 		if (fileStreamProcess) fileStreamProcess.kill();
 	}
 
-	printFFmpegOptions (options) {
+	printFFmpegOptions (options, log=true) {
 		let options_str = 'ffmpeg';
 		for (let i = 0; i < options.length; i++) {
 			options_str += ' ' + options[i];
 		}
-		// console.log("printFFmpegOptions", options_str);
+		if (log) console.log("printFFmpegOptions", options_str);
 		return options_str;
 	}
 
