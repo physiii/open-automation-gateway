@@ -4,9 +4,9 @@
 ## general ##
 #############
 
-sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing
-
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+
+sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing
 
 sudo apt-get install -y \
   sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
@@ -24,17 +24,6 @@ sudo apt install -y raspberrypi-kernel-headers \
 python3 -m pip install pymongo==3.4.0 numpy imutils pyaudio s-tui
 sudo npm install -g pm2
 
-##############
-##  ffmpeg  ##
-##############
-
-cd ${HOME}
-git clone https://github.com/FFmpeg/FFmpeg.git
-cd FFmpeg
-sudo ./configure --arch=armel --target-os=linux --enable-libfreetype --enable-openssl --enable-gpl --enable-libx264 --enable-nonfree --extra-ldflags="-latomic"
-make -j4
-sudo make install
-
 ############
 ## opencv ##
 ############
@@ -47,6 +36,8 @@ sudo make install
 
 #sudo mv /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf-ORIG.so
 #sudo ln -s /usr/local/src/opencv-4.0.0/build/lib/cv2.so /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so
+
+# while true; do vcgencmd masure_clock arm; vcgencmd measure_temp; date; sleep 10; done
 
 cd ${HOME}
 wget -O opencv.zip https://github.com/opencv/opencv/archive/4.2.0.zip
@@ -110,7 +101,7 @@ sudo systemctl enable hostapd
 sudo systemctl start hostapd
 
 cd ${HOME}
-git clone -b dev https://github.com/physiii/open-automation-gateway gateway
+git clone https://github.com/physiii/open-automation-gateway gateway
 cd gateway
 npm install
 sudo setfacl -m u:pi:rwx /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
