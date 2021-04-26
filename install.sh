@@ -114,7 +114,7 @@ sudo setfacl -m u:pi:rwx /etc
 
 sudo -i
 sed -i -e 's/exit 0//g' /etc/rc.local
-echo "su pi -c 'pm2 start /home/pi/gateway/index.js --name gateway'" >> /etc/rc.local
+echo "su pi -c 'pm2 start /home/pi/gateway/index.js --time --name gateway'" >> /etc/rc.local
 echo "modprobe snd-aloop enable=1,1,1 index=4,5,6" >> /etc/rc.local
 echo "modprobe v4l2loopback video_nr=20" >> /etc/rc.local
 echo "exit 0" >> /etc/rc.local
