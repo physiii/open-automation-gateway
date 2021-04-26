@@ -54,8 +54,6 @@ class LightService extends Service {
 	}
 
 	setBrightness (value) {
-		if (value < 1) value = 1;
-		if (value > 254) value = 254;
 		this.lightIds.forEach(id => {
 			let bri = value * brightConversion / 100
 			this.bridgeService.setBrightness(id, bri);
