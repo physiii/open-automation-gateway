@@ -18,8 +18,11 @@ sudo apt-get install -y \
 
 sudo apt install -y raspberrypi-kernel-headers \
 
-# sudo apt install -y v4l2loopback-dkms v4l2loopback-utils
-# sudo apt install -y libjasper-dev libqtgui4
+# sudo nano /boot/config.txt
+#   arm_freq=2000
+#   over_voltage=6
+# vcgencmd measure_clock arm
+# watch vcgencmd measure_temp
 
 python3 -m pip install pymongo==3.4.0 numpy imutils pyaudio s-tui
 sudo npm install -g pm2
@@ -36,8 +39,6 @@ sudo npm install -g pm2
 
 #sudo mv /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf-ORIG.so
 #sudo ln -s /usr/local/src/opencv-4.0.0/build/lib/cv2.so /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so
-
-# while true; do vcgencmd masure_clock arm; vcgencmd measure_temp; date; sleep 10; done
 
 cd ${HOME}
 wget -O opencv.zip https://github.com/opencv/opencv/archive/4.2.0.zip
@@ -106,7 +107,6 @@ cd gateway
 npm install
 sudo setfacl -m u:pi:rwx /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
 sudo setfacl -m u:pi:rwx /etc
-# sudo chmod -R 777 /usr/local/lib /etc/wpa_supplicant/wpa_supplicant.conf /etc/hostapd/ /etc/default/hostapd /etc/rc.local /etc/dnsmasq.conf /etc/sysctl.conf
 
 #############
 ## startup ##
