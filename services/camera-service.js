@@ -79,6 +79,7 @@ class CameraService extends Service {
 		this.checkDeviceFreq();
 		this.checkDeviceTemp();
 		this.checkUptime();
+		this.checkHardwareVersion();
 
 		fs.mkdir(tmpDir, { recursive: true }, (err) => {
 			if (err) throw err;
@@ -127,6 +128,12 @@ class CameraService extends Service {
 				if (this.state.deviceUpTime != stdout) this.state.deviceUpTime = stdout;
 			});
 		}, SERVICE_LOOP);
+	}
+
+	checkHardwareVersion () {
+			exec("cat /proc/cpuinfo | grep Model", (error, stdout, stderr) => {
+				this.state.deviceHardwareVersion = stdout.substring(stdout.indexOf(":") + 2, stdout.length - 1);
+			});
 	}
 
 	getCameraNumber () {
