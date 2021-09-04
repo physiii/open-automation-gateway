@@ -28,6 +28,7 @@ const spawn = require('child_process').spawn,
 	PRELOAD_DURATION = 10 * ONE_SECOND_IN_MILLISECONDS,
 	POSTLOAD_DURATION = PRELOAD_DURATION,
 	NO_MOTION_DURATION = 60 * ONE_SECOND_IN_MILLISECONDS,
+	SERVICE_LOOP = 10 * 1000,
 	AUDIO_LOOPBACK_DEVICE = 'hw:4,1',
 	TAG = '[CameraService]';
 
@@ -75,6 +76,9 @@ class CameraService extends Service {
 
 		this.startTimeLapse();
 		this.startBackup();
+		this.checkDeviceFreq();
+		this.checkDeviceTemp();
+		this.checkUptime();
 
 		fs.mkdir(tmpDir, { recursive: true }, (err) => {
 			if (err) throw err;
@@ -97,6 +101,32 @@ class CameraService extends Service {
 				}
 			});
 		}, CHECK_SCRIPTS_DELAY);
+	}
+
+	checkDeviceFreq () {
+		setInterval(() => {
+			exec('vcgencmd measure_clock arm', (error, stdout, stderr) => {
+				stdout = stdout.substring(stdout.indexOf("=") + 1, stdout.length - 1);
+				if (this.state.deviceFreq != stdout) this.state.deviceFreq = stdout;
+			});
+		}, SERVICE_LOOP);
+	}
+
+	checkDeviceTemp () {
+		setInterval(() => {
+			exec('vcgencmd measure_temp', (error, stdout, stderr) => {
+				stdout = stdout.substring(stdout.indexOf("=") + 1, stdout.length - 1);
+				if (this.state.deviceTemp != stdout) this.state.deviceTemp = stdout;
+			});
+		}, SERVICE_LOOP);
+	}
+
+	checkUptime () {
+		setInterval(() => {
+			exec("awk '{printf(\"%d:%02d:%02d:%02d\",($1/60/60/24),($1/60/60%24),($1/60%60),($1%60))}' /proc/uptime", (error, stdout, stderr) => {
+				if (this.state.deviceUpTime != stdout) this.state.deviceUpTime = stdout;
+			});
+		}, SERVICE_LOOP);
 	}
 
 	getCameraNumber () {
