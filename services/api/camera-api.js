@@ -49,6 +49,15 @@ class CameraApi extends ServiceApi {
 			});
 		});
 
+		this.on('recording/get', (data, callback) => {
+			CameraRecordings.getRecording(data.recording_id).then((video) => {
+				console.log("getRecording", video);
+				callback(null, { video });
+			}).catch((error) => {
+				callback(error);
+			});
+		});
+
 		this.on('recordings/get', function (data, callback) {
 			CameraRecordings.getRecordings(this.service.id).then((recordings) => {
 				callback(null, {recordings: recordings});

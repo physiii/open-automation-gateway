@@ -179,15 +179,6 @@ class CameraService extends Service {
 		} else {
 			console.log(TAG, 'Current time ('+time+') is outside timelapse window ('+on_time+' to '+off_time+')');
 		}
-
-		/*this.getCameraImageBrightness().then(function(brightness) {
-			if (brightness > timelapse_brightness_threshold) {
-				exec(command);
-				console.log(TAG, 'Capturing time lapse image:', command);
-			} else {
-				console.log(TAG, 'Too dark for timelapse.');
-			}
-		});*/
 	}
 
 	getPreviewImage () {
@@ -210,6 +201,17 @@ class CameraService extends Service {
 				reject(error_message);
 			}
 		});
+	}
+
+	capturePreviewImage () {
+		const command = 'ffmpeg -i '
+				+ this.getLoopbackDevicePath() + ' '
+				+ eventsDir + this.id
+				+ '/preview.jpg -y';
+
+			setTimeout(() => {
+				exec(command);
+			}, 1000);
 	}
 
 	generateStreamToken () {
@@ -276,8 +278,6 @@ class CameraService extends Service {
 			// python3  /home/pi/gateway/motion/motion.py --camera /dev/video20 --camera-id e7128581-c932-496a-8ebd-ce90cde03653 --frame-rate 3  --rotation 0 --threshold 4 --audio-device hw:5,1
 			const motionProcess = spawn('python3', motionCommand);
 
-			// this.startCapture();
-
 			// Listen for motion events.
 			motionProcess.stdout.on('data', (data) => {
 				if (!data) {
@@ -295,6 +295,8 @@ class CameraService extends Service {
 						this.motionTimestamp = this.currentPosition[currentBuffer];
 						this.isRecording = true;
 						this.recordingBuffer = currentBuffer;
+
+						this.capturePreviewImage();
 					}
 
 					console.log(METHOD_TAG, "Motion detected so clearing motionCaptureInterval and postloadTimeout.");

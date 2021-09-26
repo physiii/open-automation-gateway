@@ -1,5 +1,7 @@
 const database = require('./services/database.js'),
 	VideoStreamer = require('./video-streamer.js'),
+	fs = require('fs'),
+	spawn = require('child_process').spawn,
 	TAG = '[CameraRecordings]';
 
 class CameraRecordings {
@@ -64,6 +66,30 @@ class CameraRecordings {
 			this.getRecordingById(recordingId).then((recording) => {
 				VideoStreamer.streamAudioFile(recording.id, streamToken, recording.file);
 				resolve(recordingId);
+			}).catch((error) => {
+				console.error(TAG, error);
+				reject(error);
+			});
+		});
+	}
+
+	getRecording (recordingId) {
+		const error_message = 'There was an error retrieving the recording.';
+
+		return new Promise((resolve, reject) => {
+			this.getRecordingById(recordingId).then((recording) => {
+				const url = 'http://192.168.1.42:5050/service-content/upload-recording',
+					fileName = recording.file.split('/'),
+					curl = spawn('curl', [
+						'-X', 'POST',
+						'-F', recordingId + '=@' + recording.file,
+						url
+					]);
+
+				curl.on('close', (code) => {
+					resolve({ file: fileName[fileName.length - 1], id: recordingId });
+				});
+
 			}).catch((error) => {
 				console.error(TAG, error);
 				reject(error);
