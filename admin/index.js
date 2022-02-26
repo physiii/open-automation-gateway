@@ -31,6 +31,11 @@ io.on('connection', (socket) => {
 		DeviceUtils.searchForNetworkThermostats();
 	});
 
+	socket.on('searchForNetworkCameras', () => {
+		console.log(TAG,"Searching for network cameras.");
+		DeviceUtils.searchForNetworkCameras();
+	});
+
 	socket.on('searchForLocalCameras', () => {
 		DeviceUtils.searchForAndCreateDevices();
 	});

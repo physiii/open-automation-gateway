@@ -6,17 +6,20 @@ class LightApi extends ServiceApi {
 		ServiceApi.prototype.listen.call(this);
 
 		this.on('lightOn/set', (data, callback) => {
+			console.log(TAG,"lightOn/set",data);
 			this.service.lightOn();
 			callback(null, {});
 		});
 
 		this.on('lightOff/set', (data, callback) => {
+			console.log(TAG,"lightOff/set",data);
 			console.log(TAG,"Recieved Call...")
 			this.service.lightOff();
 			callback(null, {});
 		});
 
 		this.on('brightness/set', (data, callback) => {
+			console.log(TAG,"brightness/set",data);
 			this.service.setBrightness(data.brightness);
 			callback(null, {});
 		});
@@ -28,14 +31,22 @@ class LightApi extends ServiceApi {
 		});
 
 		this.on('action', (data, callback) => {
-			console.log(TAG,'action',data);
+			if (data.value.property === 'turn-on-lights') {
+				console.log(TAG,'turn-on-lights',data.value);
+				console.log(this.service);
+				this.service.setPower(true);
+				// this.service.lightOn();
+			}
 			if (data.property === 'lightOn') {
+				console.log(TAG,"lightOn",data);
 				this.service.lightOn(data.value);
 			}
 			if (data.property === 'setPower') {
+				console.log(TAG,"setPower",data);
 				this.service.setPower(data.value);
 			}
 			if (data.property === 'setBrightness') {
+				console.log(TAG,"setBrightness",data);
 				this.service.setBrightness(data.value);
 			}
 			if (data.property === 'setTheme') {
@@ -48,6 +59,7 @@ class LightApi extends ServiceApi {
 				this.service.nextScene();
 			}
 			if (data.property === 'triggerAlarm') {
+				console.log(TAG,"triggerAlarm",data);
 				this.service.triggerAlarm(data.value);
 			}
 			if (data.property === 'setAlarm') {

@@ -156,6 +156,11 @@ class Device {
 		this.relay_socket.on('settings', (data, callback = noOp) => {
 			this.saveSettings(data.settings).then(() => callback(null)).catch(callback);
 		});
+		this.relay_socket.on('client-connected', (data, callback = noOp) => {
+				this.services.services.forEach(service => {
+					if (service.onClientConnect) service.onClientConnect(data);
+				});
+		});
 	}
 
 	sendCurrentStateToRelay () {

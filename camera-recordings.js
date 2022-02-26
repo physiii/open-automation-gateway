@@ -78,7 +78,7 @@ class CameraRecordings {
 
 		return new Promise((resolve, reject) => {
 			this.getRecordingById(recordingId).then((recording) => {
-				const url = 'http://192.168.1.42:5050/service-content/upload-recording',
+				const url = 'http://' + RELAY_SERVER + ':' + RELAY_PORT + '/service-content/upload-recording',
 					fileName = recording.file.split('/'),
 					curl = spawn('curl', [
 						'-X', 'POST',

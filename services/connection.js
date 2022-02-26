@@ -209,6 +209,7 @@ class ConnectionManager {
 	setConnAttempts(attemps) {
 		Database.getValueByKey("network","current_ap").then((obj) => {
 			if (!obj) return; // console.log(TAG,"current_ap not found");
+			if (!obj.current_ap) return;
 			let ssid = obj.current_ap.ssid
 			Database.getValueByKey("network","apList").then((obj) => {
 			let apList = [];
@@ -229,6 +230,7 @@ class ConnectionManager {
 	setCurrentAPStatus(status) {
 		Database.getValueByKey("network","current_ap").then((obj) => {
 			if (!obj) return; // console.log(TAG,"current_ap not found");
+			if (!obj.current_ap) return;
 			let ssid = obj.current_ap.ssid
 			Database.getValueByKey("network","apList").then((obj) => {
 				let apList = [];

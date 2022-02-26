@@ -20,6 +20,10 @@ const searchForLocalCameras = () => {
   socket.emit('searchForLocalCameras');
 }
 
+const searchForNetworkCameras = () => {
+  socket.emit('searchForNetworkCameras');
+}
+
 const searchForHueBridges = () => {
   socket.emit('searchForHueBridges');
 }
@@ -71,21 +75,21 @@ socket.on('router list', (data) => {
 
 socket.on('device list', (data) => {
   let rowsAsString = "<table style='margin:15px;width:90%'>";
-  rowsAsString += "<tr><th>Device Name</th><th>UUID</th><th>Remove</th></tr>";
+  rowsAsString += "<tr><th>Device Name</th><th>UUID</th><th>Path</th><th>Remove</th></tr>";
 
   for(var i = 0; i < data.length; i++) {
     if (data[i].services[0].settings.name) {
       rowsAsString += "<tr><td>" + data[i].services[0].settings.name + "</td><td>" + data[i].id
-        + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
+        + "</td><td>" + data[i].services[0].settings.network_path + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
       continue;
     }
     if (!data[i].settings.name) {
       rowsAsString += "<tr><td>Gateway</td><td>" + data[i].id
-        + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
+        + "</td><td>" + data[i].services[0].settings.network_path + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
       continue;
     }
     rowsAsString += "<tr><td>" + data[i].settings.name + "</td><td>" + data[i].id
-      + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
+      + "</td><td>" + data[i].services[0].settings.network_path + "</td><td><button type='button' onclick=\"removeDevice('" + data[i].id + "')\">remove</button></td></tr>";
   }
   rowsAsString += "</table>";
   $device_list.html( rowsAsString );

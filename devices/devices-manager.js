@@ -66,6 +66,7 @@ class DevicesManager {
 					reject();
 				}
 
+				console.log(TAG, "createDevice", device.services.services[0].network_path);
 				device.save().then(() => {
 					resolve(device);
 				}).catch(reject);

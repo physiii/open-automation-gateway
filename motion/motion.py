@@ -26,7 +26,6 @@ from subprocess import  check_output, CalledProcessError, STDOUT
 # from bson import BSON
 # from bson import json_util
 from subprocess import call
-from pymongo import MongoClient
 from pprint import pprint
 # from bson.objectid import ObjectId
 
@@ -258,19 +257,6 @@ def saveRecording(data):
 
 	sys.stdout.flush()
 
-
-##################################################################################################################
-# Start MongoDB
-
-try:
-	connection = MongoClient('mongodb://localhost:27017')
-	print('Database connected')
-	db = connection.gateway
-except:
-	print('Error: Unable to connect to database')
-	sys.stdout.flush()
-	connection = None
-
 ##################################################################################################################
 
 # initialize the video stream and allow the camera sensor to
@@ -298,7 +284,7 @@ for needCatchUpFrame in framerateInterval(frameRate):
 	# grab the current frame
 	frame = camera.read()
 	if frame is None:
-		continue
+		break
 
 	# rotate the frame
 	if cameraRotation == 180:

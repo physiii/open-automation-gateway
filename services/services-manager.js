@@ -2,6 +2,7 @@ const Service = require('./service.js'),
 	service_classes = {
 		'gateway': require('./gateway-service.js'),
 		'camera': require('./camera-service.js'),
+		'network-camera': require('./network-camera-service.js'),
 		'thermostat': require('./thermostat-service.js'),
 		'media': require('./media-service.js'),
 		'lock': require('./lock-service.js'),

@@ -1,5 +1,7 @@
 const spawn = require('child_process').spawn,
 	exec = require('child_process').exec,
+	execSync = require('child_process').execSync,
+	fs = require('fs'),
 	execFile = require('child_process').execFile,
 	config = require('./config.json'),
 	utils = require('./utils.js'),
@@ -7,11 +9,14 @@ const spawn = require('child_process').spawn,
 	defaultWidth = 640,
 	defaultHeight = 480,
 	defaultRotation = config.rotation || 0,
+	HLS_LIST_SIZE = 3,
+	HLS_TIME = 10,
 	TAG = '[VideoStreamer]';
 
 let	audioStreamProcess,
 	videoStreamProcess,
 	fileStreamProcess,
+	watchStreamDir = {},
 	audioStreamId,
 	videoStreamId,
 	isStreaming = false,
@@ -45,6 +50,84 @@ class VideoStreamer {
 		return url;
 	}
 
+	//ffmpeg -thread_queue_size 32768 -i "http://xx/636.m3u8" -f hls -c:v copy -c:a copy -hls_time 5 -hls_list_size 5 -hls_allow_cache 0 -hls_flags delete_segments -segment_list_flags +live
+	startNetworkStream (cameraId, rtspUrl) {
+		const METHOD_TAG = TAG + '[' + cameraId + ']' + '[' + rtspUrl +']',
+			streamDir = "/usr/local/lib/open-automation/camera/stream/" + cameraId,
+			options = [
+				'-i', rtspUrl,
+				"-f", "hls",
+				"-c:v", "copy",
+				// "-c:a", "copy",
+				"-hls_time", HLS_TIME,
+				"-hls_list_size", HLS_LIST_SIZE,
+				"-hls_delete_threshold", "1",
+				"-hls_flags", "delete_segments",
+				streamDir + "/playlist.m3u8"
+			];
+
+		execSync("mkdir -p " + streamDir);
+		this.printFFmpegOptions(options);
+
+		console.log(TAG, 'Starting RTSP stream');
+		videoStreamProcess = spawn('ffmpeg', options);
+
+		videoStreamProcess.on('close', (code) => {
+			videoStreamProcess = null;
+			console.error(METHOD_TAG, `RTSP stream exited with code ${code}`);
+			setTimeout(() => {
+				this.startNetworkStream(cameraId, rtspUrl);
+			}, 10 * 1000);
+		});
+
+		videoStreamProcess.stderr.on('data', (data) => {
+			// console.log(`${data}`);
+		});
+	}
+
+	stopNetworkStream (cameraId) {
+		if (watchStreamDir[cameraId]) {
+			watchStreamDir[cameraId].close();
+			delete watchStreamDir[cameraId];
+		}
+		console.log(TAG, "stopNetworkStream");
+	}
+
+	streamNetworkCamera (cameraId, token, rtspUrl) {
+		let streamDir = "/usr/local/lib/open-automation/camera/stream/" + cameraId,
+			fileList = [],
+			url = 'http://' + RELAY_SERVER + ':' + RELAY_PORT + '/stream/upload';
+
+    watchStreamDir[cameraId] = fs.watch(streamDir, (event, file) => {
+				// console.log('/hls/video', event, fileList);
+
+				if (event === "change" && file !== "playlist.m3u8.tmp" && file.indexOf('motion') < 0) {
+					if (fileList.indexOf(file) == -1) {
+						fileList.push(file);
+					}
+				}
+
+        if (event === "rename" && file === "playlist.m3u8") {
+						fileList.push(file);
+						fileList.forEach((file, i) => {
+							console.log(TAG, 'streamNetworkCamera UPLOAD', cameraId, file);
+							let options = [
+									'-X', 'POST',
+									'-F', cameraId + '=@' + streamDir + '/' + file,
+									url
+								];
+
+							let curl = spawn('curl', options);
+							curl.on('close', (code) => {
+								// console.log("curl closed", file);
+							});
+					});
+
+					fileList = [];
+        }
+    });
+	}
+
 	streamLive (streamId, streamToken, videoDevice, {
 		audioDevice,
 		width = defaultWidth,
@@ -54,7 +137,7 @@ class VideoStreamer {
 
 		isStreaming = true;
 		videoStreamToken = streamToken;
-		// ffmpeg -s 1280x720 -r 30 -f v4l2 -i /dev/video10 -f mpegts -vf transpose=2,transpose=1 -codec:a mp2 -ar 44100 -ac 1 -b:a 128k -codec:v mpeg1video -b:v 2000k -strict -1 test.avi
+
 		let options = [
 			'-f', 'v4l2',
 				'-r', '15',
@@ -69,7 +152,6 @@ class VideoStreamer {
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
 		];
-
 		this.printFFmpegOptions(options);
 
 		if (videoStreamProcess) videoStreamProcess.kill();
@@ -86,21 +168,21 @@ class VideoStreamer {
 		});
 	}
 
-	streamLiveAudio (streamId, streamToken, audioDevice) {
+	streamLiveAudio (streamId, streamToken, audioDevice, isNetworkCamera) {
 
 		isStreaming = true;
 		audioStreamToken = streamToken;
 
 		let options = [
-			'-f', 'alsa',
-				'-ar', '44100',
-				// '-ac', '1',
-				'-i', audioDevice,
-			'-f', 'mpegts',
-				'-codec:a', 'mp2',
-					'-b:a', '128k',
-			'-strict', '-1',
-			this.getStreamUrl(streamId, streamToken)
+				'-f', 'alsa',
+					'-ar', '44100',
+					// '-ac', '1',
+					'-i', audioDevice,
+				'-f', 'mpegts',
+					'-codec:a', 'mp2',
+						'-b:a', '128k',
+				'-strict', '-1',
+				this.getStreamUrl(streamId, streamToken)
 			];
 
 		this.printFFmpegOptions(options);

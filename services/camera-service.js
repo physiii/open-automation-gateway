@@ -1,4 +1,5 @@
-const spawn = require('child_process').spawn,
+const
+	spawn = require('child_process').spawn,
 	exec = require('child_process').exec,
 	uuid = require('uuid/v4'),
 	execSync = require('child_process').execSync,
@@ -15,6 +16,7 @@ const spawn = require('child_process').spawn,
 	mediaDir = "/usr/local/lib/open-automation/camera/",
 	eventsDir = "/usr/local/lib/open-automation/camera/events/",
 	tmpDir = "/tmp/open-automation/",
+	streamDir = "/usr/local/lib/open-automation/camera/stream/",
 	ONE_DAY_IN_HOURS = 24,
 	ONE_HOUR_IN_MINUTES = 60,
 	ONE_MINUTE_IN_SECONDS = 60,
@@ -24,6 +26,7 @@ const spawn = require('child_process').spawn,
 	ONE_SECOND_IN_MILLISECONDS = 1000,
 	CHECK_SCRIPTS_DELAY = 60 * ONE_MINUTE_IN_MILLISECONDS,
 	FRAME_RATE = config.motion_frame_rate || 3,
+	NETWORK_FRAME_RATE = 8,
 	BUFFER_DURATION = 5 * ONE_MINUTE_IN_MILLISECONDS,
 	PRELOAD_DURATION = 10 * ONE_SECOND_IN_MILLISECONDS,
 	POSTLOAD_DURATION = PRELOAD_DURATION,
@@ -32,7 +35,8 @@ const spawn = require('child_process').spawn,
 	AUDIO_LOOPBACK_DEVICE = 'hw:4,1',
 	TAG = '[CameraService]';
 
-let currentBuffer = 0,
+let
+	currentBuffer = 0,
 	ffmpegCapture = [];
 
 class CameraService extends Service {
@@ -40,17 +44,24 @@ class CameraService extends Service {
 		super(data, relaySocket, save, CameraApi);
 
 		this.os_device_path = data.os_device_path || '/dev/video0';
+		this.network_path = data.network_path || '';
+		this.isNetworkCamera = this.network_path != '';
 		this.TAG = TAG;
 		this.loopbackStarted = false;
 		this.motionDetected = false;
 		this.motionTimestamp = 0;
+		this.motionTime = { start: 0, stop: 0};
 		this.noMotionTimestamp = 0;
 		this.currentPosition = [];
+		this.watcher = null;
 		this.isRecording = false;
+		this.isStreaming = false;
 		this.recordingBuffer = 0;
 		this.postloadTimeout;
+		this.cameraStreamDir = streamDir + this.id;
 
 		// Settings
+		this.settings.network_path = data.settings && this.network_path;
 		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
 		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
 		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
@@ -67,13 +78,6 @@ class CameraService extends Service {
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
-		this.setUpLoopback();
-		// if (!config.disable_audio) {
-			this.setUpAudioLoopback();
-		// } else {
-		// 	console.log(TAG, "Camera audio is disabled.");
-		// }
-
 		this.startTimeLapse();
 		this.startBackup();
 		this.checkDeviceFreq();
@@ -81,12 +85,43 @@ class CameraService extends Service {
 		this.checkUptime();
 		this.checkHardwareVersion();
 
+		if (this.isNetworkCamera) {
+			// Check if ffmpeg is already running so we do not duplicate process
+			utils.checkIfProcessIsRunning('ffmpeg', this.network_path).then((processId) => {
+				utils.killProcess(processId).then(() => {
+					VideoStreamer.startNetworkStream(this.id, this.network_path);
+				});
+			});
+			utils.checkIfProcessIsRunning('python3', this.getMotionDevicePath()).then((processId) => {
+				utils.killProcess(processId).then(() => {
+					this.startMotionDetection();
+				});
+			});
+		} else {
+			this.setUpLoopback();
+			if (!config.disable_audio) {
+				this.setUpAudioLoopback();
+				// VideoStreamer.startNetworkStream(this.id, this.network_path);
+			} else {
+				console.log(TAG, "Camera audio is disabled.");
+			}
+		}
+
 		fs.mkdir(tmpDir, { recursive: true }, (err) => {
 			if (err) throw err;
 		});
 		fs.mkdir(eventsDir, { recursive: true }, (err) => {
 			if (err) throw err;
 		});
+	}
+
+	onClientConnect (val) {
+		if (val) {
+			// VideoStreamer.startNetworkStream(this.id, this.network_path);
+		} else {
+			VideoStreamer.stopNetworkStream(this.id);
+			this.isStreaming = false;
+		}
 	}
 
 	startBackup () {
@@ -219,18 +254,30 @@ class CameraService extends Service {
 	}
 
 	streamLive () {
+		console.log(TAG, "streamLive", this.id);
 		const stream_token = this.generateStreamToken();
 
-		VideoStreamer.streamLive(
-			this.id,
-			stream_token,
-			this.getLoopbackDevicePath(),
-			{
-				width: this.settings.resolution_w,
-				height: this.settings.resolution_h,
-				rotation: this.settings.rotation
+		if (this.isNetworkCamera) {
+			if (!this.isStreaming) {
+				VideoStreamer.streamNetworkCamera(
+					this.id,
+					stream_token,
+					this.network_path
+				);
+				this.isStreaming = true;
 			}
-		);
+		} else {
+			VideoStreamer.streamLive(
+				this.id,
+				stream_token,
+				this.getLoopbackDevicePath(),
+				{
+					width: this.settings.resolution_w,
+					height: this.settings.resolution_h,
+					rotation: this.settings.rotation
+				}
+			);
+		}
 
 		return stream_token;
 	}
@@ -247,7 +294,8 @@ class CameraService extends Service {
 		VideoStreamer.streamLiveAudio(
 			this.id,
 			stream_token,
-			config.stream_audio_device_path
+			this.isNetworkCamera ? this.network_path : config.stream_audio_device_path,
+			this.isNetworkCamera
 		);
 
 		return stream_token;
@@ -257,14 +305,29 @@ class CameraService extends Service {
 		VideoStreamer.stop();
 	}
 
+	createMotionEventFolder(date) {
+		let
+			stamp = date.toISOString(),
+			year = stamp.substr(0,4) + '/',
+			month = stamp.substr(5,2) + '/',
+			day = stamp.substr(8,2) + '/',
+			eventFolder = stamp.substr(0,19).replace('T','_'),
+			destDir = eventsDir + this.id + '/'
+				+ year + month + day + eventFolder;
+
+		execSync('mkdir -p ' + destDir);
+		console.log(TAG, 'createMotionEventFolder', destDir);
+		return destDir;
+	}
+
 	startMotionDetection () {
-		const METHOD_TAG = this.TAG + ' [startMotionDetection]',
-			MOTION_TAG = METHOD_TAG + ' [motion.py]',
+		const METHOD_TAG = this.TAG,
+			MOTION_TAG = METHOD_TAG + ' ' + this.settings.name,
 			motionCommand = [
 				motionScriptPath,
-				'--camera', this.getLoopbackDevicePath(),
+				'--camera', this.isNetworkCamera ? this.getMotionDevicePath() : this.getLoopbackDevicePath(),
 				'--camera-id', this.id,
-				'--frame-rate', FRAME_RATE,
+				'--frame-rate', this.isNetworkCamera ? NETWORK_FRAME_RATE : FRAME_RATE,
 				'--rotation', this.settings.rotation || 0,
 				'--threshold', this.settings.motion_threshold || 4,
 				'--motionArea_x1', this.settings.motionArea_x1 || 0,
@@ -286,68 +349,120 @@ class CameraService extends Service {
 
 				const now = new Date();
 
-				console.log(MOTION_TAG, data.toString());
+				console.log(MOTION_TAG, data.toString().replace('\n',''));
 
 				if (data.includes('[MOTION]')) {
 					if (!this.motionDetected)  {
 						this.state.motion_detected_date = now;
 						this.motionDetected = true;
 						this.motionTimestamp = this.currentPosition[currentBuffer];
+						this.motionTime.start = Date.now();
 						this.isRecording = true;
 						this.recordingBuffer = currentBuffer;
 
-						this.capturePreviewImage();
-					}
+						let motionEventDir = this.createMotionEventFolder(this.state.motion_detected_date),
+							cmd = 'cat ' + this.cameraStreamDir + '/playlist.m3u8 | grep .ts';
 
-					console.log(METHOD_TAG, "Motion detected so clearing motionCaptureInterval and postloadTimeout.");
-					if (ffmpegCapture[currentBuffer ? 0 : 1]) ffmpegCapture[currentBuffer ? 0 : 1].kill();
+						this.capturePreviewImage();
+
+						exec(cmd, (error, stdout, stderr) => {
+							let playlistFiles = stdout.toString().split('\n'),
+								fileList = [],
+								motionFileList = [],
+								motionStartSegment = playlistFiles[playlistFiles.length - 2],
+								watcher = fs.watch(this.cameraStreamDir, (event, file) => {
+									if (event === "rename" && file === "playlist.m3u8") {
+											fileList.forEach((file, i) => {
+												if (motionFileList.indexOf("motion_" + file) < 0) {
+													// let cpCmd = "cp " + this.cameraStreamDir + '/' + file + " " + this.cameraStreamDir + '/' + "motion_" + file;
+													let cpCmd = "cp " + this.cameraStreamDir + '/' + file + " " + motionEventDir + '/' + "motion_" + file;
+													exec(cpCmd);
+													motionFileList.push("motion_" + file);
+													console.log("COPY MOTION RECORDING FILE.", this.id, "motion_"+file, cpCmd);
+												}
+											});
+					        }
+
+									if (event === "change" && file !== "playlist.m3u8.tmp" && file.indexOf("motion") < 0) {
+										if (fileList.indexOf(file) == -1) {
+											fileList.push(file);
+										}
+
+										if (!this.motionDetected) {
+											this.motionTime.stop = Date.now();
+											this.saveNetworkVideo(motionFileList);
+											fileList = [];
+											motionFileList = [];
+											watcher.close();
+										}
+									}
+							});
+						});
+					}
+					if (!this.isNetworkCamera) {
+						console.log(METHOD_TAG, "Motion detected so clearing motionCaptureInterval and postloadTimeout.");
+						if (ffmpegCapture[currentBuffer ? 0 : 1]) ffmpegCapture[currentBuffer ? 0 : 1].kill();
+					}
 
 					clearTimeout(this.postloadTimeout);
 					clearInterval(this.motionCaptureInterval);
-
 					this.relayEmit('motion-started', {date: now.toISOString()});
 				} else if (data.includes('[NO MOTION]')) {
-					console.log(METHOD_TAG, "Motion has stopped so finishing postload on recording and starting preload on capture.");
-					this.noMotionTimestamp = this.currentPosition[currentBuffer];
-					this.fillBuffer(currentBuffer ? 0 : 1);
+					if (!this.isNetworkCamera) {
+						console.log(METHOD_TAG, "Motion has stopped so finishing postload on recording and starting preload on capture.");
+						this.noMotionTimestamp = this.currentPosition[currentBuffer];
+						this.fillBuffer(currentBuffer ? 0 : 1);
 
-					this.postloadTimeout = setTimeout(() => {
-						console.log(METHOD_TAG, "Finished postload on recording and preload on capture so killing recording process.");
+						this.postloadTimeout = setTimeout(() => {
+							console.log(METHOD_TAG, "Finished postload on recording and preload on capture so killing recording process.");
 
-						this.motionDuration = this.currentPosition[currentBuffer] - this.motionTimestamp;
-						if (ffmpegCapture[currentBuffer]) ffmpegCapture[currentBuffer].kill();
+							this.motionDuration = this.currentPosition[currentBuffer] - this.motionTimestamp;
+							if (ffmpegCapture[currentBuffer]) ffmpegCapture[currentBuffer].kill();
 
-						currentBuffer = currentBuffer ? 0 : 1;
-						this.startCapture();
-						this.motionDetected = false;
-						this.relayEmit('motion-stopped', {date: now.toISOString()});
-					}, NO_MOTION_DURATION);
+							currentBuffer = currentBuffer ? 0 : 1;
+							this.startCapture();
+							this.motionDetected = false;
+							this.relayEmit('motion-stopped', {date: now.toISOString()});
+						}, NO_MOTION_DURATION);
+					} else {
+						this.postloadTimeout = setTimeout(() => {
+							this.motionDetected = false;
+							this.relayEmit('motion-stopped', {date: now.toISOString()});
+						}, NO_MOTION_DURATION);
+					}
 				}
 			});
 
 			motionProcess.on('close', (code) => {
-				console.error(TAG, `Motion process exited with code ${code}.`);
+				console.error(TAG, `Motion process exited with code ${code}. Restarting.`);
+				setTimeout(() => {
+					this.startMotionDetection();
+				}, 10 * 1000)
 			});
 
 			motionProcess.stderr.on('data', (data) => {
 				console.error(MOTION_TAG, data.toString());
 			});
 			// Every so often check to make sure motion detection is still running.
-			this.motionScriptInterval = setInterval(() => {
-				utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
-					if (!isMotionRunning) {
-						launchMotionScript();
-					}
-				});
-			}, CHECK_SCRIPTS_DELAY);
+			// this.motionScriptInterval = setInterval(() => {
+			// 	utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((isMotionRunning) => {
+			// 		if (!isMotionRunning) {
+			// 			launchMotionScript();
+			// 		}
+			// 	});
+			// }, CHECK_SCRIPTS_DELAY);
 		}
 
 		// Check if motion is already running so we do not duplicate process
-		utils.checkIfProcessIsRunning('motion.py', this.getLoopbackDevicePath()).then((processId) => {
+		utils.checkIfProcessIsRunning('motion.py', this.getMotionDevicePath()).then((processId) => {
 			utils.killProcess(processId).then(() => {
 				launchMotionScript();
 			});
 		});
+	}
+
+	getMotionDevicePath () {
+	 return this.network_path.replace('stream1', 'stream2');
 	}
 
 	startCapture () {
@@ -418,6 +533,52 @@ class CameraService extends Service {
 				console.log(METHOD_TAG, "Saving video.");
 				this.saveVideo(num);
 			}
+		});
+	}
+
+	saveNetworkVideo (motionFileList) {
+		const METHOD_TAG = this.TAG + ' [saveNetworkVideo]';
+
+		let
+			stamp = this.state.motion_detected_date.toISOString(),
+			year = stamp.substr(0,4) + '/',
+			month = stamp.substr(5,2) + '/',
+			day = stamp.substr(8,2) + '/',
+			filename = stamp.substr(0,19).replace('T','_') + '.avi',
+			destDir = eventsDir + this.id + '/'
+				+ year + month + day,
+			destPath = destDir + filename;
+
+		execSync('mkdir -p ' + destDir);
+
+		let ffmpegCmd = "ffmpeg -i \"concat:";
+		for (let i = 0; i < motionFileList.length; i++) {
+			ffmpegCmd += (i ? "|" : "") + this.cameraStreamDir + '/' + motionFileList[i];
+		}
+		ffmpegCmd += "\" -c copy " + destPath;
+		exec(ffmpegCmd, () => {
+			let duration = (this.motionTime.stop - this.motionTime.start) / 1000;
+			duration = Math.floor(duration);
+			console.log("SAVE MOTION RECORDING FILE.", duration);
+
+			let recordingInfo = {
+				id: uuid(),
+				camera_id: this.id,
+				file: destPath,
+				date: this.state.motion_detected_date,
+				duration: duration,
+				width: this.settings.resolution_w,
+				height: this.settings.resolution_h
+			}
+
+			console.log(METHOD_TAG, "Saved network video, adding to database:", recordingInfo);
+			CameraRecordings.saveRecording(recordingInfo);
+			this.isRecording = false;
+
+			motionFileList.forEach((item) => {
+				let cmd = 'rm ' + this.cameraStreamDir + '/' + item;
+				exec(cmd);
+			});
 		});
 	}
 
@@ -599,12 +760,19 @@ class CameraService extends Service {
 	dbSerialize () {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
-			os_device_path: this.os_device_path
+			os_device_path: this.os_device_path,
+			network_path: this.network_path
 		};
 	}
 }
 
 CameraService.settings_definitions = new Map([...Service.settings_definitions])
+	.set('network_path', {
+		type: 'string',
+		label: 'Network Path',
+		default_value: 'init',
+		validation: {is_required: false}
+	})
 	.set('resolution_w', {
 		type: 'integer',
 		unit_label: 'px',

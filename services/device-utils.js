@@ -2,6 +2,7 @@ const exec = require('child_process').exec,
 	ConnectionManager = require('./connection.js'),
 	config = require('../config.json'),
 	axios = require('axios'),
+	Exec = require('child_process').exec,
 	v3 = require('node-hue-api').v3,
   discovery = v3.discovery,
   hueApi = v3.api,
@@ -135,6 +136,40 @@ class DeviceUtils {
 		});
 	}
 
+	createNetworkCameraService (device_paths) {
+		console.log("createNetworkCameraService", device_paths);
+		const new_devices = [],
+			camera_services = DevicesManager.getServicesByType('camera');
+
+		return new Promise((resolve, reject) => {
+			device_paths.forEach((device_path) => {
+				console.log("createNetworkCameraService", device_path);
+				if (camera_services.find((camera_service) => camera_service.network_path === device_path)) {
+					return;
+				} else {
+					DevicesManager.createDevice({
+						settings: {
+							name: 'Network Camera'
+						},
+						info: {
+							manufacturer: config.manufacturer
+						},
+						services: [
+							{
+								type: 'network-camera',
+								network_path: 'rtsp://' + device_path + ':554/stream1'  // rtsp://192.168.1.15:554/stream1
+							}
+						]
+					}).then((new_device) => {
+						new_devices.push(new_device);
+					});
+				}
+			});
+
+			resolve(new_devices);
+		});
+	}
+
 	getOsCamerasList () {
 		return new Promise((resolve, reject) => {
 			exec('ls -lah --full-time /dev/video0', (error, stdout, stderr) => {
@@ -212,6 +247,31 @@ class DeviceUtils {
 					})
 					.catch(function (error) {})
 			}
+		})
+	}
+
+	searchForNetworkCameras () {
+		ConnectionManager.getLocalIP()
+		.then((localIps) => {
+			let ip_base = localIps[0].substring(0, localIps[0].lastIndexOf('.') + 1),
+				cmd = "nmap --script rtsp-url-brute -p 554 " + ip_base + "1/24 | grep open -B4 | grep report";
+
+			Exec(cmd, (error, stdout, stderr) => {
+			  if (error) {
+			    return;
+			  }
+				let lines = stdout.split("\n"),
+					ips = [];
+
+				for (let i = 0; i < lines.length; i++) {
+					let line = lines[i].split(" "),
+						ip = line[line.length - 1].replace("\n", "");
+
+					if (ip.split(".").length == 4) ips.push(ip);
+				}
+
+				this.createNetworkCameraService(ips);
+			});
 		})
 	}
 

@@ -6,6 +6,7 @@ class SirenApi extends ServiceApi {
 		ServiceApi.prototype.listen.call(this);
 
 		this.on('alarm/set', (data, callback) => {
+			console.log(TAG, "set alarm", data)
 			this.service.alarmSet(data.value);
 			callback(null, {});
 		});
