@@ -30,6 +30,7 @@
     "node-hue-api": "^4.0.8",
     "onoff": "^5.0.0",
     "ping": "^0.2.2",
+    "request": "^2.88.2",
     "rimraf": "^3.0.0",
     "simple-ifconfig": "^0.2.2",
     "socket.io": "^2.3.0",

@@ -24,7 +24,10 @@ const utils = require('./utils'),
   Database = require('./services/database.js'),
   DevicesManager = require('./devices/devices-manager.js'),
   diskUsage = require('diskusage'),
-  admin = require('./admin/index.js');
+  admin = require('./admin/index.js')
+
+config.local_display ? require('./local-display.js')
+	: 'Local display is turned off';
 
 if (config.zwave) {
   zwave = require('./zwave.js');

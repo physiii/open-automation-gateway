@@ -38,6 +38,15 @@ function killProcess (id) {
 	});
 }
 
+function printOptions (program, options, log=true) {
+	let options_str = program;
+	for (let i = 0; i < options.length; i++) {
+		options_str += ' ' + options[i];
+	}
+	if (log) console.log("printOptions", options_str);
+	return options_str;
+}
+
 function removeOldCameraRecordings () {
 	return new Promise((resolve, reject) => {
 		// Return only base file name without dir
@@ -215,6 +224,7 @@ const validators = {
 module.exports = {
 	checkIfProcessIsRunning,
 	killProcess,
+	printOptions,
 	restart,
 	removeOldCameraRecordings,
 	onChange,
