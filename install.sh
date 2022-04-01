@@ -6,10 +6,20 @@
 
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 
-sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing
+
+wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+
+sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing && sudo apt autoremove -y
+
+# Install the MongoDB 4.4 GPG key:
+
+# Add the source location for the MongoDB packages:
+
+
 
 sudo apt-get install -y \
-  sshpass git nodejs mongodb dnsmasq hostapd tmux xdotool libudev-dev \
+  sshpass git nodejs mongodb-org dnsmasq hostapd tmux xdotool libudev-dev \
   python-setuptools python3-dev libssl-dev nmap ffmpeg acl \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev \
   libavcodec-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
@@ -19,12 +29,12 @@ sudo apt-get install -y \
 sudo apt install -y raspberrypi-kernel-headers \
 
 # sudo nano /boot/config.txt
-#   arm_freq=2000
-#   over_voltage=6
+#   over_voltage=2
+#   arm_freq=1750
 # vcgencmd measure_clock arm
 # watch vcgencmd measure_temp
 
-python3 -m pip install pymongo==3.4.0 numpy imutils pyaudio s-tui
+python3 -m pip install numpy imutils pyaudio s-tui
 sudo npm install -g pm2
 
 ############
