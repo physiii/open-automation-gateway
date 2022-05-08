@@ -9,7 +9,7 @@ const spawn = require('child_process').spawn,
 	defaultWidth = 640,
 	defaultHeight = 480,
 	defaultRotation = config.rotation || 0,
-	HLS_LIST_SIZE = 3,
+	HLS_LIST_SIZE = 10,
 	HLS_TIME = 10,
 	TAG = '[VideoStreamer]';
 
@@ -67,21 +67,27 @@ class VideoStreamer {
 			];
 
 		execSync("mkdir -p " + streamDir);
-		this.printFFmpegOptions(options);
+		let ffmpegStr = "\"" + this.printFFmpegOptions(options) + "\"";
 
-		console.log(TAG, 'Starting RTSP stream');
-		videoStreamProcess = spawn('ffmpeg', options);
 
-		videoStreamProcess.on('close', (code) => {
-			videoStreamProcess = null;
-			console.error(METHOD_TAG, `RTSP stream exited with code ${code}`);
-			setTimeout(() => {
-				this.startNetworkStream(cameraId, rtspUrl);
-			}, 10 * 1000);
-		});
+		// Check if stream is already running so we do not duplicate process
+		utils.checkIfProcessIsRunning(ffmpegStr).then((processId) => {
+			utils.killProcess(processId).then(() => {
+				videoStreamProcess = spawn('ffmpeg', options);
 
-		videoStreamProcess.stderr.on('data', (data) => {
-			// console.log(`${data}`);
+				videoStreamProcess.on('close', (code) => {
+					videoStreamProcess = null;
+					console.error(METHOD_TAG, `RTSP stream exited with code ${code}`);
+					setTimeout(() => {
+						this.startNetworkStream(cameraId, rtspUrl);
+					}, 10 * 1000);
+				});
+
+				videoStreamProcess.stderr.on('data', (data) => {
+					// console.log(`${data}`);
+				});
+
+			});
 		});
 	}
 
@@ -91,41 +97,6 @@ class VideoStreamer {
 			delete watchStreamDir[cameraId];
 		}
 		console.log(TAG, "stopNetworkStream");
-	}
-
-	streamNetworkCamera (cameraId, token, rtspUrl) {
-		let streamDir = "/usr/local/lib/open-automation/camera/stream/" + cameraId,
-			fileList = [],
-			url = 'http://' + RELAY_SERVER + ':' + RELAY_PORT + '/stream/upload';
-
-    watchStreamDir[cameraId] = fs.watch(streamDir, (event, file) => {
-				// console.log('/hls/video', event, fileList);
-
-				if (event === "change" && file !== "playlist.m3u8.tmp" && file.indexOf('motion') < 0) {
-					if (fileList.indexOf(file) == -1) {
-						fileList.push(file);
-					}
-				}
-
-        if (event === "rename" && file === "playlist.m3u8") {
-						fileList.push(file);
-						fileList.forEach((file, i) => {
-							console.log(TAG, 'streamNetworkCamera UPLOAD', cameraId, file);
-							let options = [
-									'-X', 'POST',
-									'-F', cameraId + '=@' + streamDir + '/' + file,
-									url
-								];
-
-							let curl = spawn('curl', options);
-							curl.on('close', (code) => {
-								// console.log("curl closed", file);
-							});
-					});
-
-					fileList = [];
-        }
-    });
 	}
 
 	streamLive (streamId, streamToken, videoDevice, {
@@ -152,7 +123,7 @@ class VideoStreamer {
 			'-strict', '-1',
 			this.getStreamUrl(streamId, streamToken)
 		];
-		this.printFFmpegOptions(options);
+		// this.printFFmpegOptions(options);
 
 		if (videoStreamProcess) videoStreamProcess.kill();
 		console.log(TAG, 'Starting video stream stream. Stream ID:', streamId);
@@ -282,7 +253,7 @@ class VideoStreamer {
 		if (fileStreamProcess) fileStreamProcess.kill();
 	}
 
-	printFFmpegOptions (options, log=true) {
+	printFFmpegOptions (options, log=false) {
 		let options_str = 'ffmpeg';
 		for (let i = 0; i < options.length; i++) {
 			options_str += ' ' + options[i];

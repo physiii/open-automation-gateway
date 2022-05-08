@@ -1,4 +1,4 @@
-const database = require('./services/database.js'),
+	const database = require('./services/database.js'),
 	VideoStreamer = require('./video-streamer.js'),
 	fs = require('fs'),
 	spawn = require('child_process').spawn,
@@ -47,6 +47,24 @@ class CameraRecordings {
 
 	saveRecording (data) {
 		database.set_camera_recording(data);
+	}
+
+	uploadRecording (file, cameraId, startDate, motionDetected, token) {
+		let
+			url = 'http://' + RELAY_SERVER + ':' + RELAY_PORT + '/service-content/upload-hls-recording',
+			info = {cameraId, startDate, motionDetected},
+			options = [
+					'-X', 'POST',
+					'-F', JSON.stringify(info) + '=@' + file,
+					// '-F', cameraId + '=@' + startDate + '/' + file,
+					// '-d', 'testkey1=val1&testkey2=val2',
+					url
+				],
+			curl = spawn('curl', options);
+
+		curl.on('close', (code) => {
+			console.log(TAG, 'uploadRecording', file, startDate, cameraId, token);
+		});
 	}
 
 	streamRecording (recordingId, streamToken, time = 0) {
