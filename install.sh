@@ -4,7 +4,7 @@
 ## general ##
 #############
 
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+# curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 
 
 wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
@@ -24,7 +24,7 @@ sudo apt-get install -y \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev \
   libavcodec-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
   libatlas-base-dev gfortran python3-dev libavcodec-dev libavformat-dev python3-pip \
-  libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0 \
+  portaudio19-dev libportaudio2 libportaudiocpp0 \
 
 sudo apt install -y raspberrypi-kernel-headers \
 
@@ -82,23 +82,7 @@ gfortran openexr libatlas-base-dev python3-dev python3-numpy \
 libtbb2 libtbb-dev libdc1394-22-dev libopenexr-dev \
 libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
 
-mkdir ~/opencv_build && cd ~/opencv_build
-git clone https://github.com/opencv/opencv.git
-git clone https://github.com/opencv/opencv_contrib.git
-
-cd ~/opencv_build/opencv
-mkdir -p build && cd build
-
-cmake -D CMAKE_BUILD_TYPE=RELEASE \
--D CMAKE_INSTALL_PREFIX=/usr/local \
--D INSTALL_C_EXAMPLES=ON \
--D INSTALL_PYTHON_EXAMPLES=ON \
--D OPENCV_GENERATE_PKGCONFIG=ON \
--D OPENCV_EXTRA_MODULES_PATH=~/opencv_build/opencv_contrib/modules \
--D BUILD_EXAMPLES=ON ..
-
-make -j8
-sudo make install
+sudo apt install libopencv-dev python3-opencv
 
 #################
 ##  openzwave  ##
