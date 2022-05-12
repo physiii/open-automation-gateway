@@ -18,7 +18,8 @@ const
 	mediaDir = "/usr/local/lib/open-automation/camera/",
 	eventsDir = "/usr/local/lib/open-automation/camera/events/",
 	tmpDir = "/tmp/open-automation/",
-	streamDir = "/usr/local/lib/open-automation/camera/stream/",
+	// streamDir = "/usr/local/lib/open-automation/camera/stream/",
+	streamDir = "/tmp/open-automation/camera/stream/",
 	ONE_DAY_IN_HOURS = 24,
 	ONE_HOUR_IN_MINUTES = 60,
 	ONE_MINUTE_IN_SECONDS = 60,
@@ -52,6 +53,7 @@ class NetworkCameraService extends Service {
 		this.postloadTimeout;
 		this.cameraStreamDir = streamDir + this.id;
 		this.watchStreamDir = {};
+		this.info = {};
 
 		// Settings
 		this.settings.network_path = data.settings && this.network_path;
@@ -146,14 +148,14 @@ class NetworkCameraService extends Service {
 		console.log(TAG, "stopNetworkStream");
 	}
 
-	upload(filepath, url, info) {
+	upload(filepath, url) {
 			// if (info.file == 'playlist.m3u8') return;
-			// console.log(TAG, "!! uploading !!", filepath, info);
+			// console.log(TAG, "!! uploading !!", filepath, this.info);
 
 	    // Create the form with your file's data appended FIRST
     	var form = new FormData();
 	    form.append('file', fs.createReadStream(filepath));
-	    form.append('field', JSON.stringify(info));
+	    form.append('field', JSON.stringify(this.info));
 
 			// this.info = info;
 			let self = this;
@@ -175,7 +177,7 @@ class NetworkCameraService extends Service {
 							console.error(error);
 						}
 
-						if (self.motionTime.stop > 0 && info.file != 'playlist.m3u8') {
+						if (self.motionTime.stop > 0 && self.info.file != 'playlist.m3u8') {
 							self.motionTime.stop = 0;
 							self.motionTime.start = 0;
 						}
@@ -215,14 +217,14 @@ class NetworkCameraService extends Service {
 								this.motionTime.stop = Date.now();
 							}
 
-							let
-								info = {
-									cameraId: this.id,
-									motionTime: this.motionTime,
-									file: file
-								};
 
-							this.upload(this.cameraStreamDir + '/' + file, url, info);
+							this.info = {
+								cameraId: this.id,
+								motionTime: this.motionTime,
+								file: file
+							};
+
+							this.upload(this.cameraStreamDir + '/' + file, url);
 					});
 
 					fileList = [];

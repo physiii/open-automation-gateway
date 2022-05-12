@@ -9,6 +9,7 @@ const spawn = require('child_process').spawn,
 	defaultWidth = 640,
 	defaultHeight = 480,
 	defaultRotation = config.rotation || 0,
+	cameraStreamDir = "/tmp/open-automation/camera/stream/",
 	HLS_LIST_SIZE = 10,
 	HLS_TIME = 10,
 	TAG = '[VideoStreamer]';
@@ -53,7 +54,7 @@ class VideoStreamer {
 	//ffmpeg -thread_queue_size 32768 -i "http://xx/636.m3u8" -f hls -c:v copy -c:a copy -hls_time 5 -hls_list_size 5 -hls_allow_cache 0 -hls_flags delete_segments -segment_list_flags +live
 	startNetworkStream (cameraId, rtspUrl) {
 		const METHOD_TAG = TAG + '[' + cameraId + ']' + '[' + rtspUrl +']',
-			streamDir = "/usr/local/lib/open-automation/camera/stream/" + cameraId,
+			streamDir = cameraStreamDir + cameraId,
 			options = [
 				'-i', rtspUrl,
 				"-f", "hls",
