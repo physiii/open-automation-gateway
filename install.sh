@@ -6,9 +6,8 @@
 
 # curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 
-
-wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
+sudo add-apt-repository 'deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse' 
 
 sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing && sudo apt autoremove -y
 
