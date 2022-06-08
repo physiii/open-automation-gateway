@@ -32,7 +32,7 @@ class ServiceApi {
 
 	on (event, localCallback) {
 		this.socket.on(this.event_prefix + event, (data, remoteCallback) => {
-			console.log(TAG, "RECEIVED:", data);
+			// console.log(TAG, "RECEIVED:", data);
 			// Ensure callback is always a function so we don't have to check that it is anywhere else.
 			const callback = typeof remoteCallback === 'function' ? remoteCallback : noOp;
 

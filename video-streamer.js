@@ -10,7 +10,7 @@ const spawn = require('child_process').spawn,
 	defaultHeight = 480,
 	defaultRotation = config.rotation || 0,
 	cameraStreamDir = "/tmp/open-automation/camera/stream/",
-	HLS_LIST_SIZE = 10,
+	HLS_LIST_SIZE = 3,
 	HLS_TIME = 10,
 	TAG = '[VideoStreamer]';
 

@@ -59,7 +59,7 @@ function removeOldCameraRecordings () {
 			}
 
 			if (!stdout) {
-				console.log(TAG, 'Remove old recordings: no motion files found to remove.');
+				// console.log(TAG, 'Remove old recordings: no motion files found to remove.');
 				resolve();
 
 				return;

@@ -157,7 +157,14 @@ class DeviceUtils {
 						services: [
 							{
 								type: 'network-camera',
-								network_path: 'rtsp://' + device_path + ':554/stream1'  // rtsp://192.168.1.15:554/stream1
+								user: 'admin',
+								pwd: 'password',
+								ip_address: device_path,
+								protocol: 'rtsp://',
+								port: 554,
+								path: '',
+								sub_path: '/stream2',
+								network_path: 'rtsp://' + device_path + ':554'  // rtsp://192.168.1.15:554/stream1
 							}
 						]
 					}).then((new_device) => {

@@ -87,7 +87,7 @@ class ThermostatService extends Service {
 
 		if (temp > maxTemp) {
 			if (mode != 'cool' || previousTargetTemp != targetTemp) {
-				targetTemp = maxTemp -1;
+				targetTemp = maxTemp - 1;
 				mode = 'cool';
 				this.driver.setTemp(targetTemp, mode);
 				console.log(TAG, 'Lowering temperature to', targetTemp);
@@ -103,10 +103,10 @@ class ThermostatService extends Service {
 			}
 		}
 
-		if (temp >= minTemp && temp <= maxTemp && mode != 'off') {
+		if (temp >= minTemp + 1 && temp <= maxTemp - 1 && mode != 'off') {
 			mode = 'off';
 			this.driver.setThermostatMode(mode);
-			// console.log(TAG, 'Temperature in window, turning off.', targetTemp);
+			console.log(TAG, 'Temperature in window, turning off.', targetTemp);
 		}
 
 		if (this.prevMinTemp != minTemp || this.prevMaxTemp != maxTemp) {

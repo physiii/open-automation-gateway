@@ -43,7 +43,7 @@ class Service {
 		return new Promise((resolve, reject) => {
 			this.settings = settings;
 			this.save()
-			console.log("saveSettings", settings);
+			// console.log("saveSettings", settings);
 			resolve();
 		})
 	}

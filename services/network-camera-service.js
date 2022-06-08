@@ -19,7 +19,7 @@ const
 	eventsDir = "/usr/local/lib/open-automation/camera/events/",
 	tmpDir = "/tmp/open-automation/",
 	// streamDir = "/usr/local/lib/open-automation/camera/stream/",
-	streamDir = "/tmp/open-automation/camera/stream/",
+	streamDir = tmpDir + "camera/stream/",
 	ONE_DAY_IN_HOURS = 24,
 	ONE_HOUR_IN_MINUTES = 60,
 	ONE_MINUTE_IN_SECONDS = 60,
@@ -42,9 +42,20 @@ class NetworkCameraService extends Service {
 		super(data, relaySocket, save, CameraApi);
 
 		this.TAG = TAG;
-		this.network_path = data.network_path || '';
+		// this.network_path = data.network_path;
+		this.network_path = data.protocol
+			+ data.user + ':' + data.pwd + '@'
+			+ data.ip_address + ':' + data.port
+			+ data.path;
+		this.ip_address = data.ip_address || '127.0.0.1';
+		this.user = data.user || 'admin';
+		this.pwd = data.pwd || 'password';
+		this.port = data.port || 554;
+		this.protocol = data.protocol || 'rtsp://';
+		this.path = data.path || '';
+		this.sub_path = data.sub_path || '/stream2';
 		this.motionDetected = false;
-		this.motionTime = { start: 0, stop: 0};
+		this.motionTime = { start: 0, stop: 0 };
 		this.currentPosition = [];
 		this.watcher = null;
 		this.motionDuractionMax = ONE_HOUR_IN_MILLISECONDS;
@@ -73,17 +84,13 @@ class NetworkCameraService extends Service {
 
 		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
-		fs.mkdir(tmpDir, { recursive: true }, (err) => {
-			if (err) throw err;
+		fs.rm(this.cameraStreamDir, { recursive: true, force: true }, ()=>{
+			fs.mkdir(this.cameraStreamDir, { recursive: true }, ()=>{
+				this.streamNetworkCamera();
+				this.isStreaming = true;
+			});
 		});
-		fs.mkdir(eventsDir, { recursive: true }, (err) => {
-			if (err) throw err;
-		});
-
-		fs.rmSync(this.cameraStreamDir, { recursive: true, force: true });
-		fs.mkdirSync(this.cameraStreamDir, { recursive: true }, (err) => {
-			if (err) throw err;
-		});
+		fs.mkdirSync(eventsDir, { recursive: true });
 
 		VideoStreamer.startNetworkStream(this.id, this.network_path);
 		this.startMotionDetection();
@@ -148,45 +155,33 @@ class NetworkCameraService extends Service {
 		console.log(TAG, "stopNetworkStream");
 	}
 
-	upload(filepath, url) {
-			// if (info.file == 'playlist.m3u8') return;
-			// console.log(TAG, "!! uploading !!", filepath, this.info);
+	upload(filepath, url, info) {
+		return new Promise((resolve, reject) => {
+    	let
+				form = new FormData(),
+				opts = {
+						headers: {
+								'Content-Type': 'video/mp2t'
+						}
+				},
+				r = request.post(url, opts, function(error, res, body) {
+					if (error) {
+						console.error(error);
+					}
 
-	    // Create the form with your file's data appended FIRST
-    	var form = new FormData();
+					// try {
+						info.body = JSON.parse(body);
+			    // } catch (e) {
+			    //     console.error(TAG, "Not JSON", e);
+			    // }
+					resolve(info);
+				});
+
 	    form.append('file', fs.createReadStream(filepath));
-	    form.append('field', JSON.stringify(this.info));
+	    form.append('field', JSON.stringify(info));
 
-			// this.info = info;
-			let self = this;
-	    // Needed to set the Content-Length header value
-	    form.getLength(function(err,length) {
-
-	        var opts = {
-	            headers: {
-	                // 'Content-Length': length,
-									// 'Content-Type': 'multipart/form-data; boundary=some_random_string_for_boundary_reasons_321',
-									// 'Content-Type': 'video/mpeg'
-									'Content-Type': 'video/mp2t'
-	            }
-	        };
-
-	        // Create the request object
-	        var r = request.post(url, opts, function(error, res, body) {
-						if (error) {
-							console.error(error);
-						}
-
-						if (self.motionTime.stop > 0 && self.info.file != 'playlist.m3u8') {
-							self.motionTime.stop = 0;
-							self.motionTime.start = 0;
-						}
-	        });
-
-	        // Explicitly set the request's form property to
-	        // the form you've just created (not officially supported)
-	        r._form = form;
-	    });
+			r._form = form;
+		});
 	}
 
 	uploadCallback (error) {
@@ -195,13 +190,11 @@ class NetworkCameraService extends Service {
 
 	streamNetworkCamera () {
 		let fileList = [],
+			self = this,
 			url = 'http://' + RELAY_SERVER + ':' + RELAY_PORT + '/stream/upload';
 
     this.watchStreamDir[this.id] = fs.watch(this.cameraStreamDir, (event, file) => {
-				// console.log('/hls/video', event, fileList);
-
 				if (event === "change" && file !== "playlist.m3u8.tmp" && file.indexOf('motion') < 0) {
-					// console.log("file change: ", file);
 					if (fileList.indexOf(file) == -1) {
 						fileList.push(file);
 					}
@@ -210,25 +203,27 @@ class NetworkCameraService extends Service {
         if (event === "rename" && file === "playlist.m3u8") {
 						fileList.push(file);
 						fileList.forEach((file, i) => {
-							let motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
+							let motionDuration = self.motionTime.start ? Date.now() - self.motionTime.start : 0,
+								info = {
+									cameraId: this.id,
+									motionTime: self.motionTime,
+									file: file
+								};
 
-							// console.log(TAG,"motionDuration:", this.id, Math.floor(motionDuration/1000));
 							if (motionDuration > this.motionDuractionMax) {
-								this.motionTime.stop = Date.now();
+								self.motionTime.stop = Date.now();
 							}
 
+							this.upload(this.cameraStreamDir + '/' + file, url, info).then((info)=> {
+								if (info.body.received  === file && info.motionTime.stop > 0 && info.file !== 'playlist.m3u8') {
+									this.motionTime.stop = 0;
+									this.motionTime.start = 0;
+								}
+							});
+						});
 
-							this.info = {
-								cameraId: this.id,
-								motionTime: this.motionTime,
-								file: file
-							};
-
-							this.upload(this.cameraStreamDir + '/' + file, url);
-					});
-
-					fileList = [];
-        }
+						fileList = [];
+	        }
     });
 	}
 
@@ -264,7 +259,12 @@ class NetworkCameraService extends Service {
 	}
 
 	getMotionDevicePath () {
-		 return this.network_path.replace('stream1', 'stream2');
+		let url = this.protocol
+			+ this.user + ':' + this.pwd + '@'
+			+ this.ip_address + ':' + this.port
+			+ this.sub_path;
+		// console.log(TAG, "getMotionDevicePath", url);
+		return url;
 	}
 
 	startMotionDetection () {
@@ -313,6 +313,7 @@ class NetworkCameraService extends Service {
 							this.motionTime.stop = Date.now();
 							this.relayEmit('motion-stopped', {date: now.toISOString()});
 							console.log(this.id, this.settings.name, data.toString().replace('\n',''));
+							// console.log(TAG, "!! SET STOP TIME !!", this.id, this.motionTime.stop);
 					}, NO_MOTION_DURATION);
 				}
 			});
@@ -356,7 +357,14 @@ class NetworkCameraService extends Service {
 		return {
 			...Service.prototype.dbSerialize.apply(this, arguments),
 			os_device_path: this.os_device_path,
-			network_path: this.network_path
+			network_path: this.network_path,
+			user: this.user,
+			pwd: this.pwd,
+			ip_address: this.ip_address,
+			protocol: this.protocol,
+			port: this.port,
+			path: this.path,
+			sub_path: this.sub_path
 		};
 	}
 }
