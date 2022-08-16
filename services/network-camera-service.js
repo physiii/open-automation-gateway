@@ -31,6 +31,7 @@ const
 	FRAME_RATE = 8,
 	NO_MOTION_DURATION = 60 * ONE_SECOND_IN_MILLISECONDS,
 	SERVICE_LOOP = 10 * 1000,
+	CAMERA_RETRY_TIME = 60,
 	TAG = '[NetworkCameraService]';
 
 let
@@ -322,7 +323,7 @@ class NetworkCameraService extends Service {
 				console.error(TAG, `Motion process exited with code ${code}. Restarting.`);
 				setTimeout(() => {
 					this.startMotionDetection();
-				}, 10 * 1000)
+				}, CAMERA_RETRY_TIME * 1000)
 			});
 
 			motionProcess.stderr.on('data', (data) => {

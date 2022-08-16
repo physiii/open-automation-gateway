@@ -12,6 +12,7 @@ const spawn = require('child_process').spawn,
 	cameraStreamDir = "/tmp/open-automation/camera/stream/",
 	HLS_LIST_SIZE = 3,
 	HLS_TIME = 10,
+	CAMERA_RETRY_TIME = 60,
 	TAG = '[VideoStreamer]';
 
 let	audioStreamProcess,
@@ -81,7 +82,7 @@ class VideoStreamer {
 					console.error(METHOD_TAG, `RTSP stream exited with code ${code}`);
 					setTimeout(() => {
 						this.startNetworkStream(cameraId, rtspUrl);
-					}, 10 * 1000);
+					}, CAMERA_RETRY_TIME * 1000);
 				});
 
 				videoStreamProcess.stderr.on('data', (data) => {

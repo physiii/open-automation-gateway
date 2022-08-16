@@ -11,6 +11,7 @@ var $ssid_input = $("#ssid_input")
 var $device_id = $('#device_id');
 var $gateway_id = $('#gateway_id');
 var socket = io();
+var TAG = "[main]"
 
 const searchForNetworkThermostats = () => {
   socket.emit('searchForNetworkThermostats');
@@ -96,13 +97,14 @@ socket.on('device list', (data) => {
 });
 
 socket.on('light list', (data) => {
+  console.log(TAG, data);
   let input = "<input style='display:none' id=\"bridgeUser\" value='" + data.bridgeUser + "' />"
   let rowsAsString = input + "<table style='margin:15px;width:90%'>";
   rowsAsString += "<tr><th>Light ID</th><th>Controller UUID</th><th>Link / Unlink</th></tr>";
 
   let lightOptionsAsString = "<select name=\"lightList\">";
   for(var i = 0; i < data.lights.length; i++) {
-    lightOptionsAsString += "<option value='" + data.lights[i]._data.id + "'>" + data.lights[i]._data.id + "</option>";
+    lightOptionsAsString += "<option value='" + data.lights[i].data.id + "'>" + data.lights[i].data.id + "</option>";
   }
   lightOptionsAsString = lightOptionsAsString + "</select>";
 

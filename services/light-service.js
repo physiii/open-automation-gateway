@@ -46,6 +46,7 @@ class LightService extends Service {
 		this.save();
 	}
 	setPower (value) {
+		this.bridgeService = DevicesManager.getServicesByType('hue_bridge')[0];
 		this.lightIds.forEach(id => {
 			this.bridgeService.setPower(id, value);
 		});
@@ -54,6 +55,7 @@ class LightService extends Service {
 	}
 
 	setBrightness (value) {
+		this.bridgeService = DevicesManager.getServicesByType('hue_bridge')[0];
 		this.lightIds.forEach(id => {
 			let bri = value * brightConversion / 100
 			this.bridgeService.setBrightness(id, bri);
@@ -66,16 +68,26 @@ class LightService extends Service {
 	}
 
 	setTheme (newTheme) {
-		const themeIndex = this.themes.findIndex((theme) => {
-				return theme.theme == newTheme ? true : false;
-			}),
-			color = [
-				this.themes[themeIndex].color.r,
-				this.themes[themeIndex].color.g,
-				this.themes[themeIndex].color.b
+		console.log(TAG, "newTheme", newTheme, this.themes);
+		// const themeIndex = this.themes.findIndex((theme) => {
+		// 		return theme.theme == newTheme ? true : false;
+		// 	}),
+		// 	color = [
+		// 		this.themes[newTheme].color.r,
+		// 		this.themes[newTheme].color.g,
+		// 		this.themes[newTheme].color.b
+		// 	];
+
+		let color = [
+				this.themes[newTheme].r,
+				this.themes[newTheme].g,
+				this.themes[newTheme].b
 			];
 
+		// console.log(TAG, "themeIndex", themeIndex);
+
 		console.log(TAG,'setTheme', color);
+
 
 		this.save();
 		this.state.power = true;
@@ -95,6 +107,7 @@ class LightService extends Service {
 	}
 
 	setColor (color) {
+		this.bridgeService = DevicesManager.getServicesByType('hue_bridge')[0];
 		this.lightIds.forEach(id => {
 			this.bridgeService.setColor(id, color);
 		});
