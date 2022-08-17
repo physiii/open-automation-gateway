@@ -18,7 +18,7 @@ sudo apt update --fix-missing && sudo apt upgrade -y --fix-missing && sudo apt a
 
 
 sudo apt-get install -y \
-  sshpass git nodejs mongodb-org dnsmasq hostapd tmux xdotool libudev-dev \
+  sshpass git nodejs dnsmasq hostapd tmux xdotool libudev-dev \
   python-setuptools python3-dev libssl-dev nmap ffmpeg acl \
   build-essential cmake pkg-config libjpeg-dev libtiff5-dev \
   libavcodec-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfreetype6-dev \
