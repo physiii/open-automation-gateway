@@ -27,6 +27,8 @@ sudo apt-get install -y \
 
 sudo apt install -y raspberrypi-kernel-headers \
 
+# https://andyfelong.com/2021/08/mongodb-4-4-under-raspberry-pi-os-64-bit-raspbian64/
+
 # sudo nano /boot/config.txt
 #   over_voltage=2
 #   arm_freq=1750
