@@ -83,7 +83,7 @@ gfortran openexr libatlas-base-dev python3-dev python3-numpy \
 libtbb2 libtbb-dev libdc1394-22-dev libopenexr-dev \
 libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
 
-sudo apt install libopencv-dev python3-opencv
+sudo apt install -y libopencv-dev python3-opencv
 
 #################
 ##  openzwave  ##
