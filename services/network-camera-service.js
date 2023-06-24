@@ -1,13 +1,11 @@
 const
+	{ spawn, exec, execSync } = require('child_process'),
+	{ v4: uuid } = require('uuid'),
+	axios = require('axios'),
 	FormData = require('form-data'),
-	request = require('request'),
-	spawn = require('child_process').spawn,
-	exec = require('child_process').exec,
-	uuid = require('uuid/v4'),
-	execSync = require('child_process').execSync,
 	crypto = require('crypto'),
 	path = require('path'),
-	fs = require('fs'),
+	fs = require('fs-extra');
 	utils = require('../utils.js'),
 	Service = require('./service.js'),
 	config = require('../config.json'),
@@ -16,21 +14,17 @@ const
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	mediaDir = "/usr/local/lib/open-automation/camera/",
-	eventsDir = "/usr/local/lib/open-automation/camera/events/",
+	eventsDir = path.join(mediaDir, 'events/'),
 	tmpDir = "/tmp/open-automation/",
-	// streamDir = "/usr/local/lib/open-automation/camera/stream/",
-	streamDir = tmpDir + "camera/stream/",
-	ONE_DAY_IN_HOURS = 24,
-	ONE_HOUR_IN_MINUTES = 60,
-	ONE_MINUTE_IN_SECONDS = 60,
-	ONE_DAY_IN_MILLISECONDS = 86400000,
-	ONE_HOUR_IN_MILLISECONDS = 3600000,
-	ONE_MINUTE_IN_MILLISECONDS = 60000,
+	streamDir = path.join(tmpDir, 'camera/stream/'),
+	ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000,  // 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
+	ONE_HOUR_IN_MILLISECONDS = 60 * 60 * 1000,  // 60 minutes * 60 seconds * 1000 milliseconds
+	ONE_MINUTE_IN_MILLISECONDS = 60 * 1000,  // 60 seconds * 1000 milliseconds
 	ONE_SECOND_IN_MILLISECONDS = 1000,
 	CHECK_SCRIPTS_DELAY = 60 * ONE_MINUTE_IN_MILLISECONDS,
 	FRAME_RATE = 8,
 	NO_MOTION_DURATION = 60 * ONE_SECOND_IN_MILLISECONDS,
-	SERVICE_LOOP = 10 * 1000,
+	SERVICE_LOOP = 10 * ONE_SECOND_IN_MILLISECONDS,
 	CAMERA_RETRY_TIME = 60,
 	TAG = '[NetworkCameraService]';
 
@@ -41,20 +35,11 @@ let
 class NetworkCameraService extends Service {
 	constructor (data, relaySocket, save) {
 		super(data, relaySocket, save, CameraApi);
-
+		
 		this.TAG = TAG;
-		// this.network_path = data.network_path;
-		this.network_path = data.protocol
-			+ data.user + ':' + data.pwd + '@'
-			+ data.ip_address + ':' + data.port
-			+ data.path;
-		this.ip_address = data.ip_address || '127.0.0.1';
-		this.user = data.user || 'admin';
-		this.pwd = data.pwd || 'password';
-		this.port = data.port || 554;
-		this.protocol = data.protocol || 'rtsp://';
-		this.path = data.path || '';
-		this.sub_path = data.sub_path || '/stream2';
+		this.setupCameraDetails(data);
+		this.setupCameraSettings(data.settings);
+		
 		this.motionDetected = false;
 		this.motionTime = { start: 0, stop: 0 };
 		this.currentPosition = [];
@@ -63,38 +48,69 @@ class NetworkCameraService extends Service {
 		this.isStreaming = false;
 		this.streamStarted = false;
 		this.postloadTimeout;
-		this.cameraStreamDir = streamDir + this.id;
+		this.cameraStreamDir = `${streamDir}${this.id}`;
 		this.watchStreamDir = {};
 		this.info = {};
 
-		// Settings
-		this.settings.network_path = data.settings && this.network_path;
-		this.settings.resolution_w = data.settings && data.settings.resolution_w || 640;
-		this.settings.resolution_h = data.settings && data.settings.resolution_h || 480;
-		this.settings.rotation = data.settings && data.settings.rotation || config.rotation || 0;
-		this.settings.should_detect_motion = data.settings && data.settings.motion_detection_enabled || true;
-		this.settings.motion_threshold = data.settings && data.settings.motion_threshold || 10;
-		this.settings.should_take_timelapse = data.settings && data.settings.should_take_timelapse || true;
-		this.settings.timelapse_brightness_threshold = data.settings && data.settings.timelapse_brightness_threshold || 10;
-		this.settings.timelapse_interval = data.settings && data.settings.timelapse_interval || 20;
-		this.settings.timelapse_on_time_hour = data.settings && data.settings.timelapse_on_time_hour || 6;
-		this.settings.timelapse_on_time_minute = data.settings && data.settings.timelapse_on_time_minute || 0;
-		this.settings.timelapse_off_time_hour = data.settings && data.settings.timelapse_off_time_hour || 22;
-		this.settings.timelapse_off_time_minute = data.settings && data.settings.timelapse_off_time_minute || 0;
-		this.settings.motionArea_x1 = data.settings && data.settings.motionArea_x1 || 0;
+		CameraRecordings.getLastRecording(this.id)
+			.then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
-		CameraRecordings.getLastRecording(this.id).then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
-
-		fs.rm(this.cameraStreamDir, { recursive: true, force: true }, ()=>{
-			fs.mkdir(this.cameraStreamDir, { recursive: true }, ()=>{
-				this.streamNetworkCamera();
-				this.isStreaming = true;
-			});
-		});
-		fs.mkdirSync(eventsDir, { recursive: true });
-
+		// Initialize directories and start streaming
+		this.initializeStream();
 		VideoStreamer.startNetworkStream(this.id, this.network_path);
 		this.startMotionDetection();
+	}
+
+	setupCameraDetails(data) {
+		this.network_path = `${data.protocol}${data.user}:${data.pwd}@${data.ip_address}:${data.port}${data.path}`;
+		this.ip_address = data.ip_address || '127.0.0.1';
+		this.user = data.user || 'admin';
+		this.pwd = data.pwd || 'password';
+		this.port = data.port || 554;
+		this.protocol = data.protocol || 'rtsp://';
+		this.path = data.path || '';
+		this.sub_path = data.sub_path || '/stream2';
+	}
+
+	setupCameraSettings(settings) {
+		this.settings = settings || {};
+		let defaults = {
+			network_path: this.network_path,
+			resolution_w: 640,
+			resolution_h: 480,
+			rotation: config.rotation || 0,
+			should_detect_motion: true,
+			motion_threshold: 10,
+			should_take_timelapse: true,
+			timelapse_brightness_threshold: 10,
+			timelapse_interval: 20,
+			timelapse_on_time_hour: 6,
+			timelapse_on_time_minute: 0,
+			timelapse_off_time_hour: 22,
+			timelapse_off_time_minute: 0,
+			motionArea_x1: 0,
+		};
+
+		// Set the settings to the defaults if they're not already set
+		for (let [key, value] of Object.entries(defaults)) {
+			if (!this.settings.hasOwnProperty(key)) {
+				this.settings[key] = value;
+			}
+		}
+	}
+
+	initializeStream() {
+		// fs.rm(this.cameraStreamDir, { recursive: true, force: true }, () => {
+		// 	fs.mkdir(this.cameraStreamDir, { recursive: true }, () => {
+		// 		this.streamNetworkCamera();
+		// 		this.isStreaming = true;
+		// 	});
+		// });
+	
+		// Verify if the directory was created
+
+		this.isStreaming = true;
+		this.streamNetworkCamera();
 	}
 
 	onClientConnect (val) {
@@ -156,78 +172,6 @@ class NetworkCameraService extends Service {
 		console.log(TAG, "stopNetworkStream");
 	}
 
-	upload(filepath, url, info) {
-		return new Promise((resolve, reject) => {
-    	let
-				form = new FormData(),
-				opts = {
-						headers: {
-								'Content-Type': 'video/mp2t'
-						}
-				},
-				r = request.post(url, opts, function(error, res, body) {
-					if (error) {
-						console.error(error);
-					}
-
-					// try {
-						info.body = JSON.parse(body);
-			    // } catch (e) {
-			    //     console.error(TAG, "Not JSON", e);
-			    // }
-					resolve(info);
-				});
-
-	    form.append('file', fs.createReadStream(filepath));
-	    form.append('field', JSON.stringify(info));
-
-			r._form = form;
-		});
-	}
-
-	uploadCallback (error) {
-		console.log(TAG, "ERROR", error);
-	}
-
-	streamNetworkCamera () {
-		let fileList = [],
-			self = this,
-			url = 'http://' + RELAY_SERVER + ':' + RELAY_PORT + '/stream/upload';
-
-    this.watchStreamDir[this.id] = fs.watch(this.cameraStreamDir, (event, file) => {
-				if (event === "change" && file !== "playlist.m3u8.tmp" && file.indexOf('motion') < 0) {
-					if (fileList.indexOf(file) == -1) {
-						fileList.push(file);
-					}
-				}
-
-        if (event === "rename" && file === "playlist.m3u8") {
-						fileList.push(file);
-						fileList.forEach((file, i) => {
-							let motionDuration = self.motionTime.start ? Date.now() - self.motionTime.start : 0,
-								info = {
-									cameraId: this.id,
-									motionTime: self.motionTime,
-									file: file
-								};
-
-							if (motionDuration > this.motionDuractionMax) {
-								self.motionTime.stop = Date.now();
-							}
-
-							this.upload(this.cameraStreamDir + '/' + file, url, info).then((info)=> {
-								if (info.body.received  === file && info.motionTime.stop > 0 && info.file !== 'playlist.m3u8') {
-									this.motionTime.stop = 0;
-									this.motionTime.start = 0;
-								}
-							});
-						});
-
-						fileList = [];
-	        }
-    });
-	}
-
 	streamLive () {
 		console.log(TAG, "streamLive", this.id);
 		const stream_token = this.generateStreamToken();
@@ -244,21 +188,6 @@ class NetworkCameraService extends Service {
 		VideoStreamer.stop();
 	}
 
-	createMotionEventFolder(date) {
-		let
-			stamp = date.toISOString(),
-			year = stamp.substr(0,4) + '/',
-			month = stamp.substr(5,2) + '/',
-			day = stamp.substr(8,2) + '/',
-			eventFolder = stamp.substr(0,19).replace('T','_'),
-			destDir = eventsDir + this.id + '/'
-				+ year + month + day + eventFolder;
-
-		execSync('mkdir -p ' + destDir);
-		console.log(TAG, 'createMotionEventFolder', destDir);
-		return destDir;
-	}
-
 	getMotionDevicePath () {
 		let url = this.protocol
 			+ this.user + ':' + this.pwd + '@'
@@ -268,90 +197,238 @@ class NetworkCameraService extends Service {
 		return url;
 	}
 
-	startMotionDetection () {
-		const METHOD_TAG = this.TAG,
-			MOTION_TAG = METHOD_TAG + ' ' + this.settings.name,
-			motionCommand = [
-				motionScriptPath,
-				'--camera', this.getMotionDevicePath(),
-				'--camera-id', this.id,
-				'--frame-rate', FRAME_RATE,
-				'--rotation', this.settings.rotation || 0,
-				'--threshold', this.settings.motion_threshold || 4,
-				'--motionArea_x1', this.settings.motionArea_x1 || 0,
-				'--motionArea_y1', this.settings.motionArea_y1 || 0,
-				'--motionArea_x2', this.settings.motionArea_x2 || 0,
-				'--motionArea_y2', this.settings.motionArea_y2 || 0,
-				'--audio-device', config.motion_audio_device_path || 0,
-			],
-			launchMotionScript = () => {
-			// Launch the motion detection script.
-			// python3  /home/pi/gateway/motion/motion.py --camera /dev/video20 --camera-id e7128581-c932-496a-8ebd-ce90cde03653 --frame-rate 3  --rotation 0 --threshold 4 --audio-device hw:5,1
-			const motionProcess = spawn('python3', motionCommand);
-
-			// Listen for motion events.
-			motionProcess.stdout.on('data', (data) => {
-				if (!data) {
-					return;
+	async transcribeVideo(filepath) {
+		// Define the output directory for the transcriptions.
+		const transcriptionOutputDir = `${this.cameraStreamDir}/transcriptions`;
+		// fs.mkdirSync(transcriptionOutputDir, { recursive: true });
+	
+		// Define the transcription file path.
+		const transcriptionFilepath = `${transcriptionOutputDir}/${path.basename(filepath, '.ts')}.whisper`;
+	
+		// Define the command to transcribe the video.
+		const command = `whisper --model medium --language English --output_dir ${transcriptionOutputDir} ${filepath}`;
+	
+		// Execute the command and return a promise that is resolved when the command has finished.
+		return new Promise((resolve, reject) => {
+			exec(command, (error, stdout, stderr) => {
+				if (error) {
+					console.error(`An error occurred while transcribing the video: ${error}`);
+					reject(error);
+				} else {
+					resolve(transcriptionFilepath);
 				}
-
-				const now = new Date();
-
-				// console.log(this.id, this.settings.name, data.toString().replace('\n',''));
-
-				if (data.includes('[MOTION]')) {
-					if (this.motionTime.start == 0)  {
-						console.log(this.id, this.settings.name, data.toString().replace('\n',''));
-						this.state.motion_detected_date = now;
-						this.motionTime.start = Date.now();
-						this.capturePreviewImage();
-					}
-
-					clearTimeout(this.postloadTimeout);
-					this.relayEmit('motion-started', {date: now.toISOString()});
-				} else if (data.includes('[NO MOTION]')) {
-					this.postloadTimeout = setTimeout(() => {
-							this.motionTime.stop = Date.now();
-							this.relayEmit('motion-stopped', {date: now.toISOString()});
-							console.log(this.id, this.settings.name, data.toString().replace('\n',''));
-							// console.log(TAG, "!! SET STOP TIME !!", this.id, this.motionTime.stop);
-					}, NO_MOTION_DURATION);
-				}
-			});
-
-			motionProcess.on('close', (code) => {
-				console.error(TAG, `Motion process exited with code ${code}. Restarting.`);
-				setTimeout(() => {
-					this.startMotionDetection();
-				}, CAMERA_RETRY_TIME * 1000)
-			});
-
-			motionProcess.stderr.on('data', (data) => {
-				console.error(MOTION_TAG, data.toString());
-			});
-		}
-
-		// Check if motion is already running so we do not duplicate process
-		utils.checkIfProcessIsRunning('motion.py', this.getMotionDevicePath()).then((processId) => {
-			utils.killProcess(processId).then(() => {
-				launchMotionScript();
 			});
 		});
 	}
+	
+	async handleRenameEvent(fileList, url) {
+		try {
+		  const transcriptionFilepath = "/tmp";
+		  fileList.forEach((file, i) => {
+			const videoFilepath = path.join(this.cameraStreamDir, file);
+			let info = this.getFileInfo(file);
+			let motionDuration = this.checkMotionDuration();
+	
+			if (motionDuration > this.motionDuractionMax) {
+			  info.motionTime.stop = Date.now();
+			}
+			this.upload(videoFilepath, url, info);
+			this.resetMotionTime(info);
+		  });
+		} catch (error) {
+		  console.error(error);
+		}
+	}
 
-	saveNetworkVideo (motionFileList) {
-		const METHOD_TAG = this.TAG + ' [saveNetworkVideo]';
+	// async handleRenameEvent(fileList, url) {
+	// 	try {
+	// 	  const transcriptionFilepath = "/tmp";
+	// 	  console.log(TAG, "handleRenameEvent", fileList, url);
+	// 	  fileList.forEach((file, i) => {
+	// 		const videoFilepath = path.join(this.cameraStreamDir, file);
+	// 		console.log("[handleRenameEvent]", file, url);
+	// 		let info = this.getFileInfo(file);
+	// 		let motionDuration = this.checkMotionDuration();
+	
+	// 		if (motionDuration > this.motionDuractionMax) {
+	// 		  info.motionTime.stop = Date.now();
+	// 		}
+	// 		this.upload(videoFilepath, url, info);
+	// 		this.resetMotionTime(info);
+	// 	  });
+	// 	} catch (error) {
+	// 	  console.error(error);
+	// 	}
+	// }
+	
+	async upload(filepath, url, info) {
+		try {
+			const form = new FormData();
+			form.append('file', fs.createReadStream(filepath));
+			form.append('field', JSON.stringify(info));
 
-		let
-			stamp = this.state.motion_detected_date.toISOString(),
-			year = stamp.substr(0,4) + '/',
-			month = stamp.substr(5,2) + '/',
-			day = stamp.substr(8,2) + '/',
-			filename = stamp.substr(0,19).replace('T','_') + '.avi',
-			destDir = eventsDir + this.id + '/'
-				+ year + month + day,
-			destPath = destDir + filename;
+			const headers = form.getHeaders();
+			const axiosConfig = {
+				headers,
+				maxBodyLength: Infinity
+			};
+	
+			const response = await axios.post(url, form, axiosConfig);
 
+			info.body = response.data;
+			return info;
+		} catch (error) {
+			console.log(TAG, "[upload][fail]", error);
+			console.error(error);
+			throw error;
+		}
+	}
+
+	streamNetworkCamera() {
+		let fileList = [];
+		const url = `http://${RELAY_SERVER}:${RELAY_PORT}/stream/upload`;
+
+		if (fs.existsSync(this.cameraStreamDir)) {
+			console.log(TAG, "[streamNetworkCamera]", 'Directory exists.', this.cameraStreamDir);
+			fs.rmSync(this.cameraStreamDir, { recursive: true, force: true });
+		}
+
+		execSync(`mkdir -p ${this.cameraStreamDir}`);
+		this.watchStreamDir[this.id] = fs.watch(this.cameraStreamDir, (event, file) => {
+			const isChangeEvent = event === "change";
+			const isNotTempPlaylist = file !== "playlist.m3u8.tmp";
+			const isNotMotionFile = file.indexOf('motion') < 0;
+			const isRenameEvent = event === "rename";
+			const isPlaylist = file === "playlist.m3u8";
+
+			if (isChangeEvent && isNotTempPlaylist && isNotMotionFile) {
+				if (fileList.indexOf(file) === -1) {
+					fileList.push(file);
+				}
+			}
+
+			if (isRenameEvent && isPlaylist) {
+			fileList.push(file); // Append the file to the file list
+			this.handleRenameEvent(fileList, url);
+			fileList = []; // Clear the file list after handling the rename event
+			}
+		});
+	}
+		
+	getFileInfo(file) {
+		const motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
+		
+		return {
+			cameraId: this.id,
+			motionTime: this.motionTime,
+			file: file
+		};
+	}
+	
+	checkMotionDuration() {
+		const motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
+		
+		if (motionDuration > this.motionDuractionMax) {
+			this.motionTime.stop = Date.now();
+		}
+		
+		return motionDuration;
+	}
+	
+	resetMotionTime(info) {
+		if (info.body && info.body.received === info.file && info.motionTime.stop > 0 && info.file !== 'playlist.m3u8') {
+		  info.motionTime.stop = 0;
+		  info.motionTime.start = 0;
+		}
+	}
+	
+
+	startMotionDetection() {
+		const METHOD_TAG = `${this.TAG} ${this.settings.name}`;
+	
+		const launchMotionScript = () => {
+			const motionCommand = this.getMotionCommand();
+			const motionProcess = spawn('python3', motionCommand);
+			this.handleMotionEvents(motionProcess);
+			this.handleMotionProcessErrors(motionProcess);
+		}
+	
+		utils.checkIfProcessIsRunning('motion.py', this.getMotionDevicePath())
+			.then(processId => utils.killProcess(processId))
+			.then(launchMotionScript);
+	}
+	
+	getMotionCommand() {
+		const defaults = {
+			'--rotation': 0,
+			'--threshold': 4,
+			'--motionArea_x1': 0,
+			'--motionArea_y1': 0,
+			'--motionArea_x2': 0,
+			'--motionArea_y2': 0,
+			'--audio-device': 0,
+		};
+	
+		const motionCommand = [
+			motionScriptPath,
+			'--camera', this.getMotionDevicePath(),
+			'--camera-id', this.id,
+			'--frame-rate', FRAME_RATE,
+		];
+	
+		Object.keys(defaults).forEach((key) => {
+			const value = this.settings[key] || defaults[key];
+			motionCommand.push(key, value);
+		});
+	
+		return motionCommand;
+	}
+	
+	handleMotionEvents(motionProcess) {
+		motionProcess.stdout.on('data', data => {
+			if (!data) return;
+	
+			const now = new Date();
+			const message = data.toString().replace('\n','');
+	
+			if (data.includes('[MOTION]')) {
+				this.handleMotionDetected(now, message);
+			} else if (data.includes('[NO MOTION]')) {
+				this.handleNoMotionDetected(now, message);
+			}
+		});
+	}
+	
+	handleMotionDetected(now, message) {
+		if (this.motionTime.start !== 0) return;
+	
+		console.log(this.id, this.settings.name, message);
+		this.state.motion_detected_date = now;
+		this.motionTime.start = Date.now();
+		this.capturePreviewImage();
+		this.relayEmit('motion-started', {date: now.toISOString()});
+		clearTimeout(this.postloadTimeout);
+	}
+	
+	handleNoMotionDetected(now, message) {
+		this.postloadTimeout = setTimeout(() => {
+			this.motionTime.stop = Date.now();
+			this.relayEmit('motion-stopped', {date: now.toISOString()});
+			console.log(this.id, this.settings.name, message);
+		}, NO_MOTION_DURATION);
+	}
+	
+	handleMotionProcessErrors(motionProcess) {
+		const METHOD_TAG = this.TAG + ' [handleMotionProcessErrors]';
+
+		motionProcess.stderr.on('data', data => {
+			console.error(METHOD_TAG, data.toString());
+		});
+	
+		motionProcess.on('close', code => {
+			console.error(TAG, `Motion process exited with code ${code}. Restarting.`);
+			setTimeout(this.startMotionDetection.bind(this), CAMERA_RETRY_TIME * 1000);
+		});
 	}
 
 	dbSerialize () {

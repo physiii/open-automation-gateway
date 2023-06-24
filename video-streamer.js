@@ -71,7 +71,6 @@ class VideoStreamer {
 		execSync("mkdir -p " + streamDir);
 		let ffmpegStr = "\"" + this.printFFmpegOptions(options) + "\"";
 
-
 		// Check if stream is already running so we do not duplicate process
 		utils.checkIfProcessIsRunning(ffmpegStr).then((processId) => {
 			utils.killProcess(processId).then(() => {

@@ -1,5 +1,6 @@
 const io = require('socket.io-client'),
 	relayUrl = (USE_SSL ? 'https' : 'http') + '://' + RELAY_SERVER + ':' + RELAY_PORT + '/device-relay',
+	deviceType = 'gateway',
 	TAG = '[device-socket.js]';
 
 function createDeviceSocket (deviceId, deviceToken) {
@@ -17,10 +18,24 @@ function createDeviceSocket (deviceId, deviceToken) {
 		rejectUnauthorized: !USE_DEV
 	});
 
-	socket.on('connect', () => console.log(TAG, deviceId, 'Device connected to relay.'));
-	socket.on('disconnect', () => console.log(TAG, deviceId, 'Device was disconnected from relay.'));
-	socket.on('reconnect_failed', () => console.log(TAG, deviceId, 'Device failed to reconnect to relay.'));
-	socket.on('connect_error', (error) => console.error(TAG, deviceId, 'Error connecting device to relay:', error.type, error.description));
+
+// const headers = {
+//   'x-device-id': deviceId,
+//   'x-device-token': deviceToken,
+//   'x-device-type': deviceType
+// };
+
+// // Connect to the WebSocket server
+// const socket = io(relayUrl, {
+//   transports: ['websocket'],
+//   query: headers
+// });
+
+// Listen to events
+// socket.on('connect', () => {
+//   console.log('!! -- HIT -- !! Connected to relay.');
+// });
+
 
 	return socket;
 }

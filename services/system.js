@@ -5,7 +5,7 @@
 const exec = require('child_process').exec,
 	spawn = require('child_process').spawn,
 	loop_delay = 60 * 1000,
-  diskUsage = require('diskusage'),
+//   diskUsage = require('diskusage'),
 	utils = require('../utils');
 
 let TAG = "[connection-manager]";
@@ -22,12 +22,13 @@ class System {
 
   checkDiskSpace () {
     return new Promise(function(resolve, reject) {
-      diskUsage.check('/', function (error, info) {
-        if (error) {
-          return console.log(TAG, error);
-        }
-        resolve(info);
-      });
+		resolve();
+    //   diskUsage.check('/', function (error, info) {
+    //     if (error) {
+    //       return console.log(TAG, error);
+    //     }
+    //     resolve(info);
+    //   });
     })
   }
 
@@ -59,10 +60,10 @@ class System {
 	loop () {
 		setInterval((self) => {
 			self.checkDiskSpace().then((info) => {
-		    let ratio = info.free / info.total;
-		    if (ratio < MINIMUM_FREE_SPACE/100) {
-		      utils.removeOldCameraRecordings();
-		    }
+		    // let ratio = info.free / info.total;
+		    // if (ratio < MINIMUM_FREE_SPACE/100) {
+		    //   utils.removeOldCameraRecordings();
+		    // }
 		  });
 		}, loop_delay, this);
 	}

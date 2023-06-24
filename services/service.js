@@ -35,7 +35,6 @@ class Service {
 			console.error(TAG, this.id, 'Tried to emit event ' + event + ' to relay, but this service has no relay API.');
 			return;
 		}
-
 		this._relayEmit(event, data, callback);
 	}
 

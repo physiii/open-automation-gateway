@@ -23,7 +23,7 @@ const utils = require('./utils'),
   System = require('./services/system.js'),
   Database = require('./services/database.js'),
   DevicesManager = require('./devices/devices-manager.js'),
-  diskUsage = require('diskusage'),
+//   diskUsage = require('diskusage'),
   admin = require('./admin/index.js')
 
 config.local_display ? require('./local-display.js')
