@@ -13,6 +13,7 @@ const
 	VideoStreamer = require('../video-streamer.js'),
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
+	DetectMotionProgramPath = path.join(__dirname, '/../motion/DetectMotion.py'),
 	mediaDir = "/usr/local/lib/open-automation/camera/",
 	eventsDir = path.join(mediaDir, 'events/'),
 	tmpDir = "/tmp/open-automation/",
@@ -55,10 +56,10 @@ class NetworkCameraService extends Service {
 		CameraRecordings.getLastRecording(this.id)
 			.then((recording) => this.state.motion_detected_date = recording ? recording.date : null);
 
-		// Initialize directories and start streaming
-		this.initializeStream();
+		this.isStreaming = true;
+		this.streamNetworkCamera();
 		VideoStreamer.startNetworkStream(this.id, this.network_path);
-		this.startMotionDetection();
+		// this.startMotionDetection();
 	}
 
 	setupCameraDetails(data) {
@@ -97,34 +98,7 @@ class NetworkCameraService extends Service {
 				this.settings[key] = value;
 			}
 		}
-	}
-
-	initializeStream() {
-		// fs.rm(this.cameraStreamDir, { recursive: true, force: true }, () => {
-		// 	fs.mkdir(this.cameraStreamDir, { recursive: true }, () => {
-		// 		this.streamNetworkCamera();
-		// 		this.isStreaming = true;
-		// 	});
-		// });
-	
-		// Verify if the directory was created
-
-		this.isStreaming = true;
-		this.streamNetworkCamera();
-	}
-
-	onClientConnect (val) {
-		if (!this.streamStarted) {
-			// VideoStreamer.streamNetworkCamera(this.id);
-			// this.streamStarted = true;
-		}
-
-		// if (val) {
-		// 	VideoStreamer.startNetworkStream(this.id, this.network_path);
-		// } else {
-		// 	VideoStreamer.stopNetworkStream(this.id);
-		// 	this.isStreaming = false;
-		// }
+		console.log('Starting camera: ', this.settings.name);
 	}
 
 	getPreviewImage () {
@@ -160,10 +134,6 @@ class NetworkCameraService extends Service {
 			}, 1000);
 	}
 
-	generateStreamToken () {
-		return crypto.randomBytes(128).toString('hex');
-	}
-
 	stopNetworkStream () {
 		if (this.watchStreamDir[this.id]) {
 			this.watchStreamDir[this.id].close();
@@ -173,15 +143,13 @@ class NetworkCameraService extends Service {
 	}
 
 	streamLive () {
-		console.log(TAG, "streamLive", this.id);
-		const stream_token = this.generateStreamToken();
-
 		if (!this.isStreaming) {
 			this.streamNetworkCamera();
 			this.isStreaming = true;
 		}
 
-		return stream_token;
+		console.log(TAG, "streamLive", this.settings.name, this.id);
+		return crypto.randomBytes(128).toString('hex');
 	}
 
 	stopStream () {
@@ -223,77 +191,137 @@ class NetworkCameraService extends Service {
 	
 	async handleRenameEvent(fileList, url) {
 		try {
-		  const transcriptionFilepath = "/tmp";
-		  fileList.forEach((file, i) => {
-			const videoFilepath = path.join(this.cameraStreamDir, file);
-			let info = this.getFileInfo(file);
-			let motionDuration = this.checkMotionDuration();
+			for (let i = 0; i < fileList.length; i++) {
+				const file = fileList[i];
+				const videoFilepath = path.join(this.cameraStreamDir, file);
+				const now = new Date();
+				let info = this.getFileInfo(file);
+				let motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
 	
-			if (motionDuration > this.motionDuractionMax) {
-			  info.motionTime.stop = Date.now();
+				if (motionDuration > this.motionDuractionMax) {
+					info.motionTime.stop = Date.now();
+					console.log('Motion duration is too long. Skipping video.');
+				}
+	
+				if (info.file !== 'playlist.m3u8') {
+					let motion = await this.detectMotionInClip(videoFilepath, info);
+					if (motion > 0) {
+						if (this.motionTime.start === 0) {
+							this.handleMotionDetected(now);
+							console.log(TAG, this.settings.name, "motion [", motion, "] started at", this.motionTime.start);
+						}
+					} else {
+						if (this.motionTime.start !== 0) {
+							this.handleNoMotionDetected(now);
+						}
+					}
+				}
+
+				info.motionTime.start = this.motionTime.start;
+				info.motionTime.stop = this.motionTime.stop;
+				info = await this.upload(videoFilepath, url, info);
+
+				if (info.body.info.motionTime.start > 0 && info.body.info.motionTime.stop > 0) {
+					console.log(TAG, this.id, this.settings.name, "motion stopped at", this.motionTime.stop);
+					this.motionTime.stop = 0;
+					this.motionTime.start = 0;
+				}
 			}
-			this.upload(videoFilepath, url, info);
-			this.resetMotionTime(info);
-		  });
 		} catch (error) {
-		  console.error(error);
+			console.error(error);
 		}
 	}
+	
+	detectMotionInClip(clipPath) {
+		const cmd = `python3 ${DetectMotionProgramPath} --video "${clipPath}" --threshold ${this.settings.motion_threshold}`;
+		try {
+			const res = execSync(cmd, { encoding: 'utf8' }); // Specify the encoding to get a string instead of a buffer
+			const resultJson = JSON.parse(res);
+			return resultJson.motion_percentage; // return the motion_percentage
+		} catch (error) {
+			console.error('Error executing the Python script:', error);
+			return null; // return null in case of an error
+		}
+	}
+	  
+	handleMotionDetected(now) {
+		this.relayEmit('motion-started', {date: now.toISOString()});
+		clearTimeout(this.postloadTimeout);
 
-	// async handleRenameEvent(fileList, url) {
-	// 	try {
-	// 	  const transcriptionFilepath = "/tmp";
-	// 	  console.log(TAG, "handleRenameEvent", fileList, url);
-	// 	  fileList.forEach((file, i) => {
-	// 		const videoFilepath = path.join(this.cameraStreamDir, file);
-	// 		console.log("[handleRenameEvent]", file, url);
-	// 		let info = this.getFileInfo(file);
-	// 		let motionDuration = this.checkMotionDuration();
+		if (this.motionTime.start !== 0) return;
+		this.state.motion_detected_date = now;
+		this.motionTime.start = Date.now();
+		this.capturePreviewImage();
+	}
 	
-	// 		if (motionDuration > this.motionDuractionMax) {
-	// 		  info.motionTime.stop = Date.now();
-	// 		}
-	// 		this.upload(videoFilepath, url, info);
-	// 		this.resetMotionTime(info);
-	// 	  });
-	// 	} catch (error) {
-	// 	  console.error(error);
-	// 	}
-	// }
+	handleNoMotionDetected(now) {
+		if (this.isNoMotionTimeoutSet) return;
 	
+		this.isNoMotionTimeoutSet = true;
+		this.postloadTimeout = setTimeout(() => {
+			this.motionTime.stop = Date.now();
+			this.relayEmit('motion-stopped', {date: now.toISOString()});
+			this.isNoMotionTimeoutSet = false;
+		}, NO_MOTION_DURATION);
+	}
+
+	checkMotionDuration() {
+		const motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
+		
+		if (motionDuration > this.motionDuractionMax) {
+			this.motionTime.stop = Date.now();
+		}
+		
+		return motionDuration;
+	}
+	
+	handleMotionProcessErrors(motionProcess) {
+		const METHOD_TAG = this.TAG + ' [handleMotionProcessErrors]';
+
+		motionProcess.stderr.on('data', data => {
+			console.error(METHOD_TAG, data.toString());
+		});
+	
+		motionProcess.on('close', code => {
+			console.error(TAG, `Motion process exited with code ${code}. Restarting.`);
+			setTimeout(this.startMotionDetection.bind(this), CAMERA_RETRY_TIME * 1000);
+		});
+	}
+	  	
 	async upload(filepath, url, info) {
 		try {
-			const form = new FormData();
-			form.append('file', fs.createReadStream(filepath));
-			form.append('field', JSON.stringify(info));
+		  const form = new FormData();
+		  form.append('file', fs.createReadStream(filepath));
+		  form.append('field', JSON.stringify(info));
+	  
+		  const headers = form.getHeaders();
+		  const axiosConfig = {
+			headers,
+			maxBodyLength: Infinity
+		  };
 
-			const headers = form.getHeaders();
-			const axiosConfig = {
-				headers,
-				maxBodyLength: Infinity
-			};
-	
-			const response = await axios.post(url, form, axiosConfig);
-
-			info.body = response.data;
-			return info;
+		  const response = await axios.post(url, form, axiosConfig);
+		  info.body = response.data;
+		  return info;
 		} catch (error) {
-			console.log(TAG, "[upload][fail]", error);
-			console.error(error);
-			throw error;
+		  console.log(TAG, "[upload][fail]", error);
+		  console.error(error);
+		  // Remove the file if the upload fails
+		  fs.unlinkSync(filepath);
+		  throw error;
 		}
-	}
+	  }  
 
 	streamNetworkCamera() {
-		let fileList = [];
 		const url = `http://${RELAY_SERVER}:${RELAY_PORT}/stream/upload`;
+		let fileList = [];
 
 		if (fs.existsSync(this.cameraStreamDir)) {
-			console.log(TAG, "[streamNetworkCamera]", 'Directory exists.', this.cameraStreamDir);
 			fs.rmSync(this.cameraStreamDir, { recursive: true, force: true });
 		}
 
 		execSync(`mkdir -p ${this.cameraStreamDir}`);
+
 		this.watchStreamDir[this.id] = fs.watch(this.cameraStreamDir, (event, file) => {
 			const isChangeEvent = event === "change";
 			const isNotTempPlaylist = file !== "playlist.m3u8.tmp";
@@ -308,16 +336,14 @@ class NetworkCameraService extends Service {
 			}
 
 			if (isRenameEvent && isPlaylist) {
-			fileList.push(file); // Append the file to the file list
-			this.handleRenameEvent(fileList, url);
-			fileList = []; // Clear the file list after handling the rename event
+				fileList.push(file); // Append the file to the file list
+				this.handleRenameEvent(fileList, url);
+				fileList = []; // Clear the file list after handling the rename event
 			}
 		});
 	}
 		
-	getFileInfo(file) {
-		const motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
-		
+	getFileInfo(file) {		
 		return {
 			cameraId: this.id,
 			motionTime: this.motionTime,
@@ -325,23 +351,24 @@ class NetworkCameraService extends Service {
 		};
 	}
 	
-	checkMotionDuration() {
-		const motionDuration = this.motionTime.start ? Date.now() - this.motionTime.start : 0;
-		
-		if (motionDuration > this.motionDuractionMax) {
-			this.motionTime.stop = Date.now();
-		}
-		
-		return motionDuration;
-	}
-	
-	resetMotionTime(info) {
-		if (info.body && info.body.received === info.file && info.motionTime.stop > 0 && info.file !== 'playlist.m3u8') {
-		  info.motionTime.stop = 0;
-		  info.motionTime.start = 0;
-		}
-	}
-	
+	async addMetadataToVideo(videoFilepath, metadata) {
+		return new Promise((resolve, reject) => {
+		  // Convert metadata object to a JSON string
+		  const metadataJson = JSON.stringify(metadata);
+		  
+		  // Use FFmpeg to embed metadata as ID3 tags in the video
+		  const command = `ffmpeg -i ${videoFilepath} -c copy -metadata info='${metadataJson}' ${videoFilepath}_with_metadata.ts`;
+	  
+		  exec(command, (error, stdout, stderr) => {
+			if (error) {
+			  console.error(`An error occurred while embedding metadata to the video: ${error}`);
+			  reject(error);
+			} else {
+			  resolve();
+			}
+		  });
+		});
+	  }
 
 	startMotionDetection() {
 		const METHOD_TAG = `${this.TAG} ${this.settings.name}`;
@@ -382,53 +409,6 @@ class NetworkCameraService extends Service {
 		});
 	
 		return motionCommand;
-	}
-	
-	handleMotionEvents(motionProcess) {
-		motionProcess.stdout.on('data', data => {
-			if (!data) return;
-	
-			const now = new Date();
-			const message = data.toString().replace('\n','');
-	
-			if (data.includes('[MOTION]')) {
-				this.handleMotionDetected(now, message);
-			} else if (data.includes('[NO MOTION]')) {
-				this.handleNoMotionDetected(now, message);
-			}
-		});
-	}
-	
-	handleMotionDetected(now, message) {
-		if (this.motionTime.start !== 0) return;
-	
-		console.log(this.id, this.settings.name, message);
-		this.state.motion_detected_date = now;
-		this.motionTime.start = Date.now();
-		this.capturePreviewImage();
-		this.relayEmit('motion-started', {date: now.toISOString()});
-		clearTimeout(this.postloadTimeout);
-	}
-	
-	handleNoMotionDetected(now, message) {
-		this.postloadTimeout = setTimeout(() => {
-			this.motionTime.stop = Date.now();
-			this.relayEmit('motion-stopped', {date: now.toISOString()});
-			console.log(this.id, this.settings.name, message);
-		}, NO_MOTION_DURATION);
-	}
-	
-	handleMotionProcessErrors(motionProcess) {
-		const METHOD_TAG = this.TAG + ' [handleMotionProcessErrors]';
-
-		motionProcess.stderr.on('data', data => {
-			console.error(METHOD_TAG, data.toString());
-		});
-	
-		motionProcess.on('close', code => {
-			console.error(TAG, `Motion process exited with code ${code}. Restarting.`);
-			setTimeout(this.startMotionDetection.bind(this), CAMERA_RETRY_TIME * 1000);
-		});
 	}
 
 	dbSerialize () {

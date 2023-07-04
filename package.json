@@ -30,6 +30,7 @@
     "getmac": "^5.1.0",
     "mongodb": "^2.2.1",
     "node-hue-api": "^5.0.0-beta.13",
+    "node-id3": "^0.2.6",
     "onoff": "^5.0.0",
     "ping": "^0.2.2",
     "request": "^2.88.2",
