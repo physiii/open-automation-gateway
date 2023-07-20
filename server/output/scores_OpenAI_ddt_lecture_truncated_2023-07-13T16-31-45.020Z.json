@@ -1,0 +1,95 @@
+{
+  "scores": [
+    3,
+    null,
+    null,
+    4,
+    3
+  ],
+  "data": {
+    "slides": [
+      {
+        "slide": 1,
+        "content": "Introduction to Parasitology\nIra Blader\n\nDepartment of Microbiology and Immunology\n\nOUHSC\nWhy Do We Need To Study Parasitic Infections?",
+        "question_data": {
+          "question": "What is the importance of studying parasitic infections?",
+          "choices": [
+            "To understand their impact on host health",
+            "To develop effective treatments and prevention methods",
+            "To understand their environmental and economic impacts",
+            "All of the above"
+          ],
+          "correct_answer": "All of the above",
+          "explanation": "Studying parasitic infections allows us to understand their deleterious effects on host health, develop methods of treatment and prevention, and understand their broader impacts on society and the environment.",
+          "difficulty": "medium",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 2,
+        "content": "\nBacteria\n\nViruses\n\nFungi\n\nProtozoa\n\nHelminths\n\nEctoparasites\n\nPARASITES",
+        "question_data": {
+          "question": "Based on the contextual deep-dive into the category of parasites covered in slide 2, identify two major differences between bacteria and helminths?",
+          "choices": [],
+          "correct_answer": "Bacteria are microscopic and unicellular organisms, while helminths are multicellular worms visible to the naked eye. Bacteria can reproduce on their own, while helminths lay eggs in the host's body to reproduce",
+          "explanation": "Bacteria are single-celled organisms that can live almost anywhere - in soil, the ocean, even inside humans and other animals. They can reproduce on their own through cellular division. On the other hand, Helminths are larger, multicellular organisms, often referred to as worms. They cannot multiply inside humans and are often visible to the naked eye. They typically lay eggs inside the body of the host which then get excreted and ingested by another host to continue their lifecycle.",
+          "difficulty": "Hard",
+          "question_type": "short answer"
+        }
+      },
+      {
+        "slide": 3,
+        "content": "What Do You Need to Know\nHow to diagnose and treat a parasitic infection.\n\nCase histories are critical to a diagnosis.  \n\nLife cycles are only important to know if they help in diagnosing the infection.  ",
+        "question_data": {
+          "question": "Considering the above information on diagnosing parasitic infections, how many elements have been identified as important to diagnose a parasitic infection?",
+          "choices": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "correct_answer": "2",
+          "explanation": "The slide mentions two elements that are critical in diagnosing parasitic infections: 1) Case histories, 2) The life cycle of the parasite, but only when it aids the diagnosis.",
+          "difficulty": "Easy",
+          "question_type": "numeric"
+        }
+      },
+      {
+        "slide": 4,
+        "content": "Patient History/Presentation is Key to Diagnosing a Parasitic Infection\nTravel\n\nMedical History\n\nDiet\n\nInsect Bites\n\nHobbies\nOccupation\n\nPets\n\nLab Tests\n\nSymptoms\n\nInsect Bites",
+        "question_data": {
+          "question": "A patient's occupation has no relevance in diagnosing a parasitic infection.",
+          "choices": [
+            "True",
+            "False"
+          ],
+          "correct_answer": "False",
+          "explanation": "Occupation can have a significant impact on exposure to certain environments or elements that may increase the likelihood of contracting a parasitic infection. Therefore, a patient's occupation is an important factor to consider in diagnosis.",
+          "difficulty": "Medium",
+          "question_type": "true/false"
+        }
+      },
+      {
+        "slide": 5,
+        "content": "Keys to Treating Parasitic Infections\nProper Diagnosis\n\nProper Treatment Plan \nDrugs\nSurgical\nSupportive Care\nPrevention\n",
+        "question_data": {
+          "question": "What are the main components involved in effectively addressing parasitic infections according to the presentation?",
+          "choices": [
+            "Proper Diagnosis and Drugs only",
+            "Proper Diagnosis, Proper Treatment Plan, Drugs, Surgical, and Supportive Care only",
+            "Proper Diagnosis, Proper Treatment Plan, Drugs, Surgical, Supportive Care, and Prevention",
+            "Drugs, Surgical, and Supportive Care only"
+          ],
+          "correct_answer": "Proper Diagnosis, Proper Treatment Plan, Drugs, Surgical, Supportive Care, and Prevention",
+          "explanation": "According to the content of slide 5/5 and the overall context of the presentation, the keys to effectively treating parasitic infections include Proper Diagnosis, drafting a Proper Treatment Plan, using Drugs, Surgical methods if necessary, Supportive Care, and also Prevention mechanisms in place to avoid recurrent infections. Therefore, all listed components are essential in effectively addressing parasitic infections.",
+          "difficulty": "Hard",
+          "question_type": "multiple choice"
+        }
+      }
+    ]
+  },
+  "averageScore": 2,
+  "fileName": "ddt_lecture_truncated.pptx",
+  "model": "OpenAI",
+  "timestamp": "2023-07-13T16-31-45.020Z"
+}

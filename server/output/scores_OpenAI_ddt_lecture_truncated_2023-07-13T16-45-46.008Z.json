@@ -1,0 +1,110 @@
+{
+  "scores": [
+    null,
+    null,
+    null,
+    null,
+    3
+  ],
+  "data": {
+    "slides": [
+      {
+        "slide": 1,
+        "content": "Introduction to Parasitology\nIra Blader\n\nDepartment of Microbiology and Immunology\n\nOUHSC\nWhy Do We Need To Study Parasitic Infections?",
+        "question_data": {
+          "question": "What is Ira Blader's purpose of presenting 'Introduction to Parasitology'?",
+          "choices": [
+            "To introduce the Department of Microbiology and Immunology",
+            "To explain why parasitic infections need to be studied",
+            "To promote OUHSC",
+            "To introduce the major figures in the field of parasitology"
+          ],
+          "correct_answer": [
+            "To explain why parasitic infections need to be studied"
+          ],
+          "explanation": "The title of the presentation and the proceeding question on slide 1 'Why Do We Need To Study Parasitic Infections?' give clear indication that the presenter's intent is to explain the importance of studying parasitic infections. There's no information provided suggesting the introduction of the department, promotion of OUHSC, or introduction of major figures in the field.",
+          "difficulty": "Medium",
+          "question_type": "multiple selection"
+        }
+      },
+      {
+        "slide": 2,
+        "content": "\nBacteria\n\nViruses\n\nFungi\n\nProtozoa\n\nHelminths\n\nEctoparasites\n\nPARASITES",
+        "question_data": {
+          "question": "Which of the organisms listed can be classified as endoparasites based on the content of the presentation?",
+          "choices": [
+            "Bacteria",
+            "Viruses",
+            "Fungi",
+            "Protozoa",
+            "Helminths",
+            "Ectoparasites"
+          ],
+          "correct_answer": [
+            "Bacteria",
+            "Viruses",
+            "Protozoa",
+            "Helminths"
+          ],
+          "explanation": "Endoparasites are organisms that live inside the host's body. In the context of this presentation, bacteria, viruses, protozoa, and helminths can all be classified as endoparasites. Ectoparasites, by definition, live on the exterior of the host's body, so they are not endoparasites, and fungi can be either, depending on the species and circumstance.",
+          "difficulty": "Hard",
+          "question_type": "multiple selection"
+        }
+      },
+      {
+        "slide": 3,
+        "content": "What Do You Need to Know\nHow to diagnose and treat a parasitic infection.\n\nCase histories are critical to a diagnosis.  \n\nLife cycles are only important to know if they help in diagnosing the infection.  ",
+        "question_data": {
+          "question": "On a scale of 1 to 5, how important would you rate knowing the life cycle of a parasite for diagnosing an infection, given that it only matters if it aids in the diagnosis?",
+          "choices": [
+            "1 - Not important at all",
+            "2 - Slightly important",
+            "3 - Moderately important",
+            "4 - Very important",
+            "5 - Extremely important"
+          ],
+          "correct_answer": "3 - Moderately important",
+          "explanation": "According to the presentation, knowing the life cycle of a parasite is only important for diagnosing an infection if it helps with the diagnosis. This means that it is not always necessary and thus, can be considered moderately important.",
+          "difficulty": "Easy",
+          "question_type": "numeric"
+        }
+      },
+      {
+        "slide": 4,
+        "content": "Patient History/Presentation is Key to Diagnosing a Parasitic Infection\nTravel\n\nMedical History\n\nDiet\n\nInsect Bites\n\nHobbies\nOccupation\n\nPets\n\nLab Tests\n\nSymptoms\n\nInsect Bites",
+        "question_data": {
+          "question": "Occupation is irrelevant when diagnosing a parasitic infection.",
+          "choices": [
+            "True",
+            "False"
+          ],
+          "correct_answer": "False",
+          "explanation": "The occupation of a person can play a significant role in the risk of contracting a parasitic infection. Certain jobs involve exposure to conditions or places where one may encounter parasites, making it a crucial piece of information in diagnosis.",
+          "difficulty": "Medium",
+          "question_type": "true/false"
+        }
+      },
+      {
+        "slide": 5,
+        "content": "Keys to Treating Parasitic Infections\nProper Diagnosis\n\nProper Treatment Plan \nDrugs\nSurgical\nSupportive Care\nPrevention\n",
+        "question_data": {
+          "question": "Which of the following is NOT a key element in treating parasitic infections according to the presentation?",
+          "choices": [
+            "Proper Diagnosis",
+            "Proper Treatment Plan",
+            "Self-medication",
+            "Prevention"
+          ],
+          "correct_answer": "Self-medication",
+          "explanation": "According to the presentation, key elements in treating parasitic infections are: proper diagnosis, proper treatment plan which may include drugs or surgical intervention, supportive care, and prevention. Self-medication is not mentioned as it usually poses risks and leads to improper treatment.",
+          "difficulty": "Hard",
+          "question_type": "multiple choice"
+        }
+      }
+    ]
+  },
+  "averageScore": 0.6,
+  "fileName": "ddt_lecture_truncated.pptx",
+  "model": "OpenAI",
+  "timestamp": "2023-07-13T16-45-46.008Z"
+}

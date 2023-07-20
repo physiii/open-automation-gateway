@@ -1,0 +1,49 @@
+{
+  "name": "Universal-Automation-Server",
+  "version": "1.0.0",
+  "description": "Automation Gateway",
+  "keywords": [
+    "automation",
+    "Node.js",
+    "application",
+    "open-automation"
+  ],
+  "author": {
+    "name": "Andy Payne",
+    "email": "andy@pyfi.org",
+    "url": "https://github.com/physiii/open-automation"
+  },
+  "homepage": "https://github.com/physiii/open-automation",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/physiii/open-automation"
+  },
+  "engines": {
+    "node": ">= 0.6.0",
+    "npm": ">= 1.0.0"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "express": "^4.17.1",
+    "form-data": "^4.0.0",
+    "fs-extra": "^11.1.1",
+    "getmac": "^5.1.0",
+    "mongodb": "^2.2.1",
+    "node-hue-api": "^5.0.0-beta.13",
+    "node-id3": "^0.2.6",
+    "onoff": "^5.0.0",
+    "ping": "^0.2.2",
+    "request": "^2.88.2",
+    "rimraf": "^3.0.0",
+    "simple-ifconfig": "^0.2.2",
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^4.6.2",
+    "ws": "^3.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.1.1"
+  },
+  "bundleDependencies": [],
+  "private": true,
+  "main": "gateway.js"
+}

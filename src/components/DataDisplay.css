@@ -1,0 +1,132 @@
+.button-container-display {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+.default-button-display {
+  margin-top: 10px;
+  background-color: #FFFFFF;
+  color: #D5006C;
+  padding: 10px 20px;
+  border: 1px solid #D5006C;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.default-button-display:disabled {
+  background-color: #ccc;
+  color: #D5006C;
+  cursor: not-allowed;
+}
+
+.default-button-display:hover {
+  background-color: #D5006C;
+  color: #FFFFFF;
+}
+
+.data-container {
+  margin: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+}
+
+.data-item {
+  margin-bottom: 30px;
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.slide-number {
+  text-align: center;
+  padding: 10px;
+  margin-top: -20px;
+  background-color: #ffffff;
+  border: 1px solid #D5006C;
+  border-top-width: 0px;
+  width: 100px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 0px 0px 4px 4px;
+}
+
+.content {
+  padding: 20px;
+  white-space: pre-wrap;
+  text-align: center;
+  width: 100%;
+}
+
+.scoring-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.radio-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.regenerate-button {
+  margin-top: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.info-box {
+  width: 100%;
+  text-align: center;
+}
+
+.scrollable-results {
+  height: 70%;
+  overflow-y: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.result-item {
+  margin-bottom: 20px;
+  padding: 15px;
+  text-align: center;
+  justify-content: center;
+}
+
+.go-back-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.slide-score {
+  padding: 5px 0;
+  text-align: center;
+}
+
+.results-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}

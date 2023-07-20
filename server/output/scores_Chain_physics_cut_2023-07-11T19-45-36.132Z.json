@@ -1,0 +1,279 @@
+{
+  "scores": [
+    3,
+    3,
+    3,
+    4,
+    4,
+    3,
+    4,
+    4,
+    4,
+    4,
+    3,
+    2,
+    4,
+    4,
+    3
+  ],
+  "data": {
+    "slides": [
+      {
+        "slide": 1,
+        "content": "Work Energy and Momentum\nPhysics\nUnit 3",
+        "question_data": {
+          "question": "What are the two main components of Unit 3 in this Physics course presentation?",
+          "choices": [
+            "Work Energy",
+            "Momentum"
+          ],
+          "correct_answer": [
+            "Work Energy",
+            "Momentum"
+          ],
+          "explanation": "Slide 1/15 of the presentation mentions 'Work Energy' and 'Momentum' as the main components for Unit 3 in the Physics course.",
+          "difficulty": "Medium",
+          "question_type": "multiple selection"
+        }
+      },
+      {
+        "slide": 2,
+        "content": "\nThis Slideshow was developed to accompany the textbook\nOpenStax Physics\nAvailable for free at https://openstaxcollege.org/textbooks/college-physics \nBy OpenStax College and Rice University\n2013 edition\nSome examples and diagrams are taken from the textbook.\nSlides created by \nRichard Wright, Andrews Academy \nrwright@andrews.edu ",
+        "question_data": {
+          "question": "Who is the author of the slides?",
+          "choices": [
+            "OpenStax College",
+            "Rice University",
+            "Richard Wright from Andrews Academy"
+          ],
+          "correct_answer": "Richard Wright from Andrews Academy",
+          "explanation": "The material is sourced from a textbook authored by OpenStax College and Rice University. However, Richard Wright from Andrews Academy is responsible for creating the accompanying slides.",
+          "difficulty": "Hard",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 3,
+        "content": "03-01 Work and the Work-Energy Theorem\nIn this lesson you will…\n• Explain how an object must be displaced for a force on it to do work.\n• Explain how relative directions of force and displacement determine whether the work done is positive, negative, or zero. \n• Explain work as a transfer of energy and net work as the work done by the net force.\n• Explain and apply the work-energy theorem.",
+        "question_data": {
+          "question": "If you push a box across the floor, how much work do you do?",
+          "choices": [
+            "The amount of force you apply",
+            "The distance the box moves",
+            "The time it takes you to push the box",
+            "The weight of the box"
+          ],
+          "correct_answer": "The distance the box moves",
+          "explanation": "Work is done when a force is applied to an object and the object moves. The amount of work done is equal to the force applied multiplied by the distance the object moves.",
+          "difficulty": "Medium",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 4,
+        "content": "03-01 Work and the Work-Energy Theorem\nWhich of the following is NOT work?\nPushing a Stalled Car\nPulling a Wagon\nClimbing stairs\nFalling Down\nCarrying a Heavy Backpack Down the Hall\n",
+        "question_data": {
+          "question": "What is the difference between work and energy?",
+          "choices": [
+            "Work is the transfer of energy",
+            "Energy is the transfer of work",
+            "Work and energy are the same thing",
+            "None of the above"
+          ],
+          "correct_answer": "Work is the transfer of energy",
+          "explanation": "Work is the transfer of energy from one object to another, while energy is the ability to do work. Therefore, it is incorrect to say that pushing a stalled car or carrying a heavy backpack down the hall are both examples of 'work', since in both of these examples, work is done only when a force moves an object in the direction of the force.",
+          "difficulty": "Medium",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 5,
+        "content": "03-01 Work and the Work-Energy Theorem\nWork\nDepends on the force and the distance the force moves the object.\nWant the force in the direction of the distance\n\n\nUnit:  (Joule) (Scalar)\nWatch Eureka! 08\n",
+        "question_data": {
+          "question": "What factors affect the amount of work done on an object?",
+          "choices": [
+            "The work on an object depends on the magnitude of the force applied to the object and the distance the object moves in the direction of the applied force",
+            "The work on an object depends on only the distance the object moved",
+            "The work on an object depends only on the force applied",
+            "The work on an object depends on the angle between the force and the direction of motion"
+          ],
+          "correct_answer": "The work on an object depends on the magnitude of the force applied to the object and the distance the object moves in the direction of the applied force",
+          "explanation": "Work is defined as the product of force and distance. The force must be in the direction of the distance. The unit for work is the Joule which is a scalar quantity.",
+          "difficulty": "Hard",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 6,
+        "content": "03-01 Work and the Work-Energy Theorem\nMarcy pulls a backpack on wheels down the 100-m hall.  The 60-N force is applied at an angle of 30° above the horizontal.  How much work is done by Marcy?\n\nW = 5200 J",
+        "question_data": {
+          "question": "What is the work done by Marcy when she pulls a backpack?",
+          "choices": [
+            "5600 Joule",
+            "60 Newton",
+            "45° above the horizontal",
+            "5200 Joule"
+          ],
+          "correct_answer": "5200 Joule",
+          "explanation": "The work done by Marcy is 5200 Joule.",
+          "difficulty": "Easy",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 7,
+        "content": "03-01 Work and the Work-Energy Theorem\nDrew is carrying books (200 N) down the 100-m hall.  How much work is Drew doing on the books?\n\nW = 0 J\n\nThe force is vertical\u000bdisplacement is horizontal.",
+        "question_data": {
+          "question": "What is the work done by Drew on the books?",
+          "choices": [
+            "0 J",
+            "10 J",
+            "20 J",
+            "30 J"
+          ],
+          "correct_answer": "0 J",
+          "explanation": "The work done by Drew on the books is zero because the force applied and displacement are in perpendicular directions. This is because work is calculated as the product of the force applied and the displacement in the direction of the force. When these are perpendicular to each other, the work done ends up being zero.",
+          "difficulty": "Medium",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 8,
+        "content": "03-01 Work and the Work-Energy Theorem\nYou carry some books (200 N) while walking down stairs height 2 m and length 3 m.  How much work do you do?\n\nW = -400 J",
+        "question_data": {
+          "question": "If you were to carry a weight of 200 Newtons (the equivalent of a stack of books) for a distance of 2 meters upstairs, how much work would be done in Joules?",
+          "choices": [
+            "400 J",
+            "-400 J",
+            "200 J",
+            "-200 J"
+          ],
+          "correct_answer": "400 J",
+          "explanation": "To calculate work done, we use the work-energy principle which states work done is equal to the force times the distance moved by the force. In this case, the force (the weight of the books) is 200 N and the distance (upstairs) is 2m. Since lifting objects is work done against gravity, the work done is positive. So, we multiply the force and the distance (200N * 2m) which gives us 400J.",
+          "difficulty": "Medium",
+          "question_type": "numeric"
+        }
+      },
+      {
+        "slide": 9,
+        "content": "03-01 Work and the Work-Energy Theorem\nA suitcase is hanging straight down from your hand as you ride an escalator.  Your hand exerts a force on the suitcase, and this force does work.  Which one of the following is correct?\nThe W is negative when you ride up and positive when you ride down\nThe W is positive when you ride up and negative when you ride down\nThe W is positive\nThe W is negative\n",
+        "question_data": {
+          "question": "The work done (W) on the suitcase is always positive when you ride the escalator up.",
+          "choices": [
+            "True",
+            "False"
+          ],
+          "correct_answer": "False",
+          "explanation": "The work done on the suitcase can either be positive or negative. When riding up, the force is in the opposite direction to the displacement so the work is negative. On the other hand, when riding down, the force is in the same direction as the displacement so the work done is positive.",
+          "difficulty": "Easy",
+          "question_type": "true/false"
+        }
+      },
+      {
+        "slide": 10,
+        "content": "03-01 Work and the Work-Energy Theorem\nDo work means  W = Fd\nF = ma\n\nSo work by a net force gives an object some acceleration\n\nAcceleration means the velocity changes",
+        "question_data": {
+          "question": "According to the Work-Energy Theorem, what effect does a net force have when work is performed on an object?",
+          "choices": [
+            "Decreases the object's speed",
+            "Increments the object's mass",
+            "Initiates acceleration in the object",
+            "Makes no impact on the object"
+          ],
+          "correct_answer": "Initiates acceleration in the object",
+          "explanation": "The Work-Energy Theorem states that the sum of work done by net force on an object is equal to the change in its kinetic energy. Thus, when work is done, it catalyses acceleration in the object, altering its velocity.",
+          "difficulty": "Medium",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 11,
+        "content": "03-01 Work and the Work-Energy Theorem\n\n\n  solve for ad\n\n\n\n \n",
+        "question_data": {
+          "question": "What is the relationship between work and energy?",
+          "choices": [
+            "Work is the transfer of energy",
+            "Energy is the transfer of work",
+            "Work is the opposite of energy",
+            "Energy is the opposite of work"
+          ],
+          "correct_answer": "Work is the transfer of energy",
+          "explanation": "Work represents the transfer of energy from one object to another. This process can occur via different means such as mechanical work, chemical work, or electrical work. Energy, on the other hand, is the capability to perform work and can be stored in numerous ways - for instance, in chemical bonds, electric fields, or as thermal energy.",
+          "difficulty": "Medium",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 12,
+        "content": "03-01 Work and the Work-Energy Theorem\nEnergy is the ability to do work\nKinetic Energy - Energy due to motion \nIf something in motion hits an object, it will move it some distance\n\n\nScalar\nUnit is joule (J)\nWatch Eureka! 09",
+        "question_data": {
+          "question": "What is the unit of energy used in the context of work and the work-energy theorem?",
+          "choices": [
+            "Joule",
+            "Newton",
+            "Watt",
+            "Calorie",
+            "Foot-pound"
+          ],
+          "correct_answer": "Joule",
+          "explanation": "The joule is the SI unit of energy. It is defined as the work done when a force of one newton acts through a distance of one meter.",
+          "difficulty": "Moderate",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 13,
+        "content": "03-01 Work and the Work-Energy Theorem\nWork Energy Theorem\nWork of Net external force = change in kinetic energy\n\n\n",
+        "question_data": {
+          "question": "A car of mass 1000 kg moving with a speed of 20 m/s comes to rest. How much work did the net external force do?",
+          "choices": [
+            "1 x 10^6 Joules",
+            "2 x 10^6 Joules",
+            "3 x 10^6 Joules",
+            "4 x 10^6 Joules"
+          ],
+          "correct_answer": "2 x 10^6 Joules",
+          "explanation": "According to the Work-Energy theorem, the work done is equal to the change in kinetic energy. The initial kinetic energy of the car is (1/2) * 1000 * (20)^2 = 2 x 10^5 Joules. The final kinetic energy of the car is zero, as it comes to rest. Hence, the work done by the external force is Final Kinetic Energy - Initial Kinetic Energy = 0 - (-2 x 10^5) = 2 x 10^6 Joules. Therefore, external force has done work of 2 x 10^6 Joules.",
+          "difficulty": "Medium",
+          "question_type": "numeric"
+        }
+      },
+      {
+        "slide": 14,
+        "content": "03-01 Work and the Work-Energy Theorem\nA 0.075-kg arrow is fired horizontally.  The bowstring exerts a force on the arrow over a distance of 0.90 m.  The arrow leaves the bow at 40 m/s. What average force does the bow apply to arrow?",
+        "question_data": {
+          "question": "According to the Work-Energy Theorem, if the bowstring's force-exerting distance on the arrow increases, how does it affect the average force from the bow to the arrow?",
+          "choices": [
+            "increase",
+            "decrease"
+          ],
+          "correct_answer": "decrease",
+          "explanation": "The Work-Energy Theorem posits that the work conducted on an item equals the variation in its kinetic energy. In this case, work is the multiplication of force by the distance over which it is applied. Therefore, if the distance increases while maintaining constant kinetic energy (arrow speed), the average force must reduce to keep work constancy.",
+          "difficulty": "Hard",
+          "question_type": "multiple choice"
+        }
+      },
+      {
+        "slide": 15,
+        "content": "03-01 Work and the Work-Energy Theorem\nWork-Energy Theorem and Spring Constants Lab\nHold a meter stick vertically on your desk.\nPush a pop-up toy down so that the suction cup locks it in place. When the toy jumps up, estimate the height of the jump. Repeat 5 times.\nFind the average height. \nUse the height to find the final speed as in lesson 01-06 Falling Objects. \nThe speed you just calculated is also the speed of the toy when it jumped because projectile motion is symmetric.\nWhat was the initial velocity of the toy before it jumped? \nFind the mass of the toy. \nThe work-energy theorem states that . Find the work the spring did on the toy. \nThe energy of a spring is . Since the spring did the work to make the toy jump, the work from step 8 is the same as the energy in this equation. Use the work and the distance the spring was compressed to find the spring constant.\nWhat would happen to the height the toy jumped if the spring constant were higher? \nHow much force did you apply to the toy to push it down? (Hint: Find the force of a spring equation from last unit.) ",
+        "question_data": {
+          "question": "If the spring constant of a toy is increased by 10%, what would be the effect on the height it jumps when the spring is released?",
+          "choices": [
+            "The height would decrease by 10%",
+            "The height would remain the same",
+            "The height would increase by 10%",
+            "Cannot predict the change in height"
+          ],
+          "correct_answer": "The height would increase by 10%",
+          "explanation": "The spring constant is associated with the spring's elasticity. A higher spring constant indicates a stiffer spring, leading to more energy being stored upon compression. As the spring is released, this stored energy is transferred to the toy, causing it to jump higher. Thus, an increase in the spring constant by 10% would lead to a 10% increase in the jump height.",
+          "difficulty": "Moderate",
+          "question_type": "multiple choice"
+        }
+      }
+    ]
+  },
+  "averageScore": 3.466666666666667,
+  "fileName": "physics_cut.pptx",
+  "model": "Chain",
+  "timestamp": "2023-07-11T19-45-36.132Z"
+}

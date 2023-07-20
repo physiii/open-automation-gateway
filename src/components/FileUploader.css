@@ -1,0 +1,96 @@
+.file-uploader-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  margin-top: 20px;
+  background-color: #f4f4f4;
+}
+
+.file-uploader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 300px;
+}
+
+.custom-file-input {
+  position: relative;
+  display: inline-block;
+  text-align: left;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.custom-file-input input[type="file"] {
+  display: none;
+}
+
+.custom-file-input label {
+  padding: 10px 20px;
+  border: 1px solid #D5006C;
+  border-radius: 5px;
+  background-color: #FFFFFF;
+  color: #D5006C;
+  cursor: pointer;
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.custom-file-input label:hover {
+  background-color: #D5006C;
+  color: #FFFFFF;
+}
+
+.button-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.default-button, .view-scores-button {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.file-uploader button {
+  background-color: #FFFFFF;
+  color: #D5006C;
+  padding: 10px 20px;
+  border: 1px solid #D5006C;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.file-uploader button:disabled {
+  background-color: #ccc;
+  color: #D5006C;
+  cursor: not-allowed;
+}
+
+.file-uploader button:hover {
+  background-color: #D5006C;
+  color: #FFFFFF;
+}
+
+.view-scores-button:hover {
+  background-color: #D5006C;
+  color: #FFFFFF;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+  font-size: 12px;
+  text-align: center;
+}
