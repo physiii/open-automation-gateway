@@ -14,6 +14,7 @@ class DevicesManager {
 	}
 
 	addDevice (data) {
+		// const Device = require('./device.js').default;
 		return new Promise((resolve, reject) => {
 			let device = this.getDeviceById(data.id);
 
@@ -176,4 +177,4 @@ module.exports = new DevicesManager();
 // Otherwise, the circular dependency will cause an empty object to be returned
 // when they require DevicesManager.
 
-const Device = require('./device.js').default;
+const Device = require('./device.js');

@@ -1,6 +1,6 @@
 const Service = require('./service.js'),
 config = require('../config.json'),
-  Gpio = require('onoff').Gpio,
+  // Gpio = require('onoff').Gpio,
   database = require('./database.js'),
 	SirenApi = require('./api/siren-api.js'),
 	TAG = '[SirenService]';
@@ -10,10 +10,10 @@ class SirenService extends Service {
 		super(data, relaySocket, save, SirenApi);
 
     this.siren_gpio = data.gpio;
-    this.siren = new Gpio(this.siren_gpio, 'out');
+    // this.siren = new Gpio(this.siren_gpio, 'out');
     this.isOn = false;
 
-    this.siren.write(0);
+    // this.siren.write(0);
 	}
 
 	subscribeToDriver () {
@@ -41,7 +41,7 @@ class SirenService extends Service {
     
     this.state.last_siren_date = now;
     this.isOn = true;    
-    this.siren.writeSync(1);
+    // this.siren.writeSync(1);
     this._logSiren();
     this.relayEmit('on');
     this._events.emit('on');
@@ -49,7 +49,7 @@ class SirenService extends Service {
 
   sirenOff () {
     this.isOn = false; 
-    this.siren.writeSync(0);     
+    // this.siren.writeSync(0);     
     this.relayEmit('off');
     this._events.emit('off');
   }

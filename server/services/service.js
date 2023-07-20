@@ -1,6 +1,6 @@
 const EventEmitter = require('events'),
 	utils = require('../utils.js'),
-	uuid = require('uuid/v4'),
+	{ v4: uuid } = require('uuid'),
 	TAG = '[Service]';
 
 class Service {

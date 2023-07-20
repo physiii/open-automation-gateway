@@ -1,7 +1,7 @@
 const
 	spawn = require('child_process').spawn,
 	exec = require('child_process').exec,
-	uuid = require('uuid/v4'),
+	uuid = require('uuid'),
 	execSync = require('child_process').execSync,
 	crypto = require('crypto'),
 	path = require('path'),

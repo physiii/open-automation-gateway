@@ -1,32 +1,53 @@
-const MongoClient = require('mongodb').MongoClient,
-	TAG = '[Database]';
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const TAG = '[Database]';
 
 var settings = {};
 
 class Database {
 
-  constructor () {
-		this.init = this.init.bind(this);
-	}
-
-  init () {
-		return;
-	}
-
-	connect (callback) {
-	return new Promise((resolve, reject) => {
-		MongoClient.connect('mongodb://127.0.0.1:27017/gateway', (error, db) => {
-			if (error) {
-				console.error(TAG, 'Unable to connect to the mongoDB server. Error:', error);
-				reject('Unable to connect to gateway database.');
-				return;
-			}
-			callback(db, resolve, reject);
+	constructor() {
+		this.client = new MongoClient('mongodb://127.0.0.1:27017/gateway', { 
+		  useNewUrlParser: true, 
+		  useUnifiedTopology: true,
+		  serverApi: {
+			version: ServerApiVersion.v1,
+			strict: true,
+			deprecationErrors: true
+		  }
 		});
-	}).catch((error) => {
-		//console.log(TAG,"query error:",error);
-	});
-	}
+		this.isConnected = false;
+	  }
+	
+	  async connect() {
+		if (!this.isConnected) {
+		  try {
+			await this.client.connect();
+			this.isConnected = true;
+		  } catch (error) {
+			console.error(TAG, 'Unable to connect to the mongoDB server. Error:', error);
+			throw new Error('Unable to connect to gateway database.');
+		  }
+		}
+		return this.client;
+	  }
+	
+	  async getDevices() {
+		try {
+		  await this.connect();
+		  const result = await this.client.db().collection('devices').find().toArray();
+		  return result;
+		} catch (error) {
+		  console.error(TAG, 'getDevices', error);
+		  throw new Error('Database error');
+		}
+	  }
+	
+	  async close() {
+		if (this.isConnected) {
+		  await this.client.close();
+		  this.isConnected = false;
+		}
+	  }
 
 	store (collection, data) {
 	return this.connect((db, resolve, reject) => {
@@ -272,42 +293,22 @@ class Database {
 		});
 	}
 
-	getDevices () {
-		return this.connect((db, resolve, reject) => {
-			db.collection('devices').find().toArray((error, result) => {
-				db.close();
-
-				if (error) {
-					console.error(TAG, 'getDevices', error);
-					reject('Database error');
-					return;
-				}
-
-				resolve(result);
-			});
-		});
-	}
-
-	get_camera_recordings (camera_id) {
-		return this.connect((db, resolve, reject) => {
+	async get_camera_recordings(camera_id) {
+	
+		try {
+			await this.connect();
 			let query = {};
-
+	
 			if (camera_id) {
-				query = {camera_id: camera_id};
+				query = { camera_id };
 			}
-
-			db.collection('camera_recordings').find(query).toArray((error, result) => {
-				db.close();
-
-				if (error) {
-					console.error(TAG, 'get_camera_recordings', error);
-					reject('Database error');
-					return;
-				}
-
-				resolve(result);
-			});
-		});
+			const result = await this.client.db().collection('camera_recordings').find(query).toArray();
+	
+			return result;
+		} catch (error) {
+			console.error(TAG, 'get_camera_recordings', error);
+			throw new Error('Database error');
+		}
 	}
 
 	get_camera_recording (recording_id) {

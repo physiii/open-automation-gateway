@@ -1,7 +1,7 @@
 const Service = require('./service.js'),
   config = require('../config.json'),
   database = require('./database.js'),
-  Gpio = require('onoff').Gpio,
+//   Gpio = require('onoff').Gpio,
 	ContactSensorApi = require('./api/contact-sensor-api.js'),
 	TAG = '[ContactSensorService]';
 
@@ -10,7 +10,7 @@ class ContactSensorService extends Service {
 		super(data, relaySocket, save, ContactSensorApi);
 
     this.contact_gpio = data.gpio;    
-    this.sensor = new Gpio(this.contact_gpio, 'in', 'both');
+    // this.sensor = new Gpio(this.contact_gpio, 'in', 'both');
 
     this._handleContactChange();
 	}
@@ -24,23 +24,23 @@ class ContactSensorService extends Service {
 	}
   
   _handleContactChange () {
-    this.sensor.watch((err, value) => {
-      if (err) {
-        throw err;
-      }
+    // this.sensor.watch((err, value) => {
+    //   if (err) {
+    //     throw err;
+    //   }
       
-      const is_open = value === 0,
-        now = new Date(),        
-        state_string = is_open ? 'open' : 'closed';
+    //   const is_open = value === 0,
+    //     now = new Date(),        
+    //     state_string = is_open ? 'open' : 'closed';
         
-      this.state.last_contact_date = now,
-      console.log(TAG, 'Received contact ' + state_string);
+    //   this.state.last_contact_date = now,
+    //   console.log(TAG, 'Received contact ' + state_string);
 
-      this.state.contact = state_string;
-      this.relayEmit(state_string);
-      this._events.emit(state_string);
-      this._logAccess(is_open);
-    });
+    //   this.state.contact = state_string;
+    //   this.relayEmit(state_string);
+    //   this._events.emit(state_string);
+    //   this._logAccess(is_open);
+    // });
   }
   
   _logAccess (is_open) {

@@ -1,7 +1,3 @@
-// -----------------------------  OPEN-AUTOMATION ------------------------- //
-// ------------  https://github.com/physiii/open-automation --------------- //
-// --------------------------------- Gateway ------------------------------ //
-
 const TAG = '[Index]';
 
 try {
@@ -39,6 +35,7 @@ if (config.use_dev) {
 ConnectionManager.connectionLoop();
 // Get settings and load devices from database.
 
+console.log(TAG, "Loading devices from database.");
 Database.getDevices().then((dbDevices) => {
 	DevicesManager.loadDevicesFromDb().then(() => {
 		createGatewayDevice = true;

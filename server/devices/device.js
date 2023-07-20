@@ -1,4 +1,5 @@
-const uuid = require('uuid'),
+const 
+	{ v4: uuid } = require('uuid'),
 	database = require('../services/database.js'),
 	createDeviceSocket = require('./device-socket.js').createDeviceSocket,
 	ServicesManager = require('../services/services-manager.js'),
