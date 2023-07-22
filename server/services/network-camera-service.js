@@ -185,10 +185,8 @@ class NetworkCameraService extends Service {
 					let motionFrames = await this.detectMotionInClip(videoFilepath, info);
 					// let audioFrames = await this.detectAudioInClip(videoFilepath, info);
 					if (motionFrames > 4) {
-						if (this.motionTime.start === 0) {
-							this.handleMotionDetected(now);
-							console.log(TAG, this.id, this.settings.name, "motion detected [" + this.settings.motion_threshold + "] for " + motionFrames + " frames");
-						}
+						this.handleMotionDetected(now);
+						console.log(TAG, this.id, this.settings.name, "motion detected [" + this.settings.motion_threshold + "] for " + motionFrames + " frames");
 					} else {
 						if (this.motionTime.start !== 0) {
 							this.handleNoMotionDetected(now);
@@ -201,7 +199,9 @@ class NetworkCameraService extends Service {
 				info = await this.upload(videoFilepath, url, info);
 
 				if (info.body.info.motionTime.start > 0 && info.body.info.motionTime.stop > 0) {
-					console.log(TAG, this.id, this.settings.name, "motion stopped at", info.body.info.motionTime.stop);
+					console.log(TAG, this.id, this.settings.name, 
+						"motion stopped at", 
+						(info.body.info.motionTime.stop - info.body.info.motionTime.start) / 1000);
 					this.motionTime.stop = 0;
 					this.motionTime.start = 0;
 					clearTimeout(this.postloadTimeout);
@@ -230,11 +230,12 @@ class NetworkCameraService extends Service {
 		clearTimeout(this.postloadTimeout);
 		this.postloadTimeout = null; // do we need this?
 		this.isNoMotionTimeoutSet = false;
-
-		if (this.motionTime.start !== 0) return;
-		this.state.motion_detected_date = now;
-		this.motionTime.start = Date.now();
-		this.capturePreviewImage();
+	
+		if (this.motionTime.start === 0) {
+			this.state.motion_detected_date = now;
+			this.motionTime.start = Date.now();
+			this.capturePreviewImage();
+		}
 	}
 	
 	handleNoMotionDetected(now) {
