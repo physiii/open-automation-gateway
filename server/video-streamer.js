@@ -53,29 +53,31 @@ class VideoStreamer {
 	}
 
 	//ffmpeg -thread_queue_size 32768 -i "http://xx/636.m3u8" -f hls -c:v copy -c:a copy -hls_time 5 -hls_list_size 5 -hls_allow_cache 0 -hls_flags delete_segments -segment_list_flags +live
-	startNetworkStream (cameraId, rtspUrl) {
-		const METHOD_TAG = TAG + '[' + cameraId + ']' + '[' + rtspUrl +']',
+	startNetworkStream(cameraId, rtspUrl) {
+		const METHOD_TAG = TAG + '[' + cameraId + ']' + '[' + rtspUrl + ']',
 			streamDir = cameraStreamDir + cameraId,
 			options = [
 				'-i', rtspUrl,
 				"-f", "hls",
 				"-c:v", "copy",
-				// "-c:a", "copy",
 				"-hls_time", HLS_TIME,
 				"-hls_list_size", HLS_LIST_SIZE,
 				"-hls_delete_threshold", "1",
 				"-hls_flags", "delete_segments",
+				"-bufsize", "2M", // Increase buffer size
+				"-max_delay", "10000000", // Increase max delay (10 seconds)
+				"-rtsp_transport", "tcp", // Use TCP for more reliable transport
 				streamDir + "/playlist.m3u8"
 			];
-
+	
 		execSync("mkdir -p " + streamDir);
 		let ffmpegStr = "\"" + this.printFFmpegOptions(options) + "\"";
-
+	
 		// Check if stream is already running so we do not duplicate process
 		utils.checkIfProcessIsRunning(ffmpegStr).then((processId) => {
 			utils.killProcess(processId).then(() => {
 				videoStreamProcess = spawn('ffmpeg', options);
-
+	
 				videoStreamProcess.on('close', (code) => {
 					videoStreamProcess = null;
 					console.error(METHOD_TAG, `RTSP stream exited with code ${code}`);
@@ -83,14 +85,13 @@ class VideoStreamer {
 						this.startNetworkStream(cameraId, rtspUrl);
 					}, CAMERA_RETRY_TIME * 1000);
 				});
-
+	
 				videoStreamProcess.stderr.on('data', (data) => {
-					// console.log(`${data}`);
+					console.log(`${data}`);
 				});
-
 			});
 		});
-	}
+	}	
 
 	stopNetworkStream (cameraId) {
 		if (watchStreamDir[cameraId]) {

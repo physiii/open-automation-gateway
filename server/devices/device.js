@@ -188,10 +188,13 @@ class Device {
 		};
 	}
 
-	save () {
-		return new Promise((resolve, reject) => {
-			database.store_device(this).then(resolve).catch(reject);
-		});
+	async save() {
+		try {
+			const result = await database.store_device(this);
+			return result;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	serialize () {

@@ -36,22 +36,22 @@ class DevicesManager {
 				.then(() => {
 					System.softwareInfo()
 					.then((version) => {
-						console.log(TAG, 'softwareInfo', version);
+						// console.log(TAG, 'softwareInfo', version);
 						if (data.info) data.info.firmware_version = version;
 					})
 					.then(() => {
-						// console.log(TAG, 'device', device);
 						if (device) {
 							resolve(device);
 						}
 
-						if (!this.areDeviceDependenciesMet(data)) {
-							console.error("Device dependencies are not met!", data);
-							// return false;
-						}
+						// if (!this.areDeviceDependenciesMet(data)) {
+						// 	console.error("Device dependencies are not met!", data);
+						// 	// return false;
+						// }
 
 						device = new Device(data);
 						this.devices.set(device.id, device);
+						console.log(TAG, 'addDevice', device.id);
 						resolve(device);
 					})
 				})
@@ -67,8 +67,8 @@ class DevicesManager {
 					reject();
 				}
 
-				console.log(TAG, "createDevice", device.services.services[0].network_path);
 				device.save().then(() => {
+					console.log(TAG, "createDevice", device.id);
 					resolve(device);
 				}).catch(reject);
 			});

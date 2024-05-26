@@ -52,7 +52,7 @@ class WiFiThermostatDriver {
 				// console.log(TAG, data);
 				self.state = self.configureData(JSON.parse(data));
 			}).catch((error) => {
-				console.log(TAG, 'Polling error:', error);
+				// console.log(TAG, 'Polling error:', error);
 			})
 		}, poll_delay, this);
 	}

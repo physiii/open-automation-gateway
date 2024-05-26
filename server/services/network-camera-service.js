@@ -14,6 +14,7 @@ const
 	CameraRecordings = require('../camera-recordings.js'),
 	motionScriptPath = path.join(__dirname, '/../motion/motion.py'),
 	DetectMotionProgramPath = path.join(__dirname, '/../motion/DetectMotion.py'),
+	PythonPath = '/usr/local/src/venv/bin/python',
 	mediaDir = "/usr/local/lib/open-automation/camera/",
 	eventsDir = path.join(mediaDir, 'events/'),
 	tmpDir = "/tmp/open-automation/",
@@ -186,11 +187,9 @@ class NetworkCameraService extends Service {
 					// let audioFrames = await this.detectAudioInClip(videoFilepath, info);
 					if (motionFrames > 4) {
 						this.handleMotionDetected(now);
-						console.log(TAG, this.id, this.settings.name, "motion detected [" + this.settings.motion_threshold + "] for " + motionFrames + " frames");
+						// console.log(TAG, this.id, this.settings.name, "motion detected [" + this.settings.motion_threshold + "] for " + motionFrames + " frames");
 					} else {
-						if (this.motionTime.start !== 0) {
-							this.handleNoMotionDetected(now);
-						}
+						this.handleNoMotionDetected(now);
 					}
 				}
 
@@ -214,7 +213,7 @@ class NetworkCameraService extends Service {
 	}
 	
 	detectMotionInClip(clipPath) {
-		const cmd = `python3 ${DetectMotionProgramPath} --video "${clipPath}" --threshold ${this.settings.motion_threshold} --contour 60`;
+		const cmd = `${PythonPath} ${DetectMotionProgramPath} --video "${clipPath}" --threshold ${this.settings.motion_threshold} --contour 60`;
 		try {
 			const res = execSync(cmd, { encoding: 'utf8' });
 			const resultJson = JSON.parse(res);
@@ -239,12 +238,14 @@ class NetworkCameraService extends Service {
 	}
 	
 	handleNoMotionDetected(now) {
-		if(!this.postloadTimeout) {
-			this.postloadTimeout = setTimeout(() => {
-				this.motionTime.stop = Date.now();
-				this.relayEmit('motion-stopped', {date: now.toISOString()});
-				this.postloadTimeout = undefined;
-			}, NO_MOTION_DURATION);
+		if (this.motionTime.start !== 0) {
+			if(!this.postloadTimeout) {
+				this.postloadTimeout = setTimeout(() => {
+					this.motionTime.stop = Date.now();
+					this.relayEmit('motion-stopped', {date: now.toISOString()});
+					this.postloadTimeout = undefined;
+				}, NO_MOTION_DURATION);
+			}
 		}
 	}
 	

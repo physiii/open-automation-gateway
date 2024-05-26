@@ -1,15 +1,28 @@
+// Langchain Packages
+const { ChatOpenAI } = require("langchain/chat_models/openai");
+const { LLMChain } = require("langchain/chains");
+const { RetrievalQAChain } = require("langchain/chains");
+const { HNSWLib } = require("langchain/vectorstores/hnswlib");
+const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
+const { BufferMemory } = require("langchain/memory");
+const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
+const { PromptTemplate } = require('langchain/prompts');
+const chunkSize = 8000;
+const chunkOverlap = 0;
+const rtspUsername = "admin";
+const rtspPassword = "Qweasdzxc1";
+
 const exec = require('child_process').exec,
+	ip = require('ip'),
 	ConnectionManager = require('./connection.js'),
 	config = require('../config.json'),
 	axios = require('axios'),
-	Exec = require('child_process').exec,
 	v3 = require('node-hue-api').v3,
   discovery = v3.discovery,
   hueApi = v3.api,
 	appName = 'oa',
 	deviceName = 'gateway',
 	DevicesManager = require('../devices/devices-manager.js'),
-	Database = require ("../services/database.js"),
 	NewSchedule = [
 			{label: '1 AM', value: 1, minTemp: 65, maxTemp: 75, power: true},
 			{label: '2 AM', value: 2, minTemp: 65, maxTemp: 75, power: true},
@@ -40,11 +53,212 @@ const exec = require('child_process').exec,
 
 class DeviceUtils {
 
+	async generateEmbeddings(text) {
+		const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize, chunkOverlap });
+		const docs = await textSplitter.createDocuments([text]);
+		let vectorstore = await HNSWLib.fromDocuments(docs, new OpenAIEmbeddings());
+	
+		return vectorstore;
+	}
+	
+	initializeChain(LLM, embeddings) {
+		return RetrievalQAChain.fromLLM(
+			LLM,
+			embeddings.asRetriever(), {
+				returnSourceDocuments: true
+			}
+		);
+	}
+	
+	async runChatCompletion(message, chain) {
+		try {
+			const completion = await chain.call({
+				query: message
+			});
+	
+			return completion.text;
+		} catch (error) {
+			console.error('Error:', error);
+		}
+	}
+	
+	async guessEndpoint(data) {
+		const maxLength = 12000;
+		if (data.length > maxLength)
+			data = data.slice(-maxLength);
+	
+		const LLM = new ChatOpenAI({
+			modelName: "gpt-4",
+			temperature: 0,
+		});
+	
+		const prompt = `
+		{slide_content} 
+		Guess the IP camera manufacturer from the above html. 
+		Then provide a json list of possible rtsp url endpoints for streaming video from the camera based on the manufacturer.
+		Please use the following json format and only provide the endpoint and not the IP address or http protocol, for example:
+		[
+			{
+				"endpoint": "/cam/realmonitor?channel=1&subtype=0"
+			}
+		]`;
+	
+		const message = prompt.replace("{slide_content}", data);
+	
+		const embeddings = await this.generateEmbeddings(data);
+		const chain = this.initializeChain(LLM, embeddings);
+	
+		const response = await this.runChatCompletion(message, chain);
+		const regex = /\[\s*\{.*?\}\s*\]/gs;
+		const match = response.match(regex);
+		const responseObject = JSON.parse(match[0]);
+	
+		return responseObject;
+	}
+
+	async testRTSPUrl(rtspURL, username = null, password = null) {
+		return new Promise((resolve, reject) => {
+			const captureDuration = 4;
+			console.log(`Testing RTSP URL: ${rtspURL}`);
+	
+			// If username and password are provided, modify the rtspURL to include them.
+			if (username && password) {
+				const rtspComponents = rtspURL.split("://");
+				rtspURL = `${rtspComponents[0]}://${username}:${password}@${rtspComponents[1]}`;
+			}
+	
+			const testCommand = `ffmpeg -i "${rtspURL}" -t ${captureDuration} -c:v copy -c:a copy -f null -`;
+	
+			exec(testCommand, (error, stdout, stderr) => {
+				if (error) {
+					reject(new Error(`Failed to capture stream: ${stderr}`));
+				} else {
+					resolve('Successfully captured stream');
+				}
+			});
+		});
+	}	
+	
+	async searchForNetworkCameras() {
+		const localIp = ip.address();
+		const scanCommand = `nmap --script rtsp-url-brute -p 554 ${localIp}/24 | grep open -B4 | grep report`;
+	
+		const stdout = await new Promise((resolve, reject) => {
+			exec(scanCommand, (error, output) => {
+				if (error) {
+					console.error(`exec error: ${error}`);
+					reject(error);
+				} else {
+					resolve(output);
+				}
+			});
+		});
+	
+		const ipAddresses = stdout.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g);
+		if (!ipAddresses) {
+			console.log('No cameras found');
+			return [];
+		}
+	
+		console.log('Found cameras:', ipAddresses);
+		return ipAddresses.map(ip => ({ ip }));
+	}
+
+	async createNetworkCameraService (ip, user, pwd) {
+		console.log("createNetworkCameraService", ip, user, pwd);
+		const new_devices = [],
+			camera_services = DevicesManager.getServicesByType('camera');
+
+		let { rtspURL } = await this.getCameraEndpoint(ip);
+		console.log("createNetworkCameraService", rtspURL);
+
+		if (camera_services.find((camera_service) => camera_service.network_path === rtspURL)) {
+			console.log('Camera already exists');
+			return;
+		} else {
+			DevicesManager.createDevice({
+				settings: {
+					name: 'Network Camera'
+				},
+				info: {
+					manufacturer: config.manufacturer
+				},
+				services: [
+					{
+						type: 'network-camera',
+						user,
+						pwd,
+						ip_address: ip,
+						protocol: 'rtsp://',
+						port: 554,
+						path: '',
+						sub_path: '/stream2',
+						network_path: rtspURL
+					}
+				]
+			}).then((new_device) => {
+				console.log('Created new camera device', new_device.id);
+			});
+		}
+	}
+	
+	async getCameraEndpoint(ip) {
+		const sleep = (ms) => {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		};
+	
+		let endPointResult = false;
+		let rtspURL = "";
+		let response = "";
+	
+		try {
+			response = await axios.get(`http://${ip}`);
+		} catch (err) {
+			console.error(`Error scraping camera at ${ip}:`, err);
+			return null;
+		}
+	
+		const maxRetries = 2;
+		const baseDelay = 10000;
+		let retry = true;
+		let retryCount = 0;
+	
+		while (retry && retryCount < maxRetries) {
+			try {
+				console.log("Getting endpoint for ", ip);
+				endPointResult = await this.guessEndpoint(response.data);
+				if (endPointResult[0].endpoint) {
+					rtspURL = `rtsp://${ip}${endPointResult[0].endpoint}`;
+					retry = false;
+				} else {
+					retryCount++;
+					const delay = baseDelay * Math.pow(2, retryCount - 1);
+					await sleep(delay);
+				}
+			} catch (err) {
+				console.error(`Error guessing endpoint for ${ip}:`, err);
+				retryCount++;
+				const delay = baseDelay * Math.pow(2, retryCount - 1);
+				await sleep(delay);
+			}
+		}
+	
+		console.log(`Found endpoint at: ${rtspURL}`);
+		return { ip, rtspURL };
+	}
+
+	// try {
+	// 	const testResult = await this.testRTSPUrl(rtspURL, rtspUsername, rtspPassword);
+	// 	console.log(testResult);
+	// } catch (err) {
+	// 	console.error(`Error testing RTSP URL ${rtspURL}:`, err.message);
+	// }
+
 	createSirenService (gpio_paths = []) {
 		const new_devices = [],
 			siren_services = DevicesManager.getServicesByType('siren');
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			gpio_paths.forEach((gpio_path) => {
 				if (siren_services.find((siren_service) => siren_service.gpio === gpio_path)) {
 					return;
@@ -76,7 +290,7 @@ class DeviceUtils {
 		const new_devices = [],
 			contact_services = DevicesManager.getServicesByType('contact_sensor');
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			gpio_paths.forEach((gpio_path) => {
 				if (contact_services.find((contact_service) => contact_service.gpio === gpio_path)) {
 					return;
@@ -108,7 +322,7 @@ class DeviceUtils {
 		const new_devices = [],
 			camera_services = DevicesManager.getServicesByType('camera');
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			device_paths.forEach((device_path) => {
 				if (camera_services.find((camera_service) => camera_service.os_device_path === device_path)) {
 					return;
@@ -136,50 +350,9 @@ class DeviceUtils {
 		});
 	}
 
-	createNetworkCameraService (device_paths) {
-		console.log("createNetworkCameraService", device_paths);
-		const new_devices = [],
-			camera_services = DevicesManager.getServicesByType('camera');
-
-		return new Promise((resolve, reject) => {
-			device_paths.forEach((device_path) => {
-				console.log("createNetworkCameraService", device_path);
-				if (camera_services.find((camera_service) => camera_service.network_path === device_path)) {
-					return;
-				} else {
-					DevicesManager.createDevice({
-						settings: {
-							name: 'Network Camera'
-						},
-						info: {
-							manufacturer: config.manufacturer
-						},
-						services: [
-							{
-								type: 'network-camera',
-								user: 'admin',
-								pwd: 'password',
-								ip_address: device_path,
-								protocol: 'rtsp://',
-								port: 554,
-								path: '',
-								sub_path: '/stream2',
-								network_path: 'rtsp://' + device_path + ':554'  // rtsp://192.168.1.15:554/stream1
-							}
-						]
-					}).then((new_device) => {
-						new_devices.push(new_device);
-					});
-				}
-			});
-
-			resolve(new_devices);
-		});
-	}
-
 	getOsCamerasList () {
-		return new Promise((resolve, reject) => {
-			exec('ls -lah --full-time /dev/video0', (error, stdout, stderr) => {
+		return new Promise((resolve) => {
+			exec('ls -lah --full-time /dev/video0', (error, stdout) => {
 				if (error) {
 					// reject(error);
 					// return;
@@ -252,33 +425,8 @@ class DeviceUtils {
 							self.createThermostatService(ip);
 						}
 					})
-					.catch(function (error) {})
+					.catch(function () {})
 			}
-		})
-	}
-
-	searchForNetworkCameras () {
-		ConnectionManager.getLocalIP()
-		.then((localIps) => {
-			let ip_base = localIps[0].substring(0, localIps[0].lastIndexOf('.') + 1),
-				cmd = "nmap --script rtsp-url-brute -p 554 " + ip_base + "1/24 | grep open -B4 | grep report";
-
-			Exec(cmd, (error, stdout, stderr) => {
-			  if (error) {
-			    return;
-			  }
-				let lines = stdout.split("\n"),
-					ips = [];
-
-				for (let i = 0; i < lines.length; i++) {
-					let line = lines[i].split(" "),
-						ip = line[line.length - 1].replace("\n", "");
-
-					if (ip.split(".").length == 4) ips.push(ip);
-				}
-
-				this.createNetworkCameraService(ips);
-			});
 		})
 	}
 

@@ -18,48 +18,48 @@ class Database {
 		this.isConnected = false;
 	  }
 	
-	  async connect() {
+	async connect() {
 		if (!this.isConnected) {
-		  try {
+			try {
 			await this.client.connect();
 			this.isConnected = true;
-		  } catch (error) {
+			} catch (error) {
 			console.error(TAG, 'Unable to connect to the mongoDB server. Error:', error);
 			throw new Error('Unable to connect to gateway database.');
-		  }
+			}
 		}
 		return this.client;
-	  }
-	
-	  async getDevices() {
-		try {
-		  await this.connect();
-		  const result = await this.client.db().collection('devices').find().toArray();
-		  return result;
-		} catch (error) {
-		  console.error(TAG, 'getDevices', error);
-		  throw new Error('Database error');
-		}
-	  }
-	
-	  async close() {
-		if (this.isConnected) {
-		  await this.client.close();
-		  this.isConnected = false;
-		}
-	  }
+	}
 
+	async close() {
+		if (this.isConnected) {
+			await this.client.close();
+			this.isConnected = false;
+		}
+	}
+
+	async getDevices() {
+		try {
+			await this.connect();
+			const result = await this.client.db().collection('devices').find().toArray();
+			return result;
+		} catch (error) {
+			console.error(TAG, 'getDevices', error);
+			throw new Error('Database error');
+		}
+	}
+	
 	store (collection, data) {
-	return this.connect((db, resolve, reject) => {
-		db.collection(collection).update({}, {$set: data}, {upsert: true}, (error, item) => {
-			db.close();
-			if (error) {
-				reject('Database error');
-				return console.error(TAG, 'store', error);
-			}
-			resolve();
+		return this.connect((db, resolve, reject) => {
+			db.collection(collection).update({}, {$set: data}, {upsert: true}, (error, item) => {
+				db.close();
+				if (error) {
+					reject('Database error');
+					return console.error(TAG, 'store', error);
+				}
+				resolve();
+			});
 		});
-	});
 	}
 
 	getValueByKey (collection, key) {
@@ -263,19 +263,19 @@ class Database {
 		});
 	}
 
-	store_device (device) {
-		return this.connect((db, resolve, reject) => {
-			db.collection('devices').update({id: device.id}, {$set: device.dbSerialize()}, {upsert: true}, (error, record) => {
-				db.close();
-
-				if (error) {
-					console.error(TAG, 'store_device', error);
-					reject('Database error');
-					return;
-				}
-				resolve(record);
-			});
-		});
+	async store_device(device) {
+		try {
+			await this.connect();
+			const collection = this.client.db().collection('devices');
+			const result = await collection.updateOne(
+				{ id: device.id }, 
+				{ $set: device.dbSerialize() }, 
+				{ upsert: true }
+			);
+			return result;
+		} catch (error) {
+			throw new Error('Database error');
+		}
 	}
 
 	linkLightToController (id) {
